@@ -11,7 +11,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": []
+    "types": ["vite/client"]
   },
   "include": ["src", "vite.config.ts"]
 }

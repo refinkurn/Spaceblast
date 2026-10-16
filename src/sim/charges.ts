@@ -1,9 +1,9 @@
-import { BEAM_TICKS, Cell, DIR_DX, DIR_DY, FUSE_TICKS, RESPAWN_TICKS, TILE } from './constants';
+import { BEAM_TICKS, Cell, DIR_DX, DIR_DY, FUSE_TICKS, Item, TILE } from './constants';
 import { cellAt, inBounds, isWalkable } from './grid';
-import { playerTile, warpToSpawn, type Charge, type GameState, type Player } from './state';
+import { playerTile, type Charge, type GameState, type Player } from './state';
 
-// Plasma Charges: placing, fuses, cross-shaped beams, chain reactions,
-// breaking rocks and knocking out players.
+// Plasma Charges: placing, fuses, cross-shaped beams, chain reactions and
+// breaking rocks. Knock-outs live in lives.ts.
 
 export function chargeAt(state: GameState, tx: number, ty: number): Charge | undefined {
   return state.charges.find((c) => c.tx === tx && c.ty === ty);
@@ -58,7 +58,17 @@ function explode(state: GameState, c: Charge, queue: Charge[]): void {
   const { grid, beams } = state;
   state.charges = state.charges.filter((k) => k !== c);
   state.events.push({ type: 'charge_exploded', tx: c.tx, ty: c.ty });
-  beams[c.ty * grid.w + c.tx] = BEAM_TICKS;
+  const burn = (x: number, y: number) => {
+    const i = y * grid.w + x;
+    beams[i] = BEAM_TICKS;
+    state.beamOwner[i] = c.owner + 1;
+    // A beam destroys a power-up that is already lying in the open.
+    if (grid.cells[i] === Cell.Empty && state.items[i] !== Item.None) {
+      state.items[i] = Item.None;
+      state.events.push({ type: 'item_destroyed', tx: x, ty: y });
+    }
+  };
+  burn(c.tx, c.ty);
 
   for (let d = 1; d <= 4; d++) {
     for (let r = 1; r <= c.range; r++) {
@@ -67,35 +77,17 @@ function explode(state: GameState, c: Charge, queue: Charge[]): void {
       if (!inBounds(grid, x, y)) break;
       const cell = cellAt(grid, x, y);
       if (cell === Cell.Pillar) break;
-      beams[y * grid.w + x] = BEAM_TICKS;
       if (cell === Cell.Rock) {
+        // Break the rock first so a power-up under it is revealed, not burnt.
         grid.cells[y * grid.w + x] = Cell.Empty;
+        beams[y * grid.w + x] = BEAM_TICKS;
+        state.beamOwner[y * grid.w + x] = c.owner + 1;
         state.events.push({ type: 'rock_broken', tx: x, ty: y });
         break;
       }
+      burn(x, y);
       const other = chargeAt(state, x, y);
       if (other) queue.push(other); // chain reaction, same tick
-    }
-  }
-}
-
-/** Knocks out players standing in a beam; warps knocked-out players back after a delay. */
-export function updateLives(state: GameState): void {
-  for (const p of state.players) {
-    if (!p.alive) {
-      if (--p.respawn <= 0) {
-        warpToSpawn(p);
-        p.alive = true;
-        state.events.push({ type: 'player_respawned', id: p.id });
-      }
-      continue;
-    }
-    const [tx, ty] = playerTile(p);
-    if (state.beams[ty * state.grid.w + tx] > 0) {
-      p.alive = false;
-      p.respawn = RESPAWN_TICKS;
-      p.placeHeld = false;
-      state.events.push({ type: 'player_died', id: p.id, tx, ty });
     }
   }
 }

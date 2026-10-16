@@ -111,6 +111,38 @@ html, body {
 }
 #place-btn.pressed { background: #5ad1ff66; transform: scale(0.94); }
 
+/* Level clear / game over. */
+#banner {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  min-width: min(320px, 80vw);
+  padding: 20px 28px 22px;
+  border-radius: 14px;
+  background: #0e1118e6;
+  border: 1px solid #5ad1ff55;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+#banner[hidden] { display: none; }
+#banner-title { font-size: 24px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); }
+#banner-text { color: var(--ink-quiet); font-size: 14px; }
+#banner-btn {
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  font: 600 15px system-ui, sans-serif;
+  color: #0e1118;
+  background: var(--accent);
+  border: 0;
+  border-radius: 10px;
+}
+
 /* Landscape only. */
 #rotate {
   display: none;

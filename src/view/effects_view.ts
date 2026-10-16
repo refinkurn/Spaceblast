@@ -47,6 +47,10 @@ export class ChargesView {
   }
 }
 
+/**
+ * Beams drawn as thin bars along each arm of the cross, so the glow stays
+ * inside the tiles the beam actually covers (range 2 = 2 tiles each way).
+ */
 export class BeamsView {
   readonly group = new THREE.Group();
   private outer: THREE.InstancedMesh;
@@ -57,33 +61,44 @@ export class BeamsView {
   private s = new THREE.Vector3();
 
   constructor(maxTiles: number) {
+    const unit = new THREE.BoxGeometry(1, 1, 1);
     this.outer = new THREE.InstancedMesh(
-      new THREE.BoxGeometry(0.96, 0.5, 0.96),
-      new THREE.MeshBasicMaterial({ color: PLASMA, transparent: true, opacity: 0.45, depthWrite: false }),
-      maxTiles,
+      unit,
+      new THREE.MeshBasicMaterial({ color: PLASMA, transparent: true, opacity: 0.55, depthWrite: false }),
+      maxTiles * 2,
     );
-    this.core = new THREE.InstancedMesh(
-      new THREE.BoxGeometry(0.6, 0.3, 0.6),
-      new THREE.MeshBasicMaterial({ color: 0xe9fbff }),
-      maxTiles,
-    );
+    this.core = new THREE.InstancedMesh(unit, new THREE.MeshBasicMaterial({ color: 0xe9fbff }), maxTiles * 2);
     this.outer.count = this.core.count = 0;
     this.group.add(this.outer, this.core);
   }
 
   sync(state: GameState): void {
     const { beams, grid } = state;
+    const at = (x: number, y: number) => x >= 0 && y >= 0 && x < grid.w && y < grid.h && beams[y * grid.w + x] > 0;
     let n = 0;
-    for (let i = 0; i < beams.length; i++) {
-      const left = beams[i];
-      if (left === 0) continue;
-      const k = left / BEAM_TICKS; // 1 when fresh, fades to 0
-      tileToWorld(i % grid.w, Math.floor(i / grid.w), 0.25, this.pos);
-      this.s.set(0.7 + 0.3 * k, 0.4 + 0.6 * k, 0.7 + 0.3 * k);
-      this.m.compose(this.pos, this.q, this.s);
-      this.outer.setMatrixAt(n, this.m);
-      this.core.setMatrixAt(n, this.m);
+    const bar = (cx: number, cy: number, x0: number, x1: number, z0: number, z1: number, k: number) => {
+      // Outer glow and a thinner bright core, both fading as the beam ends.
+      for (const [mesh, thick, h] of [[this.outer, 0.46, 0.22], [this.core, 0.2, 0.26]] as const) {
+        const w = thick * (0.5 + 0.5 * k);
+        const sx = x1 - x0 === 0 ? w : x1 - x0;
+        const sz = z1 - z0 === 0 ? w : z1 - z0;
+        tileToWorld(cx, cy, 0.18, this.pos);
+        this.pos.x += (x0 + x1) / 2;
+        this.pos.z += (z0 + z1) / 2;
+        this.s.set(sx, h * (0.6 + 0.4 * k), sz);
+        this.m.compose(this.pos, this.q, this.s);
+        mesh.setMatrixAt(n, this.m);
+      }
       n++;
+    };
+    for (let i = 0; i < beams.length; i++) {
+      if (beams[i] === 0) continue;
+      const x = i % grid.w, y = Math.floor(i / grid.w);
+      const k = beams[i] / BEAM_TICKS;
+      const l = at(x - 1, y), r = at(x + 1, y), u = at(x, y - 1), d = at(x, y + 1);
+      const tip = 0.32; // a beam end stops short of the tile edge
+      if (l || r || !(u || d)) bar(x, y, l ? -0.5 : -tip, r ? 0.5 : tip, 0, 0, k);
+      if (u || d) bar(x, y, 0, 0, u ? -0.5 : -tip, d ? 0.5 : tip, k);
     }
     this.outer.count = this.core.count = n;
     this.outer.instanceMatrix.needsUpdate = this.core.instanceMatrix.needsUpdate = true;

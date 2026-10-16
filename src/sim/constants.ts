@@ -43,3 +43,29 @@ export const START_RANGE = 2;
 export const START_CHARGES = 1;
 /** Time before a knocked-out astronaut warps back in. */
 export const RESPAWN_TICKS = 90;
+
+// --- Power-ups ----------------------------------------------------------------
+export const Item = { None: 0, BeamRange: 1, ExtraCharge: 2, JetBoots: 3, FreezePulse: 4, OxygenVest: 5 } as const;
+export type Item = (typeof Item)[keyof typeof Item];
+/** 1 in N rocks hides a power-up. */
+export const ITEM_ONE_IN = 6;
+export const MAX_RANGE = 8;
+export const MAX_CHARGES = 8;
+export const MAX_BOOTS = 3;
+/** +0.75 tiles/s per Jet Boots level (13 * 60 = 780 units/s). */
+export const BOOTS_SPEED = 13;
+export const VEST_TICKS = 600;
+export const FREEZE_TICKS = 240;
+
+// --- Martians and lives ---------------------------------------------------
+export const Kind = { Goopling: 1 } as const;
+export type Kind = (typeof Kind)[keyof typeof Kind];
+/** Goopling: 2 tiles/s. */
+export const GOOPLING_SPEED = 33;
+/** Martians spawn at least this many tiles (Manhattan) from any player spawn. */
+export const MARTIAN_SPAWN_DISTANCE = 6;
+/** A bite lands when centres are closer than this on both axes. */
+export const BITE_REACH = 650;
+export const START_LIVES = 3;
+/** Invulnerability after warping back in (1.5 s). */
+export const SPAWN_SHIELD_TICKS = 90;

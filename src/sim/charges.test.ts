@@ -11,8 +11,10 @@ const placeNow = cmd(Dir.None, true);
 
 /** No rocks at all: only pillars (odd/odd) and edges. */
 function emptyArena(players = 1): GameState {
-  const g = createGame(1, players);
+  const g = createGame(1, { players, martians: 0 });
   g.grid.cells.forEach((c, i) => { if (c === Cell.Rock) g.grid.cells[i] = Cell.Empty; });
+  g.items.fill(0);
+  g.gate = -1;
   return g;
 }
 

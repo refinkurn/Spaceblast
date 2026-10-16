@@ -10,8 +10,10 @@ const cmd = (dir: DirT, alt: DirT = Dir.None): PlayerCommand => ({ dir, alt, pla
 
 /** A game with no rocks, so only pillars and edges block movement. */
 function emptyArena(): GameState {
-  const g = createGame(1);
+  const g = createGame(1, { martians: 0 });
   g.grid.cells.forEach((c, i) => { if (c === Cell.Rock) g.grid.cells[i] = Cell.Empty; });
+  g.items.fill(0);
+  g.gate = -1;
   return g;
 }
 

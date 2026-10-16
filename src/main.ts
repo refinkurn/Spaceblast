@@ -4,9 +4,11 @@ import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
 import { GRID_H, GRID_W, TICK_MS } from './sim/constants';
 import { step } from './sim/sim';
-import { createGame, playerTile, type GameState, type SimEvent } from './sim/state';
+import { gateOpen } from './sim/items';
+import { createGame, type GameState, type SimEvent } from './sim/state';
 import { BoardView } from './view/board_view';
 import { CameraRig } from './view/camera_rig';
+import { GateView, ItemsView, MartiansView } from './view/actors_view';
 import { BeamsView, ChargesView, DebrisView } from './view/effects_view';
 import { HeroView } from './view/hero_view';
 
@@ -35,7 +37,10 @@ const hero = new HeroView();
 const charges = new ChargesView();
 const beams = new BeamsView(GRID_W * GRID_H);
 const debris = new DebrisView();
-scene.add(board.group, hero.group, charges.group, beams.group, debris.group);
+const items = new ItemsView();
+const gate = new GateView();
+const martians = new MartiansView();
+scene.add(board.group, hero.group, charges.group, beams.group, debris.group, items.group, gate.group, martians.group);
 
 // --- Input -------------------------------------------------------------------
 const keys = new KeyboardSource();
@@ -44,15 +49,45 @@ const touch = new TouchSource($('stick-zone'), $('stick-base'), $('stick-knob'),
 // --- Game state --------------------------------------------------------------
 let state: GameState;
 let prev = { x: 0, y: 0 };
+const prevMartians = new Map<number, { x: number; y: number }>();
+/** Survival level: each one adds a Goopling (3 on level 1, up to 6). */
+let level = 1;
 
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
-  state = createGame(seed);
+  state = createGame(seed, { martians: Math.min(2 + level, 6) });
   prev = { x: state.players[0].x, y: state.players[0].y };
+  snapshotMartians();
   board.build(state);
   charges.clear();
+  items.clear();
+  martians.clear();
+  hideBanner();
   updateHud();
 }
+
+function snapshotMartians() {
+  prevMartians.clear();
+  for (const m of state.martians) prevMartians.set(m.id, { x: m.x, y: m.y });
+}
+
+// --- Level banner ------------------------------------------------------------------
+const banner = $('banner');
+const bannerBtn = $<HTMLButtonElement>('banner-btn');
+function showBanner(title: string, text: string, button: string) {
+  $('banner-title').textContent = title;
+  $('banner-text').textContent = text;
+  bannerBtn.textContent = button;
+  banner.hidden = false;
+}
+function hideBanner() {
+  banner.hidden = true;
+}
+bannerBtn.addEventListener('click', () => {
+  if (state.status === 'game_over') level = 1;
+  else level++;
+  newGame();
+});
 
 /** Turns sim events into effects. Sounds will hook in here too. */
 function onEvent(e: SimEvent) {
@@ -67,6 +102,18 @@ function onEvent(e: SimEvent) {
     case 'player_died':
       debris.burst(e.tx, e.ty, 0x3a7bff, 14);
       break;
+    case 'martian_killed':
+      debris.burst(e.tx, e.ty, 0x6fd14f, 12);
+      break;
+    case 'item_destroyed':
+      debris.burst(e.tx, e.ty, 0xffffff, 6);
+      break;
+    case 'level_clear':
+      showBanner('Level clear!', `All Martians defeated on level ${level}.`, 'Next level');
+      break;
+    case 'game_over':
+      showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again');
+      break;
     case 'player_respawned': {
       const p = state.players[e.id];
       prev = { x: p.x, y: p.y };
@@ -79,14 +126,25 @@ const hudInfo = $('hud-info');
 let lastHud = '';
 function updateHud() {
   const p = state.players[0];
-  const [tx, ty] = playerTile(p);
-  const status = p.alive ? `Tile ${tx},${ty}` : 'Knocked out! Warping back…';
-  const text = `${status} · Charges ${p.maxCharges} · Range ${p.range}`;
+  const left = state.martians.filter((m) => m.alive).length;
+  const parts = [
+    `Level ${level}`,
+    `Lives ${p.lives}`,
+    `Charges ${p.maxCharges}`,
+    `Range ${p.range}`,
+    p.boots > 0 ? `Boots ${p.boots}` : '',
+    p.vest > 0 ? `Vest ${Math.ceil(p.vest / 60)}s` : '',
+    state.freeze > 0 ? `Frozen ${Math.ceil(state.freeze / 60)}s` : '',
+    left > 0 ? `Martians ${left}` : gateOpen(state) ? 'Gate open!' : 'Find the Warp Gate',
+    p.alive ? '' : 'Knocked out!',
+  ];
+  const text = parts.filter(Boolean).join(' · ');
   if (text !== lastHud) hudInfo.textContent = lastHud = text;
 }
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyR') newGame();
+  if ((e.code === 'Enter' || e.code === 'Space') && !banner.hidden) bannerBtn.click();
 });
 $('new-map').addEventListener('click', () => newGame());
 
@@ -117,6 +175,7 @@ renderer.setAnimationLoop((now: number) => {
   while (acc >= TICK_MS && steps < 5) {
     const p = state.players[0];
     prev = { x: p.x, y: p.y };
+    snapshotMartians();
     step(state, [readLocalCommand(keys, touch)]);
     for (const e of state.events) onEvent(e);
     acc -= TICK_MS;
@@ -125,10 +184,18 @@ renderer.setAnimationLoop((now: number) => {
   if (steps === 5) acc = 0; // too far behind (tab was hidden): drop the backlog
   const seconds = dt / 1000;
   hero.update(prev, state.players[0], acc / TICK_MS, seconds);
+  const time = now / 1000;
   charges.sync(state);
   beams.sync(state);
+  items.sync(state, time);
+  gate.sync(state, time);
+  martians.sync(state, prevMartians, acc / TICK_MS, time);
   debris.update(seconds);
   rig.update(seconds);
   updateHud();
   renderer.render(scene, rig.camera);
 });
+
+// Dev-only console hook for debugging: `spaceblast.state` in the browser
+// console. Stripped from production builds.
+if (import.meta.env.DEV) Object.assign(window, { spaceblast: { get state() { return state; } } });

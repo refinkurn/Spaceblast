@@ -10,6 +10,10 @@ export class HeroView {
   private from = new THREE.Vector3();
   private to = new THREE.Vector3();
   private bob = 0;
+  private bubble = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 24, 16),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false }),
+  );
 
   constructor(color = 0x3a7bff) {
     const suit = new THREE.Mesh(
@@ -26,12 +30,17 @@ export class HeroView {
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }));
     nose.position.set(0, 0.42, -0.32);
     this.body.add(suit, helmet, nose);
-    this.group.add(this.body);
+    this.bubble.position.y = 0.42;
+    this.bubble.visible = false;
+    this.group.add(this.body, this.bubble);
   }
 
   /** Places the hero between the previous and current tick (alpha in [0, 1]). */
   update(prev: { x: number; y: number }, p: Player, alpha: number, dt: number): void {
     this.group.visible = p.alive;
+    // Spawn shield: blink. Oxygen Vest: a bubble that flickers in its last 2 s.
+    this.body.visible = p.shield === 0 || Math.floor(p.shield / 6) % 2 === 0;
+    this.bubble.visible = p.vest > 0 && (p.vest > 120 || Math.floor(p.vest / 8) % 2 === 0);
     toWorld(prev.x, prev.y, 0, this.from);
     toWorld(p.x, p.y, 0, this.to);
     this.group.position.lerpVectors(this.from, this.to, alpha);
