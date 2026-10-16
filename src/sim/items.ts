@@ -67,7 +67,7 @@ export function pickUpItems(state: GameState, p: Player): void {
   state.events.push({ type: 'item_picked', id: p.id, item, tx, ty });
 }
 
-/** Is the Warp Gate revealed and open (all Martians defeated)? */
+/** Is the Warp Gate revealed (and so open)? Defeating the Martians is optional. */
 export function gateOpen(state: GameState): boolean {
-  return state.gate >= 0 && state.grid.cells[state.gate] === Cell.Empty && state.martians.every((m) => !m.alive);
+  return state.gate >= 0 && state.grid.cells[state.gate] === Cell.Empty;
 }

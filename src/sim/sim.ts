@@ -1,6 +1,7 @@
 import { canWalk, tickCharges, tryPlace, updatePassable } from './charges';
 import { NO_COMMAND, type PlayerCommand } from './command';
 import { gateOpen, pickUpItems, playerSpeed } from './items';
+import { updateLevelEvents } from './level_events';
 import { updateLives, updateOutcome } from './lives';
 import { updateMartians } from './martians';
 import { movePlayer } from './movement';
@@ -23,6 +24,7 @@ export function step(state: GameState, commands: readonly PlayerCommand[]): void
   }
   tickCharges(state);
   updateMartians(state);
+  updateLevelEvents(state);
   updateLives(state);
   if (!gateWasOpen && gateOpen(state)) state.events.push({ type: 'gate_opened' });
   updateOutcome(state);
@@ -48,6 +50,10 @@ export function hashState(state: GameState): number {
   mix(state.timeLeft);
   mix(state.gate);
   mix(state.freeze);
+  for (const v of [state.event, state.eventWarning, state.eventActive, state.nextEvent, state.gateWait]) mix(v);
+  for (const v of [state.rules.mazeShift, state.rules.gateWander, state.rules.blackout]) mix(v ? 1 : 0);
+  for (const i of state.shiftRemove) mix(i);
+  for (const i of state.shiftAdd) mix(i);
   for (const c of state.grid.cells) mix(c);
   for (const v of state.items) mix(v);
   for (const b of state.beams) mix(b);

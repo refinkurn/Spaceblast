@@ -1,4 +1,5 @@
-import { Dir, GRID_H, GRID_W, Kind, ROUND_TICKS, SPAWNS, START_CHARGES, START_LIVES, START_RANGE, TILE } from './constants';
+import { Dir, FIRST_EVENT_TICKS, GRID_H, GRID_W, Kind, LevelEvent, ROUND_TICKS, SPAWNS, START_CHARGES, START_LIVES, START_RANGE, TILE } from './constants';
+import { NO_EVENTS, type LevelRules } from './levels';
 import { generateGrid, type Grid } from './grid';
 import { placeGate, placeItems } from './items';
 import { spawnMartians } from './martians';
@@ -78,6 +79,11 @@ export type SimEvent =
   | { type: 'martian_killed'; id: number; tx: number; ty: number }
   | { type: 'phaser_jumped'; id: number; from: number; to: number }
   | { type: 'rock_built'; tx: number; ty: number }
+  | { type: 'event_warning'; event: LevelEvent }
+  | { type: 'maze_shift'; removed: number[]; added: number[] }
+  | { type: 'blackout_start' }
+  | { type: 'blackout_end' }
+  | { type: 'gate_moved'; hidden: boolean }
   | { type: 'player_died'; id: number; tx: number; ty: number }
   | { type: 'player_respawned'; id: number }
   | { type: 'gate_opened' }
@@ -93,6 +99,8 @@ export interface GameOptions {
   martians?: number;
   /** Exact Martian kinds to spawn in survival; overrides `martians`. */
   roster?: Kind[];
+  /** Survival level events (Maze Shift, wandering gate, Blackout). */
+  rules?: LevelRules;
 }
 
 export interface GameState {
@@ -121,6 +129,19 @@ export interface GameState {
   beamOwner: Uint8Array;
   /** Ticks left on a Freeze Pulse (all Martians stop). */
   freeze: number;
+  rules: LevelRules;
+  /** The event being announced or running, or None. */
+  event: LevelEvent;
+  /** Ticks left in the current event's warning, then in the event itself. */
+  eventWarning: number;
+  eventActive: number;
+  /** Ticks until the next event's warning starts. */
+  nextEvent: number;
+  /** Maze Shift plan, shown during the warning: tiles losing and gaining a rock. */
+  shiftRemove: number[];
+  shiftAdd: number[];
+  /** Ticks the revealed gate has waited without anyone stepping on it. */
+  gateWait: number;
   events: SimEvent[];
 }
 
@@ -148,6 +169,14 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     beams: new Uint8Array(GRID_W * GRID_H),
     beamOwner: new Uint8Array(GRID_W * GRID_H),
     freeze: 0,
+    rules: battle ? NO_EVENTS : (options.rules ?? NO_EVENTS),
+    event: LevelEvent.None,
+    eventWarning: 0,
+    eventActive: 0,
+    nextEvent: FIRST_EVENT_TICKS,
+    shiftRemove: [],
+    shiftAdd: [],
+    gateWait: 0,
     events: [],
   };
   state.grid = generateGrid(state);

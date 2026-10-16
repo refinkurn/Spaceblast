@@ -1,7 +1,9 @@
-import { Kind } from './constants';
+import { BLACKOUT_FROM_LEVEL, GATE_WANDER_FROM_LEVEL, Kind, MAZE_SHIFT_FROM_LEVEL } from './constants';
 
 // Survival: 20 levels in 4 sectors of 5. Each sector adds the next Martian
-// kind; numbers grow inside a sector. Level 20 will get the Blaster boss.
+// kind; numbers grow inside a sector. Events switch on at fixed levels:
+// Maze Shift from 5, the wandering Warp Gate from 8, Blackout from 10.
+// Level 20 will get the Blaster boss.
 
 export const LEVEL_COUNT = 20;
 const SECTOR_KIND = [Kind.Goopling, Kind.Sniffer, Kind.Phaser, Kind.Builder] as const;
@@ -24,4 +26,21 @@ export function levelRoster(level: number): Kind[] {
   // Fill the rest with older kinds, the most recent first.
   for (let i = 0; roster.length < total; i++) roster.push(older[older.length - 1 - (i % older.length)]);
   return roster;
+}
+
+/** Which level events are switched on. */
+export interface LevelRules {
+  mazeShift: boolean;
+  gateWander: boolean;
+  blackout: boolean;
+}
+
+export const NO_EVENTS: LevelRules = { mazeShift: false, gateWander: false, blackout: false };
+
+export function levelRules(level: number): LevelRules {
+  return {
+    mazeShift: level >= MAZE_SHIFT_FROM_LEVEL,
+    gateWander: level >= GATE_WANDER_FROM_LEVEL,
+    blackout: level >= BLACKOUT_FROM_LEVEL,
+  };
 }

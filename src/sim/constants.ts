@@ -86,3 +86,26 @@ export const SPAWN_SHIELD_TICKS = 90;
 // --- Battle ---------------------------------------------------------------------
 /** A battle round ends in a draw after 3 minutes (Hurry Up comes in Phase 2). */
 export const ROUND_TICKS = 3 * 60 * 60;
+
+// --- Level events (survival) ------------------------------------------------------
+export const MAZE_SHIFT_FROM_LEVEL = 5;
+export const GATE_WANDER_FROM_LEVEL = 8;
+export const BLACKOUT_FROM_LEVEL = 10;
+/** Every event is announced this long before it happens (3 s). */
+export const EVENT_WARNING_TICKS = 180;
+/** First event about 20 s into a level, then one every 25-35 s. */
+export const FIRST_EVENT_TICKS = 20 * 60;
+export const EVENT_GAP_MIN_TICKS = 25 * 60;
+export const EVENT_GAP_MAX_TICKS = 35 * 60;
+/** Blackout lasts 10-15 s. */
+export const BLACKOUT_MIN_TICKS = 600;
+export const BLACKOUT_MAX_TICKS = 900;
+/** Maze Shift moves this many rocks. */
+export const SHIFT_MIN_ROCKS = 4;
+export const SHIFT_MAX_ROCKS = 6;
+/** A revealed gate nobody enters moves after 10 s, flickering for its last 3 s. */
+export const GATE_WAIT_TICKS = 600;
+export const GATE_FLICKER_TICKS = 180;
+
+export const LevelEvent = { None: 0, MazeShift: 1, Blackout: 2 } as const;
+export type LevelEvent = (typeof LevelEvent)[keyof typeof LevelEvent];

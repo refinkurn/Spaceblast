@@ -175,13 +175,10 @@ describe('lives and the Warp Gate', () => {
     expect(g.status).toBe('game_over');
   });
 
-  it('opens the gate only when it is revealed and every Martian is gone', () => {
+  it('opens the gate as soon as it is revealed, Martians or not', () => {
     const g = arena();
     g.gate = idx(4, 0);
-    const m = addGoopling(g, 10, 8);
-    g.freeze = 9999;
-    expect(gateOpen(g)).toBe(false);
-    m.alive = false;
+    addGoopling(g, 10, 8);
     expect(gateOpen(g)).toBe(true);
     g.grid.cells[idx(4, 0)] = Cell.Rock;
     expect(gateOpen(g)).toBe(false);

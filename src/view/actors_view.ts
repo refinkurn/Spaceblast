@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { Cell, Item, Kind, PORTAL_TICKS } from '../sim/constants';
+import { Cell, Item, Kind, LevelEvent, PORTAL_TICKS } from '../sim/constants';
 import { gateOpen } from '../sim/items';
 import type { GameState, Martian } from '../sim/state';
 import { tileToWorld, toWorld } from './coords';
+import { gateFlicker } from './level_view';
 
 // Power-ups, the Warp Gate and Martians. Placeholder shapes, one colour and
 // silhouette per kind, so real models can replace them one by one later.
@@ -86,6 +87,9 @@ export class GateView {
     const { gate, grid } = state;
     this.group.visible = gate >= 0 && grid.cells[gate] === Cell.Empty;
     if (!this.group.visible) return;
+    // About to move: blink faster and faster.
+    const f = gateFlicker(state);
+    if (f > 0 && Math.sin(time * (8 + 30 * f)) < 0) this.group.visible = false;
     tileToWorld(gate % grid.w, Math.floor(gate / grid.w), 0.08, this.group.position);
     const open = gateOpen(state);
     const mat = this.ring.material as THREE.MeshStandardMaterial;
@@ -203,7 +207,10 @@ export class MartiansView {
       const squash = m.kind === Kind.Goopling || m.kind === Kind.Sniffer ? 0.72 : 1;
       body.scale.set(1 + wobble, squash - wobble, 1 + wobble);
       if (m.kind === Kind.Phaser) v.position.y = 0.06 + Math.sin(time * 3 + m.id) * 0.05; // hovers
-      (body.material as THREE.MeshStandardMaterial).color.setHex(frozen ? 0x9fd8ff : MARTIAN_COLOR[m.kind]);
+      const mat = body.material as THREE.MeshStandardMaterial;
+      mat.color.setHex(frozen ? 0x9fd8ff : MARTIAN_COLOR[m.kind]);
+      // In a Blackout only the eyes should give a Martian away.
+      mat.emissiveIntensity = state.event === LevelEvent.Blackout && state.eventActive > 0 ? 0 : 0.15;
     }
   }
 

@@ -1,0 +1,155 @@
+import { describe, expect, it } from 'vitest';
+import {
+  BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, Cell, Dir, EVENT_GAP_MAX_TICKS, EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS,
+  FIRST_EVENT_TICKS, GATE_WAIT_TICKS, GRID_W, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, TILE,
+} from './constants';
+import type { PlayerCommand } from './command';
+import { NO_EVENTS, levelRules, type LevelRules } from './levels';
+import { step } from './sim';
+import { createGame, playerTile, type GameState, type SimEvent } from './state';
+
+const idle: PlayerCommand = { dir: Dir.None, alt: Dir.None, place: false };
+
+/** A real level map with no Martians and an untouchable astronaut, so only events happen. */
+function level(rules: LevelRules, seed = 3): GameState {
+  const g = createGame(seed, { martians: 0, rules });
+  g.players[0].shield = 1e9;
+  return g;
+}
+
+/** Runs ticks and collects every event the sim reports. */
+function run(g: GameState, ticks: number): SimEvent[] {
+  const all: SimEvent[] = [];
+  for (let i = 0; i < ticks && g.status === 'playing'; i++) {
+    step(g, [idle]);
+    all.push(...g.events);
+  }
+  return all;
+}
+
+describe('level rules', () => {
+  it('switches events on at levels 5, 8 and 10', () => {
+    expect(levelRules(4)).toEqual({ mazeShift: false, gateWander: false, blackout: false });
+    expect(levelRules(5)).toEqual({ mazeShift: true, gateWander: false, blackout: false });
+    expect(levelRules(8)).toEqual({ mazeShift: true, gateWander: true, blackout: false });
+    expect(levelRules(10)).toEqual({ mazeShift: true, gateWander: true, blackout: true });
+  });
+
+  it('runs no events when they are off, and never in battle', () => {
+    expect(run(level(NO_EVENTS), 6000).some((e) => e.type === 'event_warning')).toBe(false);
+    const battle = createGame(3, { mode: 'battle', rules: levelRules(15) });
+    battle.players.forEach((p) => (p.shield = 1e9));
+    expect(battle.rules).toEqual(NO_EVENTS);
+  });
+});
+
+describe('Maze Shift', () => {
+  const shiftOnly: LevelRules = { mazeShift: true, gateWander: false, blackout: false };
+
+  it('is announced 3 s ahead with the tiles that will change', () => {
+    const g = level(shiftOnly);
+    const before = run(g, FIRST_EVENT_TICKS);
+    expect(before.filter((e) => e.type === 'event_warning')).toEqual([{ type: 'event_warning', event: LevelEvent.MazeShift }]);
+    expect(g.shiftRemove.length).toBeGreaterThanOrEqual(SHIFT_MIN_ROCKS);
+    expect(g.shiftRemove.length).toBeLessThanOrEqual(SHIFT_MAX_ROCKS);
+    expect(g.shiftAdd.length).toBe(g.shiftRemove.length);
+    const plan = { remove: [...g.shiftRemove], add: [...g.shiftAdd] };
+    const after = run(g, EVENT_WARNING_TICKS);
+    const shift = after.find((e) => e.type === 'maze_shift');
+    expect(shift).toBeDefined();
+    if (shift?.type !== 'maze_shift') return;
+    for (const i of shift.removed) expect(plan.remove).toContain(i);
+    for (const i of shift.removed) expect(g.grid.cells[i]).toBe(Cell.Empty);
+    for (const i of shift.added) expect(plan.add).toContain(i);
+    for (const i of shift.added) expect(g.grid.cells[i]).toBe(Cell.Rock);
+    expect(g.event).toBe(LevelEvent.None);
+    expect(g.nextEvent).toBeGreaterThanOrEqual(EVENT_GAP_MIN_TICKS);
+    expect(g.nextEvent).toBeLessThanOrEqual(EVENT_GAP_MAX_TICKS);
+  });
+
+  it('never drops a rock on or next to an astronaut, a power-up or the gate', () => {
+    for (let seed = 1; seed <= 15; seed++) {
+      const g = level(shiftOnly, seed);
+      // Let the astronaut wander a little so it is not always in its corner.
+      for (let t = 0; t < FIRST_EVENT_TICKS + EVENT_WARNING_TICKS; t++) {
+        step(g, [{ dir: t % 240 < 120 ? Dir.Right : Dir.Down, alt: Dir.None, place: false }]);
+        const shift = g.events.find((e) => e.type === 'maze_shift');
+        if (shift?.type !== 'maze_shift') continue;
+        const [px, py] = playerTile(g.players[0]);
+        for (const i of shift.added) {
+          const x = i % GRID_W, y = Math.floor(i / GRID_W);
+          expect(Math.abs(x - px) + Math.abs(y - py)).toBeGreaterThan(1);
+          expect(i).not.toBe(g.gate);
+        }
+      }
+    }
+  });
+});
+
+describe('Blackout', () => {
+  it('is announced, lasts 10-15 s, and never overlaps another event', () => {
+    const g = level({ mazeShift: true, gateWander: false, blackout: true }, 9);
+    const all = run(g, 60 * 60 * 4); // four minutes
+    let inBlackout = false, blackouts = 0;
+    for (const e of all) {
+      if (e.type === 'blackout_start') { inBlackout = true; blackouts++; }
+      if (e.type === 'blackout_end') inBlackout = false;
+      if (e.type === 'event_warning' || e.type === 'maze_shift') expect(inBlackout).toBe(false);
+    }
+    expect(blackouts).toBeGreaterThan(0);
+    // Duration: a Blackout-only level, checked right after it starts.
+    const g2 = level({ mazeShift: false, gateWander: false, blackout: true });
+    run(g2, FIRST_EVENT_TICKS + EVENT_WARNING_TICKS);
+    expect(g2.event).toBe(LevelEvent.Blackout);
+    expect(g2.eventActive).toBeGreaterThanOrEqual(BLACKOUT_MIN_TICKS - 1);
+    expect(g2.eventActive).toBeLessThanOrEqual(BLACKOUT_MAX_TICKS);
+    const ends = run(g2, BLACKOUT_MAX_TICKS);
+    expect(ends.some((e) => e.type === 'blackout_end')).toBe(true);
+  });
+});
+
+describe('wandering Warp Gate', () => {
+  function revealedGate(rules: LevelRules, seed = 4): GameState {
+    const g = level(rules, seed);
+    g.grid.cells[g.gate] = Cell.Empty; // as if its rock was just blasted
+    return g;
+  }
+
+  it('moves after 10 s if nobody steps on it: under a rock, or to an open tile far from astronauts', () => {
+    let hidden = 0, open = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const g = revealedGate({ mazeShift: false, gateWander: true, blackout: false }, seed);
+      const first = g.gate;
+      const evs = run(g, GATE_WAIT_TICKS);
+      const moved = evs.find((e) => e.type === 'gate_moved');
+      expect(moved).toBeDefined();
+      expect(g.gate).not.toBe(first);
+      if (moved?.type !== 'gate_moved') continue;
+      if (moved.hidden) {
+        hidden++;
+        expect(g.grid.cells[g.gate]).toBe(Cell.Rock);
+      } else {
+        open++;
+        const [px, py] = playerTile(g.players[0]);
+        expect(Math.abs((g.gate % GRID_W) - px) + Math.abs(Math.floor(g.gate / GRID_W) - py)).toBeGreaterThanOrEqual(4);
+      }
+    }
+    expect(hidden).toBeGreaterThan(0);
+    expect(open).toBeGreaterThan(0);
+  });
+
+  it('stays put on levels without the wandering gate', () => {
+    const g = revealedGate(NO_EVENTS);
+    const first = g.gate;
+    run(g, GATE_WAIT_TICKS * 2);
+    expect(g.gate).toBe(first);
+  });
+
+  it('can be entered before it moves', () => {
+    const g = revealedGate({ mazeShift: false, gateWander: true, blackout: false });
+    g.players[0].x = (g.gate % GRID_W) * TILE;
+    g.players[0].y = Math.floor(g.gate / GRID_W) * TILE;
+    run(g, 2);
+    expect(g.status).toBe('cleared');
+  });
+});

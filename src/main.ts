@@ -4,10 +4,10 @@ import { Bot } from './input/bot';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
-import { GRID_H, GRID_W, TICK_MS } from './sim/constants';
+import { GATE_WAIT_TICKS, GRID_H, GRID_W, LevelEvent, TICK_MS } from './sim/constants';
 import type { PlayerCommand } from './sim/command';
 import { gateOpen } from './sim/items';
-import { LEVEL_COUNT, levelRoster, sectorOf } from './sim/levels';
+import { LEVEL_COUNT, levelRoster, levelRules, sectorOf } from './sim/levels';
 import { step } from './sim/sim';
 import { createGame, type GameState, type SimEvent } from './sim/state';
 import { GateView, ItemsView, MartiansView, PortalsView } from './view/actors_view';
@@ -15,6 +15,7 @@ import { BoardView } from './view/board_view';
 import { CameraRig } from './view/camera_rig';
 import { BeamsView, ChargesView, DebrisView } from './view/effects_view';
 import { HeroView } from './view/hero_view';
+import { LightingView, ShiftPreviewView } from './view/level_view';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -31,7 +32,8 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x14161d);
-scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x5a2a1c, 1.4));
+const sky = new THREE.HemisphereLight(0xdfe8ff, 0x5a2a1c, 1.4);
+scene.add(sky);
 const sun = new THREE.DirectionalLight(0xfff1dd, 2.2);
 sun.position.set(-5, 12, 6);
 sun.castShadow = true;
@@ -51,6 +53,9 @@ const martians = new MartiansView();
 const portals = new PortalsView();
 scene.add(board.group, charges.group, beams.group, debris.group, items.group, gate.group, martians.group, portals.group);
 for (const h of heroes) scene.add(h.group);
+const shiftPreview = new ShiftPreviewView(GRID_W * GRID_H);
+scene.add(shiftPreview.group);
+const lighting = new LightingView([sky, sun], scene, scene.background as THREE.Color);
 
 // --- Input -------------------------------------------------------------------
 const keys = new KeyboardSource();
@@ -62,9 +67,15 @@ let state: GameState;
 let bot: Bot | null = null;
 /** Survival level, 1..20; each sector of 5 adds a new Martian kind. */
 let level = 1;
+/** Shown before the level where each event first appears. */
+const EVENT_INTRO: Record<number, string> = {
+  5: 'New: Maze Shift. The Martians move rocks around. Flashing tiles show where, 3 s ahead.',
+  8: 'New: the Warp Gate wanders. Leave it waiting 10 s and it moves somewhere else.',
+  10: 'New: Blackouts. The lights go out for a while; watch for the warning.',
+};
 /** What each sector's new Martian does, shown when it first appears. */
 const SECTOR_INTRO = [
-  'Gooplings wander the maze. Blast them all, then find the Warp Gate.',
+  'Gooplings wander the maze. Find the Warp Gate under a rock and step on it.',
   'New: Sniffers. Faster, and they dodge your charges once they spot them.',
   'New: Phasers. They hide in burrows (can\'t be hit) and jump through portals.',
   'New: Builders. Toxic to touch, and they wall you in with new rocks.',
@@ -91,7 +102,9 @@ function openMenu() {
 
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
-  state = mode === 'battle' ? createGame(seed, { mode: 'battle' }) : createGame(seed, { roster: levelRoster(level) });
+  state = mode === 'battle'
+    ? createGame(seed, { mode: 'battle' })
+    : createGame(seed, { roster: levelRoster(level), rules: levelRules(level) });
   bot = mode === 'battle' ? new Bot(1, seed) : null;
   snapshot();
   board.build(state);
@@ -138,6 +151,17 @@ function onEvent(e: SimEvent) {
       board.addRock(e.tx, e.ty);
       debris.burst(e.tx, e.ty, 0xc6e33a, 5);
       break;
+    case 'maze_shift':
+      for (const i of e.removed) board.breakRock(i % GRID_W, Math.floor(i / GRID_W));
+      for (const i of e.added) {
+        board.addRock(i % GRID_W, Math.floor(i / GRID_W));
+        debris.burst(i % GRID_W, Math.floor(i / GRID_W), 0xd9773f, 4);
+      }
+      rig.shake(0.3);
+      break;
+    case 'gate_moved':
+      flash(e.hidden ? 'The Warp Gate moved under a rock!' : 'The Warp Gate moved!');
+      break;
     case 'player_respawned': {
       const p = state.players[e.id];
       prevPlayers[e.id] = { x: p.x, y: p.y };
@@ -162,7 +186,7 @@ function levelClear() {
   }
   const next = level + 1;
   const newSector = sectorOf(next) !== sectorOf(level);
-  const text = newSector ? SECTOR_INTRO[sectorOf(next) - 1] : `Level ${next} has ${levelRoster(next).length} Martians.`;
+  const text = EVENT_INTRO[next] ?? (newSector ? SECTOR_INTRO[sectorOf(next) - 1] : `Level ${next} has ${levelRoster(next).length} Martians.`);
   screens.showBanner(`Level ${level} clear!`, text, 'Next level', () => { level = next; newGame(); });
 }
 
@@ -176,6 +200,29 @@ function roundOver(winner: number) {
   } else {
     screens.showBanner(title, tally, 'Next round', () => { round++; newGame(); });
   }
+}
+
+// --- Event warnings ------------------------------------------------------------------
+const alertEl = $('alert');
+let flashUntil = 0;
+let flashText = '';
+/** Shows a short message in the warning pill for 2 s. */
+function flash(text: string) {
+  flashText = text;
+  flashUntil = performance.now() + 2000;
+}
+function updateAlert(now: number) {
+  let text = '';
+  const secs = (ticks: number) => Math.ceil(ticks / 60);
+  if (state.event !== LevelEvent.None && state.eventWarning > 0) {
+    text = `${state.event === LevelEvent.MazeShift ? 'Maze Shift' : 'Blackout'} in ${secs(state.eventWarning)}`;
+  } else if (state.event === LevelEvent.Blackout && state.eventActive > 0) {
+    text = `Blackout · ${secs(state.eventActive)}s`;
+  } else if (now < flashUntil) {
+    text = flashText;
+  }
+  alertEl.hidden = text === '' || state.status !== 'playing' || screens.menuOpen;
+  if (alertEl.textContent !== text) alertEl.textContent = text;
 }
 
 // --- HUD ---------------------------------------------------------------------------
@@ -200,7 +247,10 @@ function updateHud() {
       `Lives ${p.lives}`,
       ...powers,
       state.freeze > 0 ? `Frozen ${Math.ceil(state.freeze / 60)}s` : '',
-      left > 0 ? `Martians ${left}` : gateOpen(state) ? 'Gate open!' : 'Find the Warp Gate',
+      `Martians ${left}`,
+      gateOpen(state)
+        ? state.rules.gateWander ? `Gate open · moves in ${Math.ceil((GATE_WAIT_TICKS - state.gateWait) / 60)}s` : 'Gate open!'
+        : 'Find the Warp Gate',
     ];
   }
   if (!p.alive && state.status === 'playing') parts.push('Knocked out!');
@@ -261,6 +311,9 @@ renderer.setAnimationLoop((now: number) => {
   gate.sync(state, time);
   martians.sync(state, prevMartians, alpha, time);
   portals.sync(state, time);
+  shiftPreview.sync(state, time);
+  lighting.sync(state, heroes.map((h) => h.group), seconds);
+  updateAlert(now);
   debris.update(seconds);
   rig.update(seconds);
   updateHud();
