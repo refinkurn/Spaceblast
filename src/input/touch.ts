@@ -4,7 +4,9 @@
 export class TouchSource {
   /** Stick vector, screen space (+x right, +y down), length 0..1 after dead zone. */
   vector = { x: 0, y: 0 };
-  place = false;
+  private place = false;
+  /** Set on press, cleared when read, so a tap shorter than a tick still counts. */
+  private placeTapped = false;
 
   private pointer = -1;
   private cx = 0;
@@ -26,6 +28,7 @@ export class TouchSource {
     const press = (down: boolean) => (e: PointerEvent) => {
       e.preventDefault();
       this.place = down;
+      if (down) this.placeTapped = true;
       button.classList.toggle('pressed', down);
     };
     button.addEventListener('pointerdown', press(true));
@@ -33,6 +36,13 @@ export class TouchSource {
     button.addEventListener('pointercancel', press(false));
     button.addEventListener('pointerleave', press(false));
     this.reset();
+  }
+
+  /** Place button for this tick: held now, or tapped since the last read. */
+  readPlace(): boolean {
+    const v = this.place || this.placeTapped;
+    this.placeTapped = false;
+    return v;
   }
 
   private start(e: PointerEvent) {

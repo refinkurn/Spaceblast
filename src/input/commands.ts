@@ -8,7 +8,10 @@ const SECONDARY_THRESHOLD = 0.35;
 
 /** Turns the local devices into one PlayerCommand per tick. */
 export function readLocalCommand(keys: KeyboardSource, touch: TouchSource): PlayerCommand {
-  const place = keys.place || touch.place;
+  // Read both so each clears its tap latch.
+  const keyPlace = keys.readPlace();
+  const touchPlace = touch.readPlace();
+  const place = keyPlace || touchPlace;
   const keyDirs = keys.directions();
   if (keyDirs.length > 0) return { dir: keyDirs[0], alt: keyDirs[1] ?? Dir.None, place };
 

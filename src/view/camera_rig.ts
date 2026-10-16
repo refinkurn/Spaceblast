@@ -12,6 +12,8 @@ export class CameraRig {
   pitchDeg = 66;
   /** How much of the outer border ring stays in frame (0 = none, 1 = all). */
   borderInFrame = 0.35;
+  private base = new THREE.Vector3();
+  private shakeLeft = 0;
 
   /** Free area in CSS pixels: the camera keeps the board inside it. */
   fit(viewW: number, viewH: number, left: number, right: number, top: number, bottom: number): void {
@@ -72,5 +74,20 @@ export class CameraRig {
       aim = aim.clone().add(new THREE.Vector3(-offX * unitsPerNdcX, 0, offY * unitsPerNdcY));
     }
     place(dist);
+    this.base.copy(cam.position);
+  }
+
+  shake(seconds = 0.18): void {
+    this.shakeLeft = Math.max(this.shakeLeft, seconds);
+  }
+
+  update(dt: number): void {
+    this.shakeLeft = Math.max(0, this.shakeLeft - dt);
+    const a = this.shakeLeft > 0 ? 0.06 : 0;
+    this.camera.position.set(
+      this.base.x + (Math.random() - 0.5) * a,
+      this.base.y + (Math.random() - 0.5) * a,
+      this.base.z + (Math.random() - 0.5) * a,
+    );
   }
 }

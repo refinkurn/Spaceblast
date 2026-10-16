@@ -11,7 +11,9 @@ const PLACE_KEYS = new Set(['Space', 'KeyX']);
 /** Tracks held direction keys, most recently pressed first. */
 export class KeyboardSource {
   private held: Dir[] = [];
-  place = false;
+  private place = false;
+  /** Set on key down, cleared when read, so a tap shorter than a tick still counts. */
+  private placeTapped = false;
 
   constructor(target: Window = window) {
     target.addEventListener('keydown', (e) => {
@@ -22,6 +24,7 @@ export class KeyboardSource {
       } else if (PLACE_KEYS.has(e.code)) {
         e.preventDefault();
         this.place = true;
+        if (!e.repeat) this.placeTapped = true;
       }
     });
     target.addEventListener('keyup', (e) => {
@@ -33,6 +36,13 @@ export class KeyboardSource {
       this.held = [];
       this.place = false;
     });
+  }
+
+  /** Place button for this tick: held now, or tapped since the last read. */
+  readPlace(): boolean {
+    const v = this.place || this.placeTapped;
+    this.placeTapped = false;
+    return v;
   }
 
   /** [primary, perpendicular fallback] or [] when nothing is held. */

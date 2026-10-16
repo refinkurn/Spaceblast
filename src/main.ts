@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
-import { TICK_MS } from './sim/constants';
+import { GRID_H, GRID_W, TICK_MS } from './sim/constants';
 import { step } from './sim/sim';
-import { createGame, playerTile, type GameState } from './sim/state';
+import { createGame, playerTile, type GameState, type SimEvent } from './sim/state';
 import { BoardView } from './view/board_view';
 import { CameraRig } from './view/camera_rig';
+import { BeamsView, ChargesView, DebrisView } from './view/effects_view';
 import { HeroView } from './view/hero_view';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -31,7 +32,10 @@ scene.add(sun);
 const rig = new CameraRig();
 const board = new BoardView();
 const hero = new HeroView();
-scene.add(board.group, hero.group);
+const charges = new ChargesView();
+const beams = new BeamsView(GRID_W * GRID_H);
+const debris = new DebrisView();
+scene.add(board.group, hero.group, charges.group, beams.group, debris.group);
 
 // --- Input -------------------------------------------------------------------
 const keys = new KeyboardSource();
@@ -46,15 +50,39 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   state = createGame(seed);
   prev = { x: state.players[0].x, y: state.players[0].y };
   board.build(state);
+  charges.clear();
   updateHud();
 }
 
+/** Turns sim events into effects. Sounds will hook in here too. */
+function onEvent(e: SimEvent) {
+  switch (e.type) {
+    case 'rock_broken':
+      board.breakRock(e.tx, e.ty);
+      debris.burst(e.tx, e.ty, 0xd9773f);
+      break;
+    case 'charge_exploded':
+      rig.shake();
+      break;
+    case 'player_died':
+      debris.burst(e.tx, e.ty, 0x3a7bff, 14);
+      break;
+    case 'player_respawned': {
+      const p = state.players[e.id];
+      prev = { x: p.x, y: p.y };
+      break;
+    }
+  }
+}
+
 const hudInfo = $('hud-info');
-let lastTile = '';
+let lastHud = '';
 function updateHud() {
-  const [tx, ty] = playerTile(state.players[0]);
-  const text = `Tile ${tx},${ty} · Seed ${state.seed}`;
-  if (text !== lastTile) hudInfo.textContent = lastTile = text;
+  const p = state.players[0];
+  const [tx, ty] = playerTile(p);
+  const status = p.alive ? `Tile ${tx},${ty}` : 'Knocked out! Warping back…';
+  const text = `${status} · Charges ${p.maxCharges} · Range ${p.range}`;
+  if (text !== lastHud) hudInfo.textContent = lastHud = text;
 }
 
 window.addEventListener('keydown', (e) => {
@@ -90,11 +118,17 @@ renderer.setAnimationLoop((now: number) => {
     const p = state.players[0];
     prev = { x: p.x, y: p.y };
     step(state, [readLocalCommand(keys, touch)]);
+    for (const e of state.events) onEvent(e);
     acc -= TICK_MS;
     steps++;
   }
   if (steps === 5) acc = 0; // too far behind (tab was hidden): drop the backlog
-  hero.update(prev, state.players[0], acc / TICK_MS, dt / 1000);
+  const seconds = dt / 1000;
+  hero.update(prev, state.players[0], acc / TICK_MS, seconds);
+  charges.sync(state);
+  beams.sync(state);
+  debris.update(seconds);
+  rig.update(seconds);
   updateHud();
   renderer.render(scene, rig.camera);
 });

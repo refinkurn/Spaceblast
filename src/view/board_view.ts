@@ -17,6 +17,10 @@ const PALETTE = {
 
 export class BoardView {
   readonly group = new THREE.Group();
+  private rockMesh?: THREE.InstancedMesh;
+  /** Grid cell index -> rock instance index. */
+  private rockIndex = new Map<number, number>();
+  private width = 0;
 
   build(state: GameState): void {
     this.dispose();
@@ -37,7 +41,19 @@ export class BoardView {
     this.group.add(this.floor(w, h));
     this.group.add(this.cubes(pillars, 1.0, PALETTE.pillar));
     this.group.add(this.cubes(border, 1.0, PALETTE.border));
-    this.group.add(this.cubes(rocks, 0.88, PALETTE.rock));
+    this.rockMesh = this.cubes(rocks, 0.88, PALETTE.rock);
+    this.rockIndex = new Map(rocks.map(([x, y], i) => [y * w + x, i]));
+    this.width = w;
+    this.group.add(this.rockMesh);
+  }
+
+  /** Hides a rock the sim has broken. */
+  breakRock(tx: number, ty: number): void {
+    const i = this.rockIndex.get(ty * this.width + tx);
+    if (i === undefined || !this.rockMesh) return;
+    this.rockMesh.setMatrixAt(i, new THREE.Matrix4().makeScale(0, 0, 0));
+    this.rockMesh.instanceMatrix.needsUpdate = true;
+    this.rockIndex.delete(ty * this.width + tx);
   }
 
   private floor(w: number, h: number): THREE.InstancedMesh {

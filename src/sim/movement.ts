@@ -1,6 +1,5 @@
 import { DIR_DX, DIR_DY, Dir, PLAYER_SPEED, TILE } from './constants';
 import type { PlayerCommand } from './command';
-import { isWalkable, type Grid } from './grid';
 import type { Player } from './state';
 
 // Grid-locked movement, ported from the Godot prototype to integer math.
@@ -9,14 +8,17 @@ import type { Player } from './state';
 // along row/column "lanes". Turning while off-centre triggers corner assist:
 // slide onto the nearest lane whose next tile is open, then continue.
 
+/** Can the player enter this tile? (Grid, charges, later Martians.) */
+export type Walkable = (tx: number, ty: number) => boolean;
+
 /** Applies one tick of movement. Returns true if the player moved. */
-export function movePlayer(grid: Grid, p: Player, cmd: PlayerCommand, speed = PLAYER_SPEED): boolean {
+export function movePlayer(walkable: Walkable, p: Player, cmd: PlayerCommand, speed = PLAYER_SPEED): boolean {
   if (cmd.dir === Dir.None) {
     settle(p, speed);
     return false;
   }
   for (const d of cmd.alt === Dir.None ? [cmd.dir] : [cmd.dir, cmd.alt]) {
-    if (tryMove(grid, p, d, speed)) {
+    if (tryMove(walkable, p, d, speed)) {
       p.facing = d;
       return true;
     }
@@ -24,14 +26,14 @@ export function movePlayer(grid: Grid, p: Player, cmd: PlayerCommand, speed = PL
   return false;
 }
 
-function tryMove(grid: Grid, p: Player, d: Dir, budget: number): boolean {
+function tryMove(walkable: Walkable, p: Player, d: Dir, budget: number): boolean {
   const alongX = DIR_DX[d] !== 0;
   const s = alongX ? DIR_DX[d] : DIR_DY[d];
   // `main` is the axis we travel along, `perp` the one that must be lane-aligned.
   let main = alongX ? p.x : p.y;
   let perp = alongX ? p.y : p.x;
   const open = (mainTile: number, perpTile: number) =>
-    alongX ? isWalkable(grid, mainTile, perpTile) : isWalkable(grid, perpTile, mainTile);
+    alongX ? walkable(mainTile, perpTile) : walkable(perpTile, mainTile);
   const write = () => {
     const moved = (alongX ? p.x !== main || p.y !== perp : p.y !== main || p.x !== perp);
     if (alongX) { p.x = main; p.y = perp; } else { p.y = main; p.x = perp; }

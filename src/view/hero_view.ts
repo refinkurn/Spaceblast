@@ -31,6 +31,7 @@ export class HeroView {
 
   /** Places the hero between the previous and current tick (alpha in [0, 1]). */
   update(prev: { x: number; y: number }, p: Player, alpha: number, dt: number): void {
+    this.group.visible = p.alive;
     toWorld(prev.x, prev.y, 0, this.from);
     toWorld(p.x, p.y, 0, this.to);
     this.group.position.lerpVectors(this.from, this.to, alpha);

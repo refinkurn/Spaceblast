@@ -1,3 +1,4 @@
+import { canWalk, tickCharges, tryPlace, updateLives, updatePassable } from './charges';
 import { NO_COMMAND, type PlayerCommand } from './command';
 import { movePlayer } from './movement';
 import type { GameState } from './state';
@@ -5,10 +6,16 @@ import type { GameState } from './state';
 /** Advances the game by exactly one tick. `commands[i]` belongs to player i. */
 export function step(state: GameState, commands: readonly PlayerCommand[]): void {
   state.tick++;
+  state.events = [];
   for (const p of state.players) {
     if (!p.alive) continue;
-    movePlayer(state.grid, p, commands[p.id] ?? NO_COMMAND);
+    const cmd = commands[p.id] ?? NO_COMMAND;
+    tryPlace(state, p, cmd.place);
+    movePlayer((tx, ty) => canWalk(state, p, tx, ty), p, cmd);
+    updatePassable(state, p);
   }
+  tickCharges(state);
+  updateLives(state);
 }
 
 /**
@@ -26,11 +33,26 @@ export function hashState(state: GameState): number {
   mix(state.tick);
   mix(state.rng);
   for (const c of state.grid.cells) mix(c);
+  for (const b of state.beams) mix(b);
   for (const p of state.players) {
     mix(p.x);
     mix(p.y);
     mix(p.facing);
     mix(p.alive ? 1 : 0);
+    mix(p.respawn);
+    mix(p.range);
+    mix(p.maxCharges);
+    mix(p.placeHeld ? 1 : 0);
+    for (const id of p.passable) mix(id);
+  }
+  mix(state.nextChargeId);
+  for (const c of state.charges) {
+    mix(c.id);
+    mix(c.owner);
+    mix(c.tx);
+    mix(c.ty);
+    mix(c.fuse);
+    mix(c.range);
   }
   return h >>> 0;
 }
