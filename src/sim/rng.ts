@@ -5,8 +5,12 @@ export interface RngState {
   rng: number;
 }
 
+/** Scrambles the seed (a 32-bit integer hash) so nearby seeds give unrelated sequences. */
 export function seedRng(seed: number): number {
-  const s = seed >>> 0;
+  let s = seed >>> 0;
+  s = Math.imul(s ^ (s >>> 16), 0x7feb352d);
+  s = Math.imul(s ^ (s >>> 15), 0x846ca68b);
+  s = (s ^ (s >>> 16)) >>> 0;
   return s === 0 ? 0x9e3779b9 : s;
 }
 

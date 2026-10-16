@@ -7,9 +7,10 @@ import { TouchSource } from './input/touch';
 import { GRID_H, GRID_W, TICK_MS } from './sim/constants';
 import type { PlayerCommand } from './sim/command';
 import { gateOpen } from './sim/items';
+import { LEVEL_COUNT, levelRoster, sectorOf } from './sim/levels';
 import { step } from './sim/sim';
 import { createGame, type GameState, type SimEvent } from './sim/state';
-import { GateView, ItemsView, MartiansView } from './view/actors_view';
+import { GateView, ItemsView, MartiansView, PortalsView } from './view/actors_view';
 import { BoardView } from './view/board_view';
 import { CameraRig } from './view/camera_rig';
 import { BeamsView, ChargesView, DebrisView } from './view/effects_view';
@@ -47,7 +48,8 @@ const debris = new DebrisView();
 const items = new ItemsView();
 const gate = new GateView();
 const martians = new MartiansView();
-scene.add(board.group, charges.group, beams.group, debris.group, items.group, gate.group, martians.group);
+const portals = new PortalsView();
+scene.add(board.group, charges.group, beams.group, debris.group, items.group, gate.group, martians.group, portals.group);
 for (const h of heroes) scene.add(h.group);
 
 // --- Input -------------------------------------------------------------------
@@ -58,8 +60,15 @@ const touch = new TouchSource($('stick-zone'), $('stick-base'), $('stick-knob'),
 let mode: MenuChoice = 'survival';
 let state: GameState;
 let bot: Bot | null = null;
-/** Survival level: each one adds a Goopling (3 on level 1, up to 6). */
+/** Survival level, 1..20; each sector of 5 adds a new Martian kind. */
 let level = 1;
+/** What each sector's new Martian does, shown when it first appears. */
+const SECTOR_INTRO = [
+  'Gooplings wander the maze. Blast them all, then find the Warp Gate.',
+  'New: Sniffers. Faster, and they dodge your charges once they spot them.',
+  'New: Phasers. They hide in burrows (can\'t be hit) and jump through portals.',
+  'New: Builders. Toxic to touch, and they wall you in with new rocks.',
+];
 let round = 1;
 let score = [0, 0];
 let prevPlayers: { x: number; y: number }[] = [];
@@ -82,7 +91,7 @@ function openMenu() {
 
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
-  state = mode === 'battle' ? createGame(seed, { mode: 'battle' }) : createGame(seed, { martians: Math.min(2 + level, 6) });
+  state = mode === 'battle' ? createGame(seed, { mode: 'battle' }) : createGame(seed, { roster: levelRoster(level) });
   bot = mode === 'battle' ? new Bot(1, seed) : null;
   snapshot();
   board.build(state);
@@ -125,13 +134,17 @@ function onEvent(e: SimEvent) {
     case 'item_destroyed':
       debris.burst(e.tx, e.ty, 0xffffff, 6);
       break;
+    case 'rock_built':
+      board.addRock(e.tx, e.ty);
+      debris.burst(e.tx, e.ty, 0xc6e33a, 5);
+      break;
     case 'player_respawned': {
       const p = state.players[e.id];
       prevPlayers[e.id] = { x: p.x, y: p.y };
       break;
     }
     case 'level_clear':
-      screens.showBanner('Level clear!', `All Martians defeated on level ${level}.`, 'Next level', () => { level++; newGame(); });
+      levelClear();
       break;
     case 'game_over':
       screens.showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again', () => { level = 1; newGame(); });
@@ -140,6 +153,17 @@ function onEvent(e: SimEvent) {
       roundOver(e.winner);
       break;
   }
+}
+
+function levelClear() {
+  if (level >= LEVEL_COUNT) {
+    screens.showBanner('All 20 levels cleared!', 'The Hive is beaten. The Blaster boss and Endless Survival are coming next.', 'Play again', () => { level = 1; newGame(); });
+    return;
+  }
+  const next = level + 1;
+  const newSector = sectorOf(next) !== sectorOf(level);
+  const text = newSector ? SECTOR_INTRO[sectorOf(next) - 1] : `Level ${next} has ${levelRoster(next).length} Martians.`;
+  screens.showBanner(`Level ${level} clear!`, text, 'Next level', () => { level = next; newGame(); });
 }
 
 function roundOver(winner: number) {
@@ -172,7 +196,7 @@ function updateHud() {
   } else {
     const left = state.martians.filter((m) => m.alive).length;
     parts = [
-      `Level ${level}`,
+      `Sector ${sectorOf(level)} · Level ${level}`,
       `Lives ${p.lives}`,
       ...powers,
       state.freeze > 0 ? `Frozen ${Math.ceil(state.freeze / 60)}s` : '',
@@ -236,12 +260,21 @@ renderer.setAnimationLoop((now: number) => {
   items.sync(state, time);
   gate.sync(state, time);
   martians.sync(state, prevMartians, alpha, time);
+  portals.sync(state, time);
   debris.update(seconds);
   rig.update(seconds);
   updateHud();
   renderer.render(scene, rig.camera);
 });
 
-// Dev-only console hook for debugging: `spaceblast.state` in the browser
-// console. Stripped from production builds.
-if (import.meta.env.DEV) Object.assign(window, { spaceblast: { get state() { return state; } } });
+// Dev-only console hooks for debugging (`spaceblast.state`, `spaceblast.startLevel(n)`)
+// in the browser console. Stripped from production builds.
+if (import.meta.env.DEV) {
+  Object.assign(window, {
+    spaceblast: {
+      get state() { return state; },
+      /** Jump straight to a survival level, e.g. spaceblast.startLevel(16). */
+      startLevel(n: number) { mode = 'survival'; level = n; screens.hideMenu(); newGame(); },
+    },
+  });
+}

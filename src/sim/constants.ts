@@ -58,10 +58,23 @@ export const VEST_TICKS = 600;
 export const FREEZE_TICKS = 240;
 
 // --- Martians and lives ---------------------------------------------------
-export const Kind = { Goopling: 1 } as const;
+export const Kind = { Goopling: 1, Sniffer: 2, Phaser: 3, Builder: 4 } as const;
 export type Kind = (typeof Kind)[keyof typeof Kind];
 /** Goopling: 2 tiles/s. */
 export const GOOPLING_SPEED = 33;
+/** Movement speed per Kind, in units per tick (Sniffer 3 tiles/s, Builder 1.8). */
+export const MARTIAN_SPEED = [0, GOOPLING_SPEED, 50, 40, 30] as const;
+/** Sniffer: notices a charge only once it has been down this long (0.6 s)... */
+export const SNIFF_DELAY_TICKS = 36;
+/** ...and misjudges 1 decision in this many. */
+export const SNIFF_MISS_ONE_IN = 4;
+/** Phaser: wanders this long, hides this long, then its portals stay open this long. */
+export const PHASER_WANDER_TICKS = 300;
+export const PHASER_HIDE_TICKS = 180;
+export const PORTAL_TICKS = 240;
+/** Builder: places a rock this often, up to this many. */
+export const BUILD_EVERY_TICKS = 240;
+export const BUILDER_MAX_ROCKS = 8;
 /** Martians spawn at least this many tiles (Manhattan) from any player spawn. */
 export const MARTIAN_SPAWN_DISTANCE = 6;
 /** A bite lands when centres are closer than this on both axes. */

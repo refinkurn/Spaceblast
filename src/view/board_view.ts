@@ -17,9 +17,8 @@ const PALETTE = {
 
 export class BoardView {
   readonly group = new THREE.Group();
+  /** One rock instance per grid cell (hidden when there is no rock), so rocks can come and go. */
   private rockMesh?: THREE.InstancedMesh;
-  /** Grid cell index -> rock instance index. */
-  private rockIndex = new Map<number, number>();
   private width = 0;
 
   build(state: GameState): void {
@@ -41,19 +40,26 @@ export class BoardView {
     this.group.add(this.floor(w, h));
     this.group.add(this.cubes(pillars, 1.0, PALETTE.pillar));
     this.group.add(this.cubes(border, 1.0, PALETTE.border));
-    this.rockMesh = this.cubes(rocks, 0.88, PALETTE.rock);
-    this.rockIndex = new Map(rocks.map(([x, y], i) => [y * w + x, i]));
+    const allCells: [number, number][] = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) allCells.push([x, y]);
+    this.rockMesh = this.cubes(allCells, 0.88, PALETTE.rock);
     this.width = w;
+    for (const [x, y] of allCells) if (!rocks.some(([rx, ry]) => rx === x && ry === y)) this.breakRock(x, y);
     this.group.add(this.rockMesh);
   }
 
   /** Hides a rock the sim has broken. */
   breakRock(tx: number, ty: number): void {
-    const i = this.rockIndex.get(ty * this.width + tx);
-    if (i === undefined || !this.rockMesh) return;
-    this.rockMesh.setMatrixAt(i, new THREE.Matrix4().makeScale(0, 0, 0));
+    if (!this.rockMesh) return;
+    this.rockMesh.setMatrixAt(ty * this.width + tx, new THREE.Matrix4().makeScale(0, 0, 0));
     this.rockMesh.instanceMatrix.needsUpdate = true;
-    this.rockIndex.delete(ty * this.width + tx);
+  }
+
+  /** Shows a rock the sim has added (Builder, Maze Shift). */
+  addRock(tx: number, ty: number): void {
+    if (!this.rockMesh) return;
+    this.rockMesh.setMatrixAt(ty * this.width + tx, new THREE.Matrix4().makeTranslation(tileToWorld(tx, ty, 0.44)));
+    this.rockMesh.instanceMatrix.needsUpdate = true;
   }
 
   private floor(w: number, h: number): THREE.InstancedMesh {

@@ -28,7 +28,7 @@ function arena(): GameState {
 const idx = (x: number, y: number) => y * GRID_W + x;
 
 function addGoopling(g: GameState, tx: number, ty: number) {
-  g.martians.push({ id: g.martians.length + 1, kind: Kind.Goopling, x: tx * TILE, y: ty * TILE, dir: Dir.None, alive: true });
+  g.martians.push({ id: g.martians.length + 1, kind: Kind.Goopling, x: tx * TILE, y: ty * TILE, dir: Dir.None, alive: true, timer: 0, hidden: false, built: 0 });
   return g.martians[g.martians.length - 1];
 }
 

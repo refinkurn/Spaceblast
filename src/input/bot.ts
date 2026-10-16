@@ -1,7 +1,7 @@
 import { canWalk } from '../sim/charges';
 import { Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS, Item, TILE } from '../sim/constants';
+import { SAFE, dangerMap, forEachBeamTile } from '../sim/danger';
 import type { PlayerCommand } from '../sim/command';
-import { cellAt, inBounds } from '../sim/grid';
 import { itemAt, playerSpeed } from '../sim/items';
 import { nextInt, seedRng, type RngState } from '../sim/rng';
 import { playerTile, type GameState, type Player } from '../sim/state';
@@ -13,7 +13,6 @@ import { playerTile, type GameState, type Player } from '../sim/state';
 // It reads the state but never changes it; its own RNG keeps replays exact.
 
 const DIRS = [Dir.Up, Dir.Down, Dir.Left, Dir.Right] as const;
-const SAFE = -1;
 
 interface Path {
   first: Dir;
@@ -114,45 +113,6 @@ function toCentre(p: Player): Dir {
   if (p.x !== tx * TILE) return p.x < tx * TILE ? Dir.Right : Dir.Left;
   if (p.y !== ty * TILE) return p.y < ty * TILE ? Dir.Down : Dir.Up;
   return Dir.None;
-}
-
-/** Calls fn for every tile a charge at (x, y) with `range` would reach, rock tiles included. */
-function forEachBeamTile(state: GameState, x: number, y: number, range: number, fn: (bx: number, by: number, cell: number) => void) {
-  fn(x, y, Cell.Empty);
-  for (const d of DIRS) {
-    for (let r = 1; r <= range; r++) {
-      const bx = x + DIR_DX[d] * r, by = y + DIR_DY[d] * r;
-      if (!inBounds(state.grid, bx, by)) break;
-      const cell = cellAt(state.grid, bx, by);
-      if (cell === Cell.Pillar) break;
-      fn(bx, by, cell);
-      if (cell === Cell.Rock) break;
-    }
-  }
-}
-
-/**
- * Ticks until each tile is hit by a beam: 0 = beam now, SAFE = not threatened.
- * Accounts for chain reactions. `extra` adds a hypothetical new charge.
- */
-export function dangerMap(state: GameState, extra?: { tx: number; ty: number; range: number }): Int16Array {
-  const { w, h } = state.grid;
-  const danger = new Int16Array(w * h).fill(SAFE);
-  state.beams.forEach((b, i) => { if (b > 0) danger[i] = 0; });
-  const charges = state.charges.map((c) => ({ tx: c.tx, ty: c.ty, range: c.range, fuse: c.fuse }));
-  if (extra) charges.push({ ...extra, fuse: FUSE_TICKS });
-  // A few passes let chain reactions shorten fuses that a nearer blast will trigger.
-  for (let pass = 0; pass < 3; pass++) {
-    for (const c of charges) {
-      const here = danger[c.ty * w + c.tx];
-      if (here !== SAFE && here < c.fuse) c.fuse = here;
-      forEachBeamTile(state, c.tx, c.ty, c.range, (bx, by) => {
-        const i = by * w + bx;
-        if (danger[i] === SAFE || danger[i] > c.fuse) danger[i] = c.fuse;
-      });
-    }
-  }
-  return danger;
 }
 
 /**

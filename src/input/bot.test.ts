@@ -3,7 +3,8 @@ import { Cell, Dir, FUSE_TICKS, GRID_W } from '../sim/constants';
 import type { PlayerCommand } from '../sim/command';
 import { step } from '../sim/sim';
 import { createGame } from '../sim/state';
-import { Bot, dangerMap } from './bot';
+import { dangerMap } from '../sim/danger';
+import { Bot } from './bot';
 
 const idle: PlayerCommand = { dir: Dir.None, alt: Dir.None, place: false };
 

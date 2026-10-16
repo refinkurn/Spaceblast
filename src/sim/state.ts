@@ -47,6 +47,19 @@ export interface Martian {
   y: number;
   dir: Dir;
   alive: boolean;
+  /** Kind-specific countdown (Phaser phases, Builder rocks). */
+  timer: number;
+  /** Phaser in its burrow: invisible, cannot bite or be hit. */
+  hidden: boolean;
+  /** Builder: rocks placed so far. */
+  built: number;
+}
+
+/** A Phaser portal pair: Martians stepping on tile `from` come out at `to`. */
+export interface Portal {
+  from: number;
+  to: number;
+  ticks: number;
 }
 
 export type Status = 'playing' | 'cleared' | 'game_over' | 'round_over';
@@ -63,6 +76,8 @@ export type SimEvent =
   | { type: 'item_destroyed'; tx: number; ty: number }
   | { type: 'freeze'; ticks: number }
   | { type: 'martian_killed'; id: number; tx: number; ty: number }
+  | { type: 'phaser_jumped'; id: number; from: number; to: number }
+  | { type: 'rock_built'; tx: number; ty: number }
   | { type: 'player_died'; id: number; tx: number; ty: number }
   | { type: 'player_respawned'; id: number }
   | { type: 'gate_opened' }
@@ -76,6 +91,8 @@ export interface GameOptions {
   players?: number;
   /** Gooplings to spawn in survival (0 for an empty test arena). */
   martians?: number;
+  /** Exact Martian kinds to spawn in survival; overrides `martians`. */
+  roster?: Kind[];
 }
 
 export interface GameState {
@@ -95,6 +112,7 @@ export interface GameState {
   gate: number;
   players: Player[];
   martians: Martian[];
+  portals: Portal[];
   charges: Charge[];
   nextChargeId: number;
   /** Remaining beam ticks per tile (0 = no beam), indexed y * w + x. */
@@ -110,7 +128,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
   const mode = options.mode ?? 'survival';
   const battle = mode === 'battle';
   const players = options.players ?? (battle ? 2 : 1);
-  const martians = battle ? 0 : (options.martians ?? 3);
+  const roster: Kind[] = battle ? [] : (options.roster ?? Array<Kind>(options.martians ?? 3).fill(Kind.Goopling));
   const state: GameState = {
     tick: 0,
     seed,
@@ -124,6 +142,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     gate: -1,
     players: [],
     martians: [],
+    portals: [],
     charges: [],
     nextChargeId: 1,
     beams: new Uint8Array(GRID_W * GRID_H),
@@ -136,7 +155,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
   if (!battle) placeGate(state);
   // One life per round in battle; survival keeps START_LIVES.
   for (let i = 0; i < players; i++) state.players.push(newPlayer(i, battle ? 1 : START_LIVES));
-  spawnMartians(state, Kind.Goopling, martians);
+  spawnMartians(state, roster);
   return state;
 }
 
