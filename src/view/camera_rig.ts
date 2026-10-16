@@ -1,0 +1,73 @@
+import * as THREE from 'three';
+import { GRID_H, GRID_W } from '../sim/constants';
+
+/**
+ * Fixed angled top-down camera. Fits the arena (plus its border) into the
+ * screen area left free between the touch-control gutters and below the HUD,
+ * so thumbs never cover the maze.
+ */
+export class CameraRig {
+  readonly camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+  pitchDeg = 56;
+
+  /** Free area in CSS pixels: the camera keeps the board inside it. */
+  fit(viewW: number, viewH: number, left: number, right: number, top: number, bottom: number): void {
+    const cam = this.camera;
+    cam.aspect = viewW / viewH;
+    cam.updateProjectionMatrix();
+
+    const pitch = THREE.MathUtils.degToRad(this.pitchDeg);
+    const dir = new THREE.Vector3(0, Math.sin(pitch), Math.cos(pitch));
+    const halfW = (GRID_W + 2) / 2;
+    const halfD = (GRID_H + 2) / 2;
+    const corners = [-1, 1].flatMap((sx) =>
+      [-1, 1].flatMap((sz) => [0, 1].map((y) => new THREE.Vector3(sx * halfW, y, sz * halfD))),
+    );
+    // Target rectangle in normalised device coordinates.
+    const nx0 = (left / viewW) * 2 - 1;
+    const nx1 = ((viewW - right) / viewW) * 2 - 1;
+    const ny0 = 1 - ((viewH - bottom) / viewH) * 2;
+    const ny1 = 1 - (top / viewH) * 2;
+
+    let aim = new THREE.Vector3();
+    const p = new THREE.Vector3();
+    const place = (dist: number) => {
+      cam.position.copy(aim).addScaledVector(dir, dist);
+      cam.lookAt(aim);
+      cam.updateMatrixWorld();
+    };
+    const bounds = () => {
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (const c of corners) {
+        p.copy(c).project(cam);
+        x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x);
+        y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+      }
+      return { x0, x1, y0, y1 };
+    };
+
+    // Binary-search the distance, then shift the aim so the board is centred
+    // in the free area; two passes are enough to converge.
+    let dist = 20;
+    for (let pass = 0; pass < 3; pass++) {
+      let lo = 2, hi = 120;
+      for (let i = 0; i < 40; i++) {
+        dist = (lo + hi) / 2;
+        place(dist);
+        const b = bounds();
+        const fits = b.x1 - b.x0 <= nx1 - nx0 && b.y1 - b.y0 <= ny1 - ny0;
+        if (fits) hi = dist; else lo = dist;
+      }
+      dist = hi;
+      place(dist);
+      const b = bounds();
+      const offX = (nx0 + nx1) / 2 - (b.x0 + b.x1) / 2;
+      const offY = (ny0 + ny1) / 2 - (b.y0 + b.y1) / 2;
+      // Convert the NDC offset into a world shift on the ground plane.
+      const unitsPerNdcY = (Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * dist) / Math.sin(pitch);
+      const unitsPerNdcX = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * dist * cam.aspect;
+      aim = aim.clone().add(new THREE.Vector3(-offX * unitsPerNdcX, 0, offY * unitsPerNdcY));
+    }
+    place(dist);
+  }
+}
