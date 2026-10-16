@@ -63,16 +63,16 @@ window.addEventListener('keydown', (e) => {
 $('new-map').addEventListener('click', () => newGame());
 
 // --- Layout --------------------------------------------------------------------
-/** Gutter width for the touch controls: about 22% of the width, 120-200 px. */
+/** Gutter width for the touch controls: about 16% of the width, 110-170 px. */
 function layout() {
   const w = window.innerWidth;
   const h = window.innerHeight;
-  const gutter = Math.round(Math.min(200, Math.max(120, w * 0.22)));
+  const gutter = Math.round(Math.min(170, Math.max(110, w * 0.16)));
   const hud = 44;
   document.documentElement.style.setProperty('--gutter', `${gutter}px`);
   document.documentElement.style.setProperty('--hud', `${hud}px`);
   renderer.setSize(w, h, false);
-  rig.fit(w, h, gutter, gutter, hud + 8, 8);
+  rig.fit(w, h, gutter, gutter, hud + 2, 4);
 }
 window.addEventListener('resize', layout);
 layout();

@@ -8,7 +8,10 @@ import { GRID_H, GRID_W } from '../sim/constants';
  */
 export class CameraRig {
   readonly camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
-  pitchDeg = 56;
+  /** Camera tilt: 90 = straight down. Higher = more top-down, less depth. */
+  pitchDeg = 66;
+  /** How much of the outer border ring stays in frame (0 = none, 1 = all). */
+  borderInFrame = 0.35;
 
   /** Free area in CSS pixels: the camera keeps the board inside it. */
   fit(viewW: number, viewH: number, left: number, right: number, top: number, bottom: number): void {
@@ -18,8 +21,8 @@ export class CameraRig {
 
     const pitch = THREE.MathUtils.degToRad(this.pitchDeg);
     const dir = new THREE.Vector3(0, Math.sin(pitch), Math.cos(pitch));
-    const halfW = (GRID_W + 2) / 2;
-    const halfD = (GRID_H + 2) / 2;
+    const halfW = GRID_W / 2 + this.borderInFrame;
+    const halfD = GRID_H / 2 + this.borderInFrame;
     const corners = [-1, 1].flatMap((sx) =>
       [-1, 1].flatMap((sz) => [0, 1].map((y) => new THREE.Vector3(sx * halfW, y, sz * halfD))),
     );
