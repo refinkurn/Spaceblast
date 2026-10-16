@@ -70,6 +70,7 @@ describe('power-ups', () => {
     const g = arena();
     g.grid.cells[idx(2, 0)] = Cell.Rock;
     g.items[idx(2, 0)] = Item.BeamRange;
+    g.players[0].range = 2;
     step(g, [cmd(Dir.None, true)]); // charge at (0,0)
     run(g, cmd(Dir.Down), 70); // walk ~4.5 tiles down the open edge, out of range
     run(g, idle, 150);
@@ -84,6 +85,7 @@ describe('power-ups', () => {
   it('destroys a power-up already lying in the open', () => {
     const g = arena();
     g.items[idx(2, 0)] = Item.ExtraCharge;
+    g.players[0].range = 2;
     step(g, [cmd(Dir.None, true)]);
     run(g, cmd(Dir.Down), 70);
     run(g, idle, 150);
@@ -139,6 +141,7 @@ describe('Martians', () => {
     const g = arena();
     const m = addGoopling(g, 2, 0);
     g.freeze = 999; // hold it in place
+    g.players[0].range = 2;
     step(g, [cmd(Dir.None, true)]);
     run(g, cmd(Dir.Down), 70);
     run(g, idle, 150);

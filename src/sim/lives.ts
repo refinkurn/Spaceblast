@@ -42,8 +42,19 @@ export function updateLives(state: GameState): void {
   }
 }
 
+/** Battle: last astronaut standing wins; the round is a draw when time runs out or nobody is left. */
+function battleOutcome(state: GameState): void {
+  if (state.timeLeft > 0) state.timeLeft--;
+  const standing = state.players.filter((p) => p.alive);
+  if (standing.length > 1 && state.timeLeft > 0) return;
+  state.status = 'round_over';
+  state.winner = standing.length === 1 ? standing[0].id : -1;
+  state.events.push({ type: 'round_over', winner: state.winner });
+}
+
 /** Survival: clear the level on the open Warp Gate, or lose when all lives are gone. */
 export function updateOutcome(state: GameState): void {
+  if (state.mode === 'battle') return battleOutcome(state);
   if (state.players.every((p) => !p.alive && p.lives <= 0)) {
     state.status = 'game_over';
     state.events.push({ type: 'game_over' });

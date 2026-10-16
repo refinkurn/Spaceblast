@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BEAM_TICKS, Cell, Dir, FUSE_TICKS, GRID_W, RESPAWN_TICKS, TILE, type Dir as DirT } from './constants';
+import { BEAM_TICKS, Cell, Dir, FUSE_TICKS, GRID_W, RESPAWN_TICKS, START_RANGE, TILE, type Dir as DirT } from './constants';
 import type { PlayerCommand } from './command';
 import { cellAt } from './grid';
 import { step } from './sim';
@@ -31,7 +31,7 @@ describe('placing charges', () => {
     const g = emptyArena();
     step(g, [placeNow]);
     expect(g.charges).toHaveLength(1);
-    expect(g.charges[0]).toMatchObject({ tx: 0, ty: 0, owner: 0, range: 2 });
+    expect(g.charges[0]).toMatchObject({ tx: 0, ty: 0, owner: 0, range: START_RANGE });
     expect(g.events).toContainEqual({ type: 'charge_placed', tx: 0, ty: 0 });
   });
 
@@ -73,9 +73,21 @@ describe('placing charges', () => {
 });
 
 describe('detonation', () => {
+  it('reaches 1 tile each way by default', () => {
+    const g = emptyArena();
+    g.players[0].x = 4 * TILE; g.players[0].y = 4 * TILE;
+    step(g, [placeNow]);
+    g.players[0].alive = false; g.players[0].respawn = 999;
+    run(g, idle, g.charges[0].fuse);
+    const beamAt = (x: number, y: number) => g.beams[y * GRID_W + x] > 0;
+    expect([beamAt(4, 4), beamAt(5, 4), beamAt(3, 4), beamAt(4, 3), beamAt(4, 5)]).toEqual([true, true, true, true, true]);
+    expect([beamAt(6, 4), beamAt(2, 4), beamAt(4, 2), beamAt(4, 6)]).toEqual([false, false, false, false]);
+  });
+
   it('explodes after the fuse and leaves beams for BEAM_TICKS', () => {
     const g = emptyArena();
     g.players[0].x = 4 * TILE; g.players[0].y = 4 * TILE;
+    g.players[0].range = 2;
     step(g, [placeNow]);
     g.players[0].alive = false; g.players[0].respawn = 999; // keep the player out of the way
     expect(g.charges[0].fuse).toBe(FUSE_TICKS - 1);
@@ -107,6 +119,7 @@ describe('detonation', () => {
     const g = emptyArena();
     setRock(g, 2, 0);
     setRock(g, 3, 0);
+    g.players[0].range = 2;
     step(g, [placeNow]); // at (0,0), range 2 to the right: (1,0), rock at (2,0)
     g.players[0].alive = false; g.players[0].respawn = 999;
     run(g, idle, g.charges[0].fuse);
@@ -120,6 +133,7 @@ describe('detonation', () => {
     const [a, b] = g.players;
     a.x = 0; a.y = 4 * TILE;
     b.x = 2 * TILE; b.y = 4 * TILE;
+    a.range = b.range = 2;
     step(g, [placeNow, idle]);
     run(g, idle, 60);
     step(g, [idle, placeNow]); // b's charge has a much longer fuse left

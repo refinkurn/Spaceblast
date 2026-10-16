@@ -13,7 +13,7 @@
     <div id="hud">
       <span class="title">SPACEBLAST</span>
       <span id="hud-info"></span>
-      <button id="new-map" type="button">New map</button>
+      <button id="menu-btn" type="button">Menu</button>
     </div>
     <div id="stick-zone" aria-label="Movement joystick">
       <div id="stick-base"><div id="stick-knob"></div></div>
@@ -24,7 +24,25 @@
     <div id="banner" hidden>
       <div id="banner-title"></div>
       <div id="banner-text"></div>
-      <button id="banner-btn" type="button"></button>
+      <div class="actions">
+        <button id="banner-btn" type="button"></button>
+        <button id="banner-menu" class="quiet" type="button">Menu</button>
+      </div>
+    </div>
+    <div id="menu">
+      <h1>SPACEBLAST</h1>
+      <p class="tagline">Animal astronauts vs hungry Martians</p>
+      <div class="modes">
+        <button id="mode-survival" type="button">
+          <strong>Survival</strong>
+          <span>Clear the Martians, find the Warp Gate</span>
+        </button>
+        <button id="mode-battle" type="button">
+          <strong>Battle vs bot</strong>
+          <span>Last astronaut standing, first to 3 rounds</span>
+        </button>
+      </div>
+      <p class="controls">Move: arrows / WASD or drag on the left · Charge: Space / X or the right button</p>
     </div>
     <div id="rotate">
       <div>Rotate your phone to landscape</div>

@@ -1,4 +1,4 @@
-import { Dir, GRID_H, GRID_W, Kind, SPAWNS, START_CHARGES, START_LIVES, START_RANGE, TILE } from './constants';
+import { Dir, GRID_H, GRID_W, Kind, ROUND_TICKS, SPAWNS, START_CHARGES, START_LIVES, START_RANGE, TILE } from './constants';
 import { generateGrid, type Grid } from './grid';
 import { placeGate, placeItems } from './items';
 import { spawnMartians } from './martians';
@@ -49,7 +49,10 @@ export interface Martian {
   alive: boolean;
 }
 
-export type Status = 'playing' | 'cleared' | 'game_over';
+export type Status = 'playing' | 'cleared' | 'game_over' | 'round_over';
+
+/** Survival: clear levels against Martians. Battle: last astronaut standing. */
+export type Mode = 'survival' | 'battle';
 
 /** Things that happened this tick, for the view (sounds, effects). Not part of the state hash. */
 export type SimEvent =
@@ -64,11 +67,14 @@ export type SimEvent =
   | { type: 'player_respawned'; id: number }
   | { type: 'gate_opened' }
   | { type: 'level_clear' }
-  | { type: 'game_over' };
+  | { type: 'game_over' }
+  | { type: 'round_over'; winner: number };
 
 export interface GameOptions {
+  mode?: Mode;
+  /** Defaults: 1 in survival, 2 in battle. */
   players?: number;
-  /** Gooplings to spawn (0 for an empty test arena). */
+  /** Gooplings to spawn in survival (0 for an empty test arena). */
   martians?: number;
 }
 
@@ -76,7 +82,12 @@ export interface GameState {
   tick: number;
   seed: number;
   rng: number;
+  mode: Mode;
   status: Status;
+  /** Battle: id of the round winner, or -1 for a draw. */
+  winner: number;
+  /** Battle: ticks left in the round. */
+  timeLeft: number;
   grid: Grid;
   /** Power-up per tile (Item), hidden while the tile is still a rock. */
   items: Uint8Array;
@@ -96,12 +107,18 @@ export interface GameState {
 }
 
 export function createGame(seed: number, options: GameOptions = {}): GameState {
-  const { players = 1, martians = 3 } = options;
+  const mode = options.mode ?? 'survival';
+  const battle = mode === 'battle';
+  const players = options.players ?? (battle ? 2 : 1);
+  const martians = battle ? 0 : (options.martians ?? 3);
   const state: GameState = {
     tick: 0,
     seed,
     rng: seedRng(seed),
+    mode,
     status: 'playing',
+    winner: -1,
+    timeLeft: battle ? ROUND_TICKS : 0,
     grid: undefined!,
     items: new Uint8Array(GRID_W * GRID_H),
     gate: -1,
@@ -116,13 +133,14 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
   };
   state.grid = generateGrid(state);
   placeItems(state);
-  placeGate(state);
-  for (let i = 0; i < players; i++) state.players.push(newPlayer(i));
+  if (!battle) placeGate(state);
+  // One life per round in battle; survival keeps START_LIVES.
+  for (let i = 0; i < players; i++) state.players.push(newPlayer(i, battle ? 1 : START_LIVES));
   spawnMartians(state, Kind.Goopling, martians);
   return state;
 }
 
-function newPlayer(id: number): Player {
+function newPlayer(id: number, lives: number): Player {
   const [sx, sy] = SPAWNS[id];
   return {
     id,
@@ -130,7 +148,7 @@ function newPlayer(id: number): Player {
     y: sy * TILE,
     facing: Dir.Down,
     alive: true,
-    lives: START_LIVES,
+    lives,
     respawn: 0,
     shield: 0,
     range: START_RANGE,

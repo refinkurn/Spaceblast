@@ -35,4 +35,4 @@ src/
 ## Game rules reference
 
 The design doc (Spaceblast — Development Plan) is the source of truth for rule
-numbers: 13x11 arena, pillars on odd/odd tiles, 2.5 s fuse, 2-tile beams, etc.
+numbers: 13x11 arena, pillars on odd/odd tiles, 2.5 s fuse, 1-tile beams (Beam Range+ adds 1, up to 8), etc.

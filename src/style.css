@@ -40,7 +40,7 @@ html, body {
 }
 #hud .title { font-weight: 700; letter-spacing: 0.12em; color: var(--accent); }
 #hud-info { color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
-#new-map {
+#menu-btn {
   margin-left: auto;
   pointer-events: auto;
   font: inherit;
@@ -132,8 +132,8 @@ html, body {
 #banner[hidden] { display: none; }
 #banner-title { font-size: 24px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); }
 #banner-text { color: var(--ink-quiet); font-size: 14px; }
-#banner-btn {
-  margin-top: 8px;
+#banner .actions { display: flex; gap: 10px; margin-top: 8px; }
+#banner button {
   min-height: 44px;
   padding: 0 22px;
   font: 600 15px system-ui, sans-serif;
@@ -142,6 +142,45 @@ html, body {
   border: 0;
   border-radius: 10px;
 }
+#banner button.quiet { color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; }
+
+/* Start screen. */
+#menu {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px max(24px, env(safe-area-inset-right)) 24px max(24px, env(safe-area-inset-left));
+  background: radial-gradient(ellipse at 50% 120%, #5a2a1ccc, #14161df2 60%);
+  text-align: center;
+}
+#menu[hidden] { display: none; }
+#menu h1 { margin: 0; font-size: clamp(32px, 7vw, 56px); letter-spacing: 0.16em; color: var(--accent); }
+#menu .tagline { margin: 0; color: var(--ink-quiet); }
+#menu .modes { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+#menu .modes button {
+  width: min(260px, 40vw);
+  min-height: 84px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  text-align: left;
+  color: var(--ink);
+  font: inherit;
+  background: #ffffff10;
+  border: 1px solid #5ad1ff66;
+  border-radius: 14px;
+}
+#menu .modes button strong { font-size: 18px; }
+#menu .modes button span { font-size: 13px; color: var(--ink-quiet); }
+#menu .modes button:hover, #menu .modes button:focus-visible { background: #5ad1ff22; outline: none; border-color: var(--accent); }
+#menu .controls { margin: 4px 0 0; font-size: 12px; color: var(--ink-quiet); }
 
 /* Landscape only. */
 #rotate {

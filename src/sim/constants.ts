@@ -39,7 +39,7 @@ export const SPAWNS: ReadonlyArray<readonly [number, number]> = [
 export const FUSE_TICKS = 150;
 /** Beams stay dangerous for 0.5 s. */
 export const BEAM_TICKS = 30;
-export const START_RANGE = 2;
+export const START_RANGE = 1;
 export const START_CHARGES = 1;
 /** Time before a knocked-out astronaut warps back in. */
 export const RESPAWN_TICKS = 90;
@@ -69,3 +69,7 @@ export const BITE_REACH = 650;
 export const START_LIVES = 3;
 /** Invulnerability after warping back in (1.5 s). */
 export const SPAWN_SHIELD_TICKS = 90;
+
+// --- Battle ---------------------------------------------------------------------
+/** A battle round ends in a draw after 3 minutes (Hurry Up comes in Phase 2). */
+export const ROUND_TICKS = 3 * 60 * 60;

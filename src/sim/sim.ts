@@ -42,7 +42,10 @@ export function hashState(state: GameState): number {
   };
   mix(state.tick);
   mix(state.rng);
-  mix(['playing', 'cleared', 'game_over'].indexOf(state.status));
+  mix(['playing', 'cleared', 'game_over', 'round_over'].indexOf(state.status));
+  mix(state.mode === 'battle' ? 1 : 0);
+  mix(state.winner);
+  mix(state.timeLeft);
   mix(state.gate);
   mix(state.freeze);
   for (const c of state.grid.cells) mix(c);

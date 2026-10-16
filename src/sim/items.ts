@@ -20,7 +20,10 @@ export function placeItems(state: GameState): void {
   const { grid, items } = state;
   for (let i = 0; i < grid.cells.length; i++) {
     if (grid.cells[i] !== Cell.Rock) continue;
-    if (nextInt(state, ITEM_ONE_IN) === 0) items[i] = ITEM_TABLE[nextInt(state, ITEM_TABLE.length)];
+    if (nextInt(state, ITEM_ONE_IN) !== 0) continue;
+    const item = ITEM_TABLE[nextInt(state, ITEM_TABLE.length)];
+    // Freeze Pulse only matters with Martians, so battles roll Extra Charge instead.
+    items[i] = item === Item.FreezePulse && state.mode === 'battle' ? Item.ExtraCharge : item;
   }
 }
 
