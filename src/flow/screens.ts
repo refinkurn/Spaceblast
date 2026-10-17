@@ -104,8 +104,10 @@ export class Screens {
   }
 
   /** `menuLabel` renames the second button (it always goes to the menu). */
-  showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = 'Menu'): void {
+  showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = 'Menu', tip = ''): void {
     $('banner-menu').textContent = menuLabel;
+    $('banner-tip').textContent = tip ? `Tip: ${tip}` : '';
+    $('banner-tip').hidden = !tip;
     $('banner-title').textContent = title;
     $('banner-text').textContent = text;
     this.primary.textContent = button;

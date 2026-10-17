@@ -7,6 +7,7 @@ import { StoryProgress, starsFor } from './progress';
 import type { Screens } from './screens';
 import { BOSS_NAMES, ENDING, SECTORS, briefing } from './story';
 import { INTRO_SCENES, OUTRO_SCENES } from './story_scenes';
+import { randomTip } from './tutorial';
 
 // Story Mode flow: the level map (continue / replay with stars), each level's
 // lead-in (sector card, boss cutscene, briefing), results, retrying a level
@@ -150,7 +151,7 @@ export class StoryMode {
   private gameOver(): void {
     this.progress.save();
     const level = this.level;
-    this.screens.showBanner('Game over', `The Martians got you on level ${level}. Your progress is saved.`, `Retry level ${level}`, () => this.play(level, false));
+    this.screens.showBanner('Game over', `The Martians got you on level ${level}. Your progress is saved.`, `Retry level ${level}`, () => this.play(level, false), 'Menu', randomTip());
   }
 
   private showEnding(): void {

@@ -34,6 +34,7 @@
       <button id="place-btn" type="button" aria-label="Place charge">CHARGE</button>
     </div>
     <div id="alert" hidden></div>
+    <div id="coach" class="coach" hidden aria-live="polite"><span class="coach-label">Tip</span><span id="coach-text"></span></div>
     <div id="cine" class="cine" hidden aria-live="polite">
       <div class="cine-kicker"></div>
       <div class="cine-title"></div>
@@ -58,6 +59,7 @@
     <div id="banner" hidden>
       <div id="banner-title"></div>
       <div id="banner-text"></div>
+      <div id="banner-tip" class="banner-tip" hidden></div>
       <div class="actions">
         <button id="banner-btn" type="button"></button>
         <button id="banner-menu" class="quiet" type="button">Menu</button>
@@ -76,6 +78,7 @@
       <div id="card-context" class="context"></div>
       <div id="card-goal" class="goal"></div>
       <div id="card-hazards" class="hazards"></div>
+      <div id="card-tip" class="card-tip"></div>
     </div>
     <div id="menu">
       <div class="menu-corner">
@@ -231,6 +234,9 @@
             <button type="button" data-value="short">Short</button>
             <button type="button" data-value="off">Off</button>
           </div>
+        </div>
+        <div class="setting-line">Tutorial
+          <button id="settings-tutorial" type="button" class="quiet-btn">Show the tutorial again</button>
         </div>
         <button id="settings-done" type="button" class="primary">Done</button>
       </div>

@@ -11,6 +11,8 @@ import { Screens, type MenuChoice } from './flow/screens';
 import { CONTROL_SCALE, SettingsScreen } from './flow/settings';
 import { GameAudio } from './flow/sound';
 import { StoryMode } from './flow/story_mode';
+import { Tutorial, randomTip } from './flow/tutorial';
+import { BATTLE_TIPS } from './flow/tutorial_script';
 import { Bot } from './input/bot';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
@@ -72,11 +74,20 @@ const story = new StoryMode({
   newLevel: () => { newGame(); return state; },
   get state() { return state; },
   showBriefing: (title, context, goal, hazards) => {
+    $('card-tip').textContent = `Tip: ${randomTip()}`;
+    briefingUp = true;
     screens.showLevelCard(title, context, goal, hazards);
     cardUntil = performance.now() + CARD_MS;
   },
   openMenu,
 }, screens, cutscene, view);
+/** Story tutorial coach; starts when a level's briefing closes. */
+const tutorial = new Tutorial();
+let briefingUp = false;
+$('settings-tutorial').addEventListener('click', () => {
+  tutorial.reset();
+  $('settings-tutorial').textContent = 'It will show again from level 1';
+});
 const settings = new SettingsScreen((s) => {
   audio.setVolumes(s.music, s.sfx);
   touch.setScale(CONTROL_SCALE[s.controls]);
@@ -135,6 +146,7 @@ function openMenu() {
 
 // --- A new map ----------------------------------------------------------------------------
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
+  tutorial.stop();
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
   const spec = levelSpec(story.level);
   if (mode === 'online' && net) state = createGame(seed, net.gameOptions());
@@ -185,6 +197,7 @@ function runTick(cmds: PlayerCommand[]) {
   }
   if (!quiet) audio.events(state, localId);
   if (mode === 'survival') {
+    tutorial.tick(state);
     story.tick();
     for (const e of state.events) story.event(e);
   }
@@ -257,13 +270,13 @@ function showRoundScore() {
   const title = lastWinner < 0 ? 'Draw' : lastWinner === localId ? 'You win the round!' : `${playerName(lastWinner)} wins the round`;
   const goal = `First to ${winsNeeded()} wins`;
   if (mode !== 'online') {
-    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => { score.nextRound(false); newGame(); });
+    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => { score.nextRound(false); newGame(); }, 'Menu', randomTip(BATTLE_TIPS));
   } else if (online.total < 2) {
     screens.showBanner(title, `${tally()} · Everyone else left.`, 'Back to room', () => { screens.hideBanner(); online.showLobby(); });
   } else if (online.isHost) {
-    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => online.startRound());
+    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => online.startRound(), 'Menu', randomTip(BATTLE_TIPS));
   } else {
-    screens.showBanner(title, `${tally()} · ${goal}`, 'Waiting for host…', () => {});
+    screens.showBanner(title, `${tally()} · ${goal}`, 'Waiting for host…', () => {}, 'Menu', randomTip(BATTLE_TIPS));
   }
 }
 
@@ -412,6 +425,9 @@ $('game').addEventListener('pointerdown', () => cine.skip());
 function skipCard() {
   cardUntil = 0;
   screens.hideLevelCard();
+  // The Story level really starts now: the tutorial may have something to say.
+  if (briefingUp && mode === 'survival') tutorial.start(story.level, state);
+  briefingUp = false;
 }
 
 /** Gutter width for the touch controls: about 16% of the width, 110-170 px. */
@@ -449,6 +465,7 @@ view.renderer.setAnimationLoop((now: number) => {
   if (paused && !wasPaused) touch.release();
   if (!paused && wasPaused) clearPresses();
   wasPaused = paused;
+  tutorial.update(!paused && mode === 'survival' && state.status === 'playing');
   let steps = 0;
   while (acc >= TICK_MS && steps < 5) {
     if (!paused && mode === 'online') {
