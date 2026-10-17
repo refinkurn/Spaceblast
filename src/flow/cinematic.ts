@@ -12,12 +12,14 @@ import type { GameView } from '../view/game_view';
 // browsers each play their own copy.
 
 const SNAP_EVERY = 30;
-/** The replay starts this long before the knock-out (1.25 s). */
-const REPLAY_TICKS = 75;
-/** Slow motion: replay ticks per real tick. */
-const REPLAY_SPEED = 0.35;
-const HOLD_SECONDS = 0.8;
-const WINNER_SECONDS = 2.8;
+/** The replay starts this long before the knock-out (1 s). */
+const REPLAY_TICKS = 60;
+/** Slow motion: replay ticks per real tick (the 1 s replay takes 2 s). */
+const REPLAY_SPEED = 0.5;
+const HOLD_SECONDS = 0.5;
+const WINNER_SECONDS = 2.2;
+/** Taps and keys can't skip this early: players are often still mashing when the round ends. */
+const NO_SKIP_SECONDS = 1.2;
 
 export class Recorder {
   private snaps: GameState[] = [];
@@ -90,6 +92,8 @@ export class Cinematic {
   private acc = 0;
   private t = 0;
   private confetti = 0;
+  /** Seconds since the cinematic started. */
+  private age = 0;
   private done: () => void = () => {};
   private el = document.getElementById('cine') as HTMLElement;
   private tag = document.getElementById('cine-tag') as HTMLElement;
@@ -110,6 +114,7 @@ export class Cinematic {
     this.real = real;
     this.info = info;
     this.done = done;
+    this.age = 0;
     const death = this.recorder.lastDeath;
     const start = death && real.tick - death.tick < 30 ? this.recorder.stateAt(Math.max(0, death.tick - REPLAY_TICKS)) : null;
     if (death && start) {
@@ -125,9 +130,9 @@ export class Cinematic {
     }
   }
 
-  /** Tap / Enter: jump to the end. */
+  /** Tap / Enter: jump to the end (ignored in the first moment so a late button mash can't skip it). */
   skip(): void {
-    if (this.phase) this.finish();
+    if (this.phase && this.age >= NO_SKIP_SECONDS) this.finish();
   }
 
   /** Cancels without calling `done` (a new round started). */
@@ -142,6 +147,7 @@ export class Cinematic {
 
   /** Advances the cinematic; returns the interpolation alpha for drawing. */
   update(dt: number): number {
+    this.age += dt;
     if (this.phase === 'replay' && this.replay) {
       this.acc += dt * 60 * REPLAY_SPEED;
       while (this.acc >= 1 && this.replay.tick < this.endTick) {

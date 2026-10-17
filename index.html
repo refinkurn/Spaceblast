@@ -6,6 +6,13 @@
     <meta name="theme-color" content="#14161d" />
     <title>Spaceblast</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <!-- Installed to the home screen, the game opens without browser bars. -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Spaceblast" />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
@@ -16,6 +23,7 @@
       <div id="hud-stage" class="hud-chip"></div>
       <div id="hud-goal" class="hud-goal"></div>
       <div id="hud-powers" class="hud-powers"></div>
+      <button id="full-btn" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
       <button id="sound-btn" class="sound-btn" type="button" aria-label="Sound"></button>
       <button id="menu-btn" type="button">Menu</button>
     </div>
@@ -70,7 +78,10 @@
       <div id="card-hazards" class="hazards"></div>
     </div>
     <div id="menu">
-      <button id="menu-sound" class="sound-btn" type="button" aria-label="Sound"></button>
+      <div class="menu-corner">
+        <button id="menu-full" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
+        <button id="menu-sound" class="sound-btn" type="button" aria-label="Sound"></button>
+      </div>
       <h1>SPACEBLAST</h1>
       <p class="tagline">Animal astronauts vs hungry Martians</p>
       <div class="modes">
@@ -164,6 +175,19 @@
       <h1>SPACEBLAST</h1>
       <p class="tagline">Animal astronauts vs hungry Martians</p>
       <p class="tap">Tap to start</p>
+      <p id="start-tip" class="start-tip" hidden>Tip: add Spaceblast to your Home Screen to play full screen</p>
+    </div>
+    <div id="install" hidden>
+      <div class="install-card">
+        <div class="kicker">Full screen on iPhone</div>
+        <h2>Play without the browser bars</h2>
+        <ol>
+          <li>Tap <strong>Share</strong> <svg viewBox="0 0 24 24" class="inline-icon"><path d="M12 3v12M7 8l5-5 5 5M5 12v8h14v-8"/></svg> in Safari's toolbar.</li>
+          <li>Choose <strong>Add to Home Screen</strong>.</li>
+          <li>Open <strong>Spaceblast</strong> from your Home Screen: it plays full screen, like an app.</li>
+        </ol>
+        <button id="install-ok" type="button">Got it</button>
+      </div>
     </div>
     <div id="rotate">
       <div>Rotate your phone to landscape</div>

@@ -2,6 +2,7 @@ import { Announcer } from './flow/announcer';
 import { Cinematic, Recorder } from './flow/cinematic';
 import { Congrats, type Standing } from './flow/congrats';
 import { DevPanel, GOD_SHIELD } from './flow/dev';
+import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound } from './flow/online_match';
@@ -71,6 +72,7 @@ const cine = new Cinematic(view, recorder, (s) => {
   audio.events(s, localId);
 });
 const dev = new DevPanel(startAtLevel);
+setupFullscreen();
 
 /** Developer level select: jump straight to a Story level. */
 function startAtLevel(n: number) {
@@ -356,7 +358,9 @@ window.addEventListener('keydown', (e) => {
   if (screens.menuOpen || online.screenOpen) return;
   const confirm = e.code === 'Enter' || e.code === 'Space';
   if (e.code === 'Escape') openMenu();
-  else if (confirm && cine.active) cine.skip();
+  else if (cine.active) {
+    if (e.code === 'Enter') cine.skip(); // not Space: that's the charge key
+  }
   else if (confirm && congrats.open) congrats.pressPrimary();
   else if (confirm && screens.storyOpen) screens.pressStory();
   else if (confirm && screens.bannerOpen) screens.pressPrimary();

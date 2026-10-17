@@ -3,8 +3,8 @@ import { COLLAPSE_WARNING_TICKS, LevelEvent } from '../sim/constants';
 import type { GameState } from '../sim/state';
 
 // On-screen warnings. Big ones (Maze Shift, Blackout, boss waves, the arena
-// collapse) pop up large in the middle-top of the screen with a countdown,
-// hard to miss. Small notes (waiting for a player, short messages) use the
+// collapse) pop up large for a moment, hard to miss, then shrink to a compact
+// pill at the top with the countdown so the arena stays visible. Small notes (waiting for a player, short messages) use the
 // pill under the HUD.
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
@@ -19,6 +19,8 @@ interface Big {
 }
 
 const secs = (ticks: number) => Math.ceil(ticks / 60);
+/** How long a warning stays big before it shrinks (ms). */
+const BIG_MS = 1100;
 
 function bigFor(state: GameState): Big | null {
   if (state.status !== 'playing') return null;
@@ -43,6 +45,7 @@ export class Announcer {
   private flashText = '';
   private flashUntil = 0;
   private shown = '';
+  private shownAt = 0;
 
   /** A short note in the small pill for 2 s. */
   flash(text: string): void {
@@ -56,6 +59,7 @@ export class Announcer {
     const key = big ? `${big.kind}|${big.title}` : '';
     if (key !== this.shown) {
       this.shown = key;
+      this.shownAt = now;
       this.big.hidden = !big;
       if (big) {
         this.big.className = `announce ${big.kind}`;
@@ -66,6 +70,7 @@ export class Announcer {
       }
     }
     if (big) {
+      this.big.classList.toggle('mini', now - this.shownAt > BIG_MS);
       const count = big.count > 0 ? String(big.count) : '';
       if (this.bigCount.textContent !== count) {
         this.bigCount.textContent = count;

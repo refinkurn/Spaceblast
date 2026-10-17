@@ -1,6 +1,7 @@
 import { AudioEngine, type SoundSetting } from '../audio/engine';
 import { Music } from '../audio/music';
 import { Sfx } from '../audio/sfx';
+import { enterFullscreen } from './fullscreen';
 import type { GameState, SimEvent } from '../sim/state';
 
 // Game audio wiring: the tap-to-start screen (phones need a tap before any
@@ -30,7 +31,8 @@ export class GameAudio {
       start.hidden = true;
       this.engine.unlock();
       this.sfx.start();
-      goFullscreen();
+      // Phones go full screen on that first tap where the browser allows it.
+      if (window.matchMedia('(pointer: coarse)').matches) enterFullscreen();
       onStart();
     };
     // 'click', not 'pointerdown': hiding the screen on touch-down let the same
@@ -93,13 +95,4 @@ export class GameAudio {
       b.title = LABELS[this.engine.setting];
     }
   }
-}
-
-/** On phones, go full screen and lock landscape where the browser allows it (Android). */
-function goFullscreen(): void {
-  if (!window.matchMedia('(pointer: coarse)').matches) return;
-  const el = document.documentElement;
-  el.requestFullscreen?.({ navigationUI: 'hide' })
-    .then(() => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape'))
-    .catch(() => { /* not supported (iPhone): the rotate hint still works */ });
 }
