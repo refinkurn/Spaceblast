@@ -14,6 +14,14 @@ function knockOut(state: GameState, p: Player): void {
   state.events.push({ type: 'player_died', id: p.id, tx, ty });
 }
 
+/** A player who left an online room: out for good, whatever lives or armor they had. */
+export function forfeit(state: GameState, p: Player): void {
+  if (!p.alive) return;
+  p.lives = 1;
+  p.armor = 0;
+  knockOut(state, p);
+}
+
 /** A hit costs an Oxygen Vest armor point (plus a short shield) before it costs a life. */
 function hit(state: GameState, p: Player): void {
   if (p.armor > 0) {

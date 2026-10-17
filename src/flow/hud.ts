@@ -21,7 +21,11 @@ const POWER_ICONS: Record<string, string> = {
 };
 
 export interface HudInfo {
-  mode: 'survival' | 'battle';
+  mode: 'survival' | 'battle' | 'online';
+  /** Sim player id of this browser's astronaut. */
+  local: number;
+  /** Online: this browser's round wins and the best of the others. */
+  online?: { mine: number; best: number };
   level: number;
   sector: number;
   round: number;
@@ -46,7 +50,7 @@ export class Hud {
   private last = ['', '', '', ''];
 
   update(state: GameState, info: HudInfo): void {
-    const p = state.players[0];
+    const p = state.players[info.local] ?? state.players[0];
     const hearts = Math.max(START_LIVES, p.lives);
     const health =
       Array.from({ length: hearts }, (_, i) => `<span class="${i < p.lives ? '' : 'lost'}">${HEART}</span>`).join('') +
@@ -55,7 +59,11 @@ export class Hud {
     let stage: string;
     let goal: string;
     let stageClass = '';
-    if (info.mode === 'battle') {
+    if (info.mode === 'online') {
+      const o = info.online ?? { mine: 0, best: 0 };
+      stage = `Online · Round ${info.round} · You ${o.mine}–${o.best} Top`;
+      goal = `Last one standing · ${clock(state.timeLeft)}`;
+    } else if (info.mode === 'battle') {
       stage = `Round ${info.round} · You ${info.score[0]}–${info.score[1]} Bot`;
       goal = `Last one standing · ${clock(state.timeLeft)}`;
     } else if (state.boss) {

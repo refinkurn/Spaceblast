@@ -1,17 +1,19 @@
 import * as THREE from 'three';
 import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { Hud } from './flow/hud';
+import { OnlineRoom, type RoundStart } from './flow/online';
 import { Screens, type MenuChoice } from './flow/screens';
 import { BOSS_NAMES, ENDING, SECTORS, briefing } from './flow/story';
 import { Bot } from './input/bot';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
+import { Lockstep } from './net/lockstep';
 import { bossWarning } from './sim/boss';
 import { GRID_H, GRID_W, Kind, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, LevelEvent, TICK_MS } from './sim/constants';
 import type { PlayerCommand } from './sim/command';
 import { LEVEL_COUNT, isSectorStart, levelRoster, levelSpec } from './sim/levels';
-import { step } from './sim/sim';
+import { hashState, step } from './sim/sim';
 import { createGame, type GameState, type SimEvent } from './sim/state';
 import { GateView, ItemsView, MartiansView, PortalsView } from './view/actors_view';
 import { BoardView } from './view/board_view';
@@ -25,8 +27,8 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 /** Battle: first to this many round wins takes the match. */
 const ROUNDS_TO_WIN = 3;
-/** You (blue) and the rival: battle bot or the Renegade Pilot (orange). */
-const HERO_COLORS = [0x3a7bff, 0xff6a3d];
+/** You (blue), the rival (orange: battle bot or the Renegade Pilot), then online players 3 and 4. */
+const HERO_COLORS = [0x3a7bff, 0xff6a3d, 0x4fd17a, 0xc77dff];
 /** How long the level briefing stays up (the game waits meanwhile). */
 const CARD_MS = 3000;
 
@@ -86,6 +88,21 @@ const prevMartians = new Map<number, { x: number; y: number }>();
 
 const screens = new Screens(startMode, openMenu);
 const hud = new Hud();
+const online = new OnlineRoom();
+/** Online round state; null outside an online round. */
+let lockstep: Lockstep | null = null;
+let netRound = 0;
+/** Room slot of each sim player this round. */
+let netSlots: number[] = [];
+let matchOver = false;
+/** Sim player id of this browser's astronaut (always 0 offline). */
+let localId = 0;
+/** Hero model (and colour) for each sim player; online it follows the room slot. */
+let heroOf = [0, 1, 2, 3];
+/** Desync check: this browser's state hashes by tick, and hashes from the others not yet compared. */
+const myHashes = new Map<number, number>();
+const pendingHashes = new Map<number, number[]>();
+let lastWinner = -1;
 /** Set when a run was started from the developer level select; enables its cheats. */
 let devRun = false;
 const dev = new DevPanel(startAtLevel);
@@ -101,7 +118,14 @@ function startAtLevel(n: number) {
 }
 
 function startMode(m: MenuChoice) {
+  if (m === 'online') {
+    screens.hideMenu();
+    online.open();
+    return;
+  }
   mode = m;
+  localId = 0;
+  heroOf = [0, 1, 2, 3];
   level = 1;
   devRun = false;
   round = 1;
@@ -113,7 +137,8 @@ function startMode(m: MenuChoice) {
 }
 
 function openMenu() {
-  screens.showMenu();
+  if (online.connected) online.exit(''); // leaving the room; onExit comes back here
+  else screens.showMenu();
 }
 
 /** Story Mode: sector story card (levels 1, 6, 11, 16), then the level with its briefing. */
@@ -140,7 +165,9 @@ function briefLevel() {
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
   const spec = levelSpec(level);
-  state = mode === 'battle'
+  state = mode === 'online'
+    ? createGame(seed, { mode: 'battle', players: netSlots.length })
+    : mode === 'battle'
     ? createGame(seed, { mode: 'battle' })
     : createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival });
   if (devRun && mode === 'survival') applyCheats();
@@ -153,7 +180,7 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   screens.hideBanner();
   screens.hideLevelCard();
   cardUntil = 0;
-  heroes.forEach((h, i) => (h.group.visible = i < state.players.length));
+  heroes.forEach((h, i) => (h.group.visible = heroOf.slice(0, state.players.length).includes(i)));
 }
 
 function applyCheats() {
@@ -189,7 +216,7 @@ function onEvent(e: SimEvent) {
       rig.shake();
       break;
     case 'player_died':
-      debris.burst(e.tx, e.ty, HERO_COLORS[e.id] ?? 0xffffff, 14);
+      debris.burst(e.tx, e.ty, HERO_COLORS[heroOf[e.id]] ?? 0xffffff, 14);
       break;
     case 'armor_hit':
       flash('Oxygen Vest absorbed the hit!');
@@ -233,7 +260,8 @@ function onEvent(e: SimEvent) {
       screens.showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again', () => { level = 1; beginLevel(false); });
       break;
     case 'round_over':
-      roundOver(e.winner);
+      if (mode === 'online') onlineRoundOver(e.winner);
+      else roundOver(e.winner);
       break;
   }
 }
@@ -262,6 +290,102 @@ function roundOver(winner: number) {
   }
 }
 
+// --- Online rooms --------------------------------------------------------------------
+online.onRoundStart = (s: RoundStart) => {
+  // A browser a few ticks behind finishes the old round first, so every score agrees.
+  while (mode === 'online' && lockstep && state.status === 'playing' && lockstep.ready()) onlineStep();
+  if (mode !== 'online' || matchOver) {
+    score = [0, 0, 0, 0];
+    round = 1;
+    matchOver = false;
+  } else {
+    round++;
+  }
+  mode = 'online';
+  netRound = s.r;
+  netSlots = s.slots;
+  localId = s.local;
+  heroOf = s.slots;
+  lockstep = new Lockstep(s.slots.length, s.local);
+  myHashes.clear();
+  pendingHashes.clear();
+  screens.hideMenu();
+  newGame(s.seed);
+};
+online.onInput = (slot, r, tick, c) => {
+  if (lockstep && r === netRound) lockstep.receive(netSlots.indexOf(slot), tick, c);
+};
+online.onLeft = (slot, lastTick) => {
+  if (lockstep && netSlots.includes(slot)) lockstep.playerLeft(netSlots.indexOf(slot), lastTick);
+  if (mode === 'online' && screens.bannerOpen) onlineBanner(); // the host may have changed
+};
+online.onHash = (r, tick, h) => {
+  if (r !== netRound) return;
+  const mine = myHashes.get(tick);
+  if (mine === undefined) pendingHashes.set(tick, [...(pendingHashes.get(tick) ?? []), h]);
+  else if (mine !== h) desync(tick);
+};
+online.onExit = (reason) => {
+  lockstep = null;
+  if (mode === 'online') mode = 'battle';
+  localId = 0;
+  heroOf = [0, 1, 2, 3];
+  if (!reason) {
+    newGame();
+    screens.showMenu();
+  }
+};
+
+/** Runs one online tick if everyone's input is in. Returns false while waiting. */
+function onlineStep(): boolean {
+  if (!lockstep || state.status !== 'playing') return true;
+  if (!lockstep.ready()) return false;
+  snapshot();
+  step(state, lockstep.advance(readLocalCommand(keys, touch)));
+  for (const e of state.events) onEvent(e);
+  if (state.tick % 60 === 0) {
+    const h = hashState(state);
+    myHashes.set(state.tick, h);
+    online.sendHash(netRound, state.tick, h);
+    if (pendingHashes.get(state.tick)?.some((x) => x !== h)) desync(state.tick);
+    pendingHashes.delete(state.tick);
+  }
+  return true;
+}
+
+function sendInputs() {
+  if (!lockstep) return;
+  // Waiting on others (or the round is over): send what we have right away.
+  const out = lockstep.takeOutgoing(state.status !== 'playing' || !lockstep.ready());
+  if (out) online.sendInput(netRound, out.tick, out.c);
+}
+
+function desync(tick: number) {
+  console.error(`Online desync at tick ${tick}`);
+  flash('Out of sync with the other players!');
+}
+
+function onlineRoundOver(winner: number) {
+  if (winner >= 0) score[netSlots[winner]]++;
+  lastWinner = winner;
+  matchOver = Math.max(...score) >= ROUNDS_TO_WIN;
+  onlineBanner();
+}
+
+function onlineBanner() {
+  const name = (id: number) => (id === localId ? 'You' : `Player ${netSlots[id] + 1}`);
+  const unit = matchOver ? 'match' : 'round';
+  const title = lastWinner < 0 ? 'Draw' : lastWinner === localId ? `You win the ${unit}!` : `${name(lastWinner)} wins the ${unit}`;
+  const tally = netSlots.map((slot, id) => `${name(id)} ${score[slot]}`).join(' · ');
+  if (online.slots.length < 2) {
+    screens.showBanner(title, `${tally} · Everyone else left.`, 'Back to lobby', () => { screens.hideBanner(); online.showLobby(); });
+  } else if (online.isHost) {
+    screens.showBanner(title, tally, matchOver ? 'Play again' : 'Next round', () => online.startRound());
+  } else {
+    screens.showBanner(title, tally, 'Waiting for host…', () => {});
+  }
+}
+
 // --- Event warnings ------------------------------------------------------------------
 const alertEl = $('alert');
 let flashUntil = 0;
@@ -287,7 +411,7 @@ function updateAlert(now: number) {
 }
 
 window.addEventListener('keydown', (e) => {
-  if (screens.menuOpen) return;
+  if (screens.menuOpen || online.screenOpen) return;
   if (e.code === 'Escape') openMenu();
   else if ((e.code === 'Enter' || e.code === 'Space') && screens.storyOpen) screens.pressStory();
   else if ((e.code === 'Enter' || e.code === 'Space') && screens.bannerOpen) screens.pressPrimary();
@@ -327,10 +451,15 @@ renderer.setAnimationLoop((now: number) => {
   last = now;
   acc += dt;
   if (cardUntil > 0 && now >= cardUntil) skipCard();
-  const paused = screens.menuOpen || screens.storyOpen || cardUntil > 0;
+  const paused = screens.menuOpen || screens.storyOpen || cardUntil > 0 || online.screenOpen || (mode === 'online' && !lockstep);
   let steps = 0;
   while (acc >= TICK_MS && steps < 5) {
-    if (!paused) {
+    if (!paused && mode === 'online') {
+      if (!onlineStep()) {
+        acc = Math.min(acc, TICK_MS); // waiting for another player's input
+        break;
+      }
+    } else if (!paused) {
       snapshot();
       step(state, commands());
       for (const e of state.events) onEvent(e);
@@ -338,11 +467,12 @@ renderer.setAnimationLoop((now: number) => {
     acc -= TICK_MS;
     steps++;
   }
-  if (steps === 5) acc = 0; // too far behind (tab was hidden): drop the backlog
+  if (steps === 5 && mode !== 'online') acc = 0; // too far behind (tab was hidden): drop the backlog
+  sendInputs();
   const seconds = dt / 1000;
   const time = now / 1000;
   const alpha = paused ? 1 : acc / TICK_MS;
-  state.players.forEach((p, i) => heroes[i].update(prevPlayers[i] ?? p, p, alpha, seconds));
+  state.players.forEach((p, i) => heroes[heroOf[i]].update(prevPlayers[i] ?? p, p, alpha, seconds));
   charges.sync(state);
   beams.sync(state);
   items.sync(state, time);
@@ -352,11 +482,13 @@ renderer.setAnimationLoop((now: number) => {
   boss.sync(state, time);
   crossPreview.sync(state, time);
   shiftPreview.sync(state, time);
-  lighting.sync(state, heroes.map((h) => h.group), seconds);
+  lighting.sync(state, state.players.map((_, i) => heroes[heroOf[i]].group), seconds);
   updateAlert(now);
   debris.update(seconds);
   rig.update(seconds);
-  hud.update(state, { mode, level, sector: levelSpec(level).sector, round, score });
+  const mine = mode === 'online' ? score[netSlots[localId]] ?? 0 : 0;
+  const best = mode === 'online' ? Math.max(0, ...netSlots.filter((_, i) => i !== localId).map((s) => score[s])) : 0;
+  hud.update(state, { mode, level, sector: levelSpec(level).sector, round, score, local: localId, online: { mine, best } });
   renderer.render(scene, rig.camera);
 });
 
@@ -366,6 +498,7 @@ if (import.meta.env.DEV) {
   Object.assign(window, {
     spaceblast: {
       get state() { return state; },
+      hash: () => hashState(state),
       /** Jump straight to a story level, e.g. spaceblast.startLevel(15). */
       startLevel(n: number, story = false) { mode = 'survival'; level = n; screens.hideMenu(); beginLevel(story); },
       dev,

@@ -12,6 +12,8 @@ export interface PlayerCommand {
   alt: Dir;
   /** Place a Plasma Charge (used from Phase 2). */
   place: boolean;
+  /** Online: the player left the room. Their astronaut is out for the rest of the round. */
+  leave?: boolean;
 }
 
 export const NO_COMMAND: PlayerCommand = Object.freeze({ dir: Dir.None, alt: Dir.None, place: false });

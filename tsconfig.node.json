@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "lib": ["ES2022"], "types": ["node"] },
+  "include": ["vite.config.ts", "server/dev_relay.ts", "server/room.ts", "server/room.test.ts"]
+}

@@ -2,7 +2,7 @@
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-export type MenuChoice = 'survival' | 'battle';
+export type MenuChoice = 'survival' | 'battle' | 'online';
 
 export class Screens {
   private menu = $('menu');
@@ -13,6 +13,7 @@ export class Screens {
   constructor(onMode: (mode: MenuChoice) => void, onMenu: () => void) {
     $('mode-survival').addEventListener('click', () => onMode('survival'));
     $('mode-battle').addEventListener('click', () => onMode('battle'));
+    $('mode-online').addEventListener('click', () => onMode('online'));
     this.primary.addEventListener('click', () => this.onPrimary());
     $('banner-menu').addEventListener('click', onMenu);
     $('menu-btn').addEventListener('click', onMenu);

@@ -1,0 +1,19 @@
+# Cloudflare deploy for Spaceblast: the game page plus online rooms.
+# `npm run deploy` builds dist/ and uploads both. See ONLINE.md.
+name = "spaceblast"
+main = "server/worker.ts"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/room/*"]
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "RoomObject"
+
+# Free plan: Durable Objects must use the SQLite storage backend.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RoomObject"]

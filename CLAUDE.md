@@ -9,16 +9,24 @@ Capacitor. Multiplayer is the main goal, so the simulation must stay determinist
 - `npm run dev` — dev server (also reachable from a phone on the same Wi-Fi)
 - `npm test` — Vitest unit tests (must pass before every commit)
 - `npm run build` — typecheck + production build into `dist/`
+- `npm run deploy` — build and upload the game + online rooms to Cloudflare (see ONLINE.md)
 
 ## Architecture (do not break these)
 
 ```
 src/
   sim/     game rules: plain TypeScript, deterministic, no DOM, no Three.js
-  input/   devices -> PlayerCommand (keyboard, touch, later bots/network)
+  input/   devices -> PlayerCommand (keyboard, touch, bots)
+  net/     online rooms: protocol, lockstep input sync, WebSocket client
   view/    Three.js rendering; reads sim state, never writes it
+  flow/    menus, HUD, story, online lobby
   main.ts  wiring + fixed 60 Hz loop
+server/    the room relay: room.ts (shared), dev_relay.ts (npm run dev), worker.ts (Cloudflare)
 ```
+
+- Online play is lockstep: browsers share only packed PlayerCommands, so any
+  non-determinism in `sim/` becomes a desync. Never read local-only data
+  (time, window size, settings) inside `sim/`.
 
 - `sim/` uses **integers only** for positions and timers: 1 tile = 1000 units
   (`TILE`), 60 ticks per second. No floats stored in state, no `Math.random()`,

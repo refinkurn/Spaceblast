@@ -3,7 +3,7 @@ import { canWalk, tickCharges, tryPlace, updatePassable } from './charges';
 import { NO_COMMAND, type PlayerCommand } from './command';
 import { gateOpen, pickUpItems, playerSpeed } from './items';
 import { updateLevelEvents } from './level_events';
-import { updateLives, updateOutcome } from './lives';
+import { forfeit, updateLives, updateOutcome } from './lives';
 import { updateMartians } from './martians';
 import { movePlayer } from './movement';
 import type { GameState } from './state';
@@ -18,6 +18,10 @@ export function step(state: GameState, commands: readonly PlayerCommand[]): void
   for (const p of state.players) {
     if (!p.alive) continue;
     const cmd = commands[p.id] ?? NO_COMMAND;
+    if (cmd.leave) {
+      forfeit(state, p);
+      continue;
+    }
     tryPlace(state, p, cmd.place);
     movePlayer((tx, ty) => canWalk(state, p, tx, ty), p, cmd, playerSpeed(p));
     updatePassable(state, p);

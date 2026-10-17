@@ -267,7 +267,7 @@ html, body {
 #menu .tagline { margin: 0; color: var(--ink-quiet); }
 #menu .modes { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
 #menu .modes button {
-  width: min(260px, 40vw);
+  width: min(240px, 28vw);
   min-height: 84px;
   padding: 14px 18px;
   display: flex;
@@ -349,3 +349,52 @@ html, body {
 #dev-panel .dev-levels button:hover { background: #5ad1ff22; }
 #dev-panel .dev-toggles { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 14px; }
 #dev-panel .dev-close { padding: 0 18px; }
+
+/* Online rooms: create / join, then the lobby. */
+#online {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #14161df2;
+}
+#online[hidden], #online [hidden] { display: none !important; }
+.online-card { width: min(420px, 92vw); display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
+#online-choose, #online-lobby { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; }
+#online button {
+  min-height: 48px;
+  padding: 0 22px;
+  font: 600 16px system-ui, sans-serif;
+  color: var(--ink);
+  background: #ffffff14;
+  border: 1px solid #ffffff30;
+  border-radius: 10px;
+}
+#online button.primary { color: #0e1118; background: var(--accent); border: 0; }
+#online button:disabled { opacity: 0.45; }
+#online button.quiet { min-height: 40px; font-weight: 500; }
+.online-join { display: flex; gap: 8px; }
+#online-code {
+  width: 140px;
+  min-height: 48px;
+  font: 700 24px ui-monospace, monospace;
+  letter-spacing: 0.3em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: #0e1118;
+  border: 1px solid #5ad1ff66;
+  border-radius: 10px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.online-code-label { font-size: 12px; color: var(--ink-quiet); }
+.online-room { font: 800 44px ui-monospace, monospace; letter-spacing: 0.25em; color: var(--accent); user-select: text; -webkit-user-select: text; }
+#online-players { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+#online-players li { padding: 6px 12px; border-radius: 999px; background: #ffffff10; font-size: 14px; display: flex; gap: 6px; align-items: center; }
+#online-players .dot { width: 10px; height: 10px; border-radius: 50%; }
+.online-status { min-height: 18px; font-size: 14px; color: var(--ink-quiet); }
+.online-status.error { color: #ffb4a2; }
