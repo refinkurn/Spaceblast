@@ -1,5 +1,6 @@
 import { Announcer } from './flow/announcer';
 import { Cinematic, Recorder } from './flow/cinematic';
+import { Cutscene } from './flow/cutscene';
 import { Congrats, type Standing } from './flow/congrats';
 import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
@@ -7,15 +8,16 @@ import { Hud } from './flow/hud';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound } from './flow/online_match';
 import { Screens, type MenuChoice } from './flow/screens';
+import { CONTROL_SCALE, SettingsScreen } from './flow/settings';
 import { GameAudio } from './flow/sound';
-import { BOSS_NAMES, ENDING, SECTORS, briefing } from './flow/story';
+import { StoryMode } from './flow/story_mode';
 import { Bot } from './input/bot';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
 import type { PlayerCommand } from './sim/command';
-import { Kind, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS } from './sim/constants';
-import { LEVEL_COUNT, isSectorStart, levelRoster, levelSpec } from './sim/levels';
+import { MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS } from './sim/constants';
+import { levelSpec } from './sim/levels';
 import { hashState, step } from './sim/sim';
 import { createGame, type GameState, type SimEvent } from './sim/state';
 import { GameView } from './view/game_view';
@@ -41,9 +43,6 @@ const touch = new TouchSource($('stick-zone'), $('stick-base'), $('stick-knob'),
 let mode: MenuChoice = 'survival';
 let state: GameState;
 let bot: Bot | null = null;
-let level = 1;
-/** Martian kinds the player has already met this run (for "New:" on the briefing). */
-const seenKinds = new Set<Kind>();
 /** The game waits while the briefing card is up. */
 let cardUntil = 0;
 /** Battle round wins (offline and online). */
@@ -71,17 +70,30 @@ const cine = new Cinematic(view, recorder, (s) => {
   for (const e of s.events) view.effect(e, s);
   audio.events(s, localId);
 });
+const cutscene = new Cutscene(view);
+const story = new StoryMode({
+  newLevel: () => { newGame(); return state; },
+  get state() { return state; },
+  showBriefing: (title, context, goal, hazards) => {
+    screens.showLevelCard(title, context, goal, hazards);
+    cardUntil = performance.now() + CARD_MS;
+  },
+  openMenu,
+}, screens, cutscene, view);
+const settings = new SettingsScreen((s) => {
+  audio.setVolumes(s.music, s.sfx);
+  touch.setScale(CONTROL_SCALE[s.controls]);
+});
 const dev = new DevPanel(startAtLevel);
 setupFullscreen();
 
 /** Developer level select: jump straight to a Story level. */
 function startAtLevel(n: number) {
   mode = 'survival';
-  level = n;
   devRun = true;
   dev.hide();
   screens.hideMenu();
-  beginLevel(dev.opts.story);
+  story.play(n, dev.opts.story);
 }
 
 function startMode(m: MenuChoice) {
@@ -92,63 +104,30 @@ function startMode(m: MenuChoice) {
   }
   mode = m;
   localId = 0;
-  level = 1;
   devRun = false;
-  seenKinds.clear();
   screens.hideMenu();
   if (mode === 'battle') {
     score.nextRound(true);
     newGame();
   } else {
-    beginLevel(true);
+    story.open();
   }
 }
 
 function openMenu() {
   cine.stop();
+  cutscene.cancel();
+  story.closeOverlays();
+  settings.close();
   congrats.hide();
   if (online.connected) online.exit(''); // leaving the room; onExit comes back here
   else screens.showMenu();
 }
 
-// --- Story Mode ------------------------------------------------------------------------
-/** Sector story card (levels 1, 6, 11, 16), then the level with its briefing. */
-function beginLevel(withStory: boolean) {
-  const spec = levelSpec(level);
-  if (withStory && isSectorStart(level)) {
-    const sector = SECTORS[spec.sector - 1];
-    newGame(); // the new map shows dimly behind the card
-    screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', () => briefLevel());
-    return;
-  }
-  newGame();
-  briefLevel();
-}
-
-function briefLevel() {
-  const spec = levelSpec(level);
-  const b = briefing(spec, (k) => !seenKinds.has(k));
-  for (const k of spec.roster) seenKinds.add(k);
-  screens.showLevelCard(b.title, b.context, b.goal, b.hazards);
-  cardUntil = performance.now() + CARD_MS;
-}
-
-function levelClear() {
-  const spec = levelSpec(level);
-  if (level >= LEVEL_COUNT) {
-    screens.showStory('Story Mode complete', 'Mission accomplished', ENDING, 'Back to menu', openMenu);
-    return;
-  }
-  const title = spec.boss ? `${BOSS_NAMES[spec.boss]} destroyed!` : `Level ${level} clear!`;
-  const next = level + 1;
-  const text = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${levelRoster(next).length} Martians.`;
-  screens.showBanner(title, text, 'Next level', () => { level = next; beginLevel(true); });
-}
-
 // --- A new map ----------------------------------------------------------------------------
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
-  const spec = levelSpec(level);
+  const spec = levelSpec(story.level);
   if (mode === 'online' && net) state = createGame(seed, net.gameOptions());
   else if (mode === 'battle') state = createGame(seed, { mode: 'battle' });
   else state = createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival });
@@ -188,6 +167,10 @@ function runTick(cmds: PlayerCommand[]) {
     onEvent(e);
   }
   audio.events(state, localId);
+  if (mode === 'survival') {
+    story.tick();
+    for (const e of state.events) story.event(e);
+  }
 }
 
 function localCommands(): PlayerCommand[] {
@@ -202,12 +185,6 @@ function onEvent(e: SimEvent) {
       break;
     case 'gate_moved':
       announcer.flash(e.hidden ? 'The Warp Gate moved under a rock!' : 'The Warp Gate moved!');
-      break;
-    case 'level_clear':
-      levelClear();
-      break;
-    case 'game_over':
-      screens.showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again', () => { level = 1; beginLevel(false); });
       break;
     case 'round_over':
       roundOver(e.winner);
@@ -233,6 +210,11 @@ function winsNeeded(): number {
 function roundOver(winner: number) {
   if (winner >= 0) score.win(playerKeys()[winner], winsNeeded());
   lastWinner = winner;
+  const length = settings.value.cinematic;
+  if (length === 'off') {
+    afterRound();
+    return;
+  }
   const title = winner < 0 ? 'Draw!' : winner === localId ? 'You win!' : `${playerName(winner)} wins!`;
   cine.start(state, {
     winner,
@@ -241,6 +223,7 @@ function roundOver(winner: number) {
     color: winner >= 0 ? colors()[winner] : 0xffffff,
     colors: colors(),
     local: mode === 'online' ? localId : -1,
+    replay: length === 'full',
   }, afterRound);
 }
 
@@ -355,10 +338,12 @@ function desync(tick: number) {
 
 // --- Keys, taps, layout -------------------------------------------------------------
 window.addEventListener('keydown', (e) => {
-  if (screens.menuOpen || online.screenOpen) return;
+  if (screens.menuOpen || online.screenOpen || settings.isOpen || story.overlayOpen) return;
   const confirm = e.code === 'Enter' || e.code === 'Space';
   if (e.code === 'Escape') openMenu();
-  else if (cine.active) {
+  else if (cutscene.active) {
+    if (confirm) cutscene.advance();
+  } else if (cine.active) {
     if (e.code === 'Enter') cine.skip(); // not Space: that's the charge key
   }
   else if (confirm && congrats.open) congrats.pressPrimary();
@@ -399,8 +384,8 @@ view.renderer.setAnimationLoop((now: number) => {
   last = now;
   acc += dt;
   if (cardUntil > 0 && now >= cardUntil) skipCard();
-  const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open;
-  const paused = overlay || cardUntil > 0 || cine.active || (mode === 'online' && !net);
+  const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open || settings.isOpen || story.overlayOpen;
+  const paused = overlay || cardUntil > 0 || cine.active || cutscene.active || (mode === 'online' && !net);
   let steps = 0;
   while (acc >= TICK_MS && steps < 5) {
     if (!paused && mode === 'online') {
@@ -418,16 +403,19 @@ view.renderer.setAnimationLoop((now: number) => {
   sendInputs(now);
   const seconds = dt / 1000;
   // During the cinematic the view shows its replay (or the final moment).
+  cutscene.update(seconds);
+  // Scenes hide the HUD and touch controls.
+  document.body.classList.toggle('scene', cutscene.active || cine.active || story.endingOpen);
   const alpha = cine.active ? cine.update(seconds) : paused ? 1 : acc / TICK_MS;
   view.render(cine.state ?? state, alpha, seconds, now / 1000);
   const waiting = net && waitingSince && now - waitingSince > 500 ? net.waitingFor().join(', ') : '';
-  announcer.update(state, now, waiting, overlay || cine.active);
+  announcer.update(state, now, waiting, overlay || cine.active || cutscene.active);
   audio.update(state, screens.menuOpen || online.screenOpen || screens.storyOpen);
   const keyList = playerKeys();
   const mine = score.of(keyList[localId] ?? '');
   const best = Math.max(0, ...keyList.filter((_, i) => i !== localId).map((k) => score.of(k)));
   hud.update(state, {
-    mode, level, sector: levelSpec(level).sector, round: score.round,
+    mode, level: story.level, sector: levelSpec(story.level).sector, round: score.round,
     score: [score.of('p0'), score.of('p1')], local: localId, online: { mine, best },
   });
 });
@@ -440,7 +428,8 @@ if (import.meta.env.DEV) {
       get state() { return state; },
       hash: () => hashState(state),
       /** Jump straight to a story level, e.g. spaceblast.startLevel(15). */
-      startLevel(n: number, story = false) { mode = 'survival'; level = n; screens.hideMenu(); beginLevel(story); },
+      startLevel(n: number, withStory = false) { mode = 'survival'; screens.hideMenu(); story.play(n, withStory); },
+      story,
       dev,
       cine,
     },

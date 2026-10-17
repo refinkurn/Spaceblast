@@ -79,6 +79,8 @@ export interface CinematicInfo {
   /** Player colours, and this browser's player (for the "you" arrow). */
   colors: number[];
   local: number;
+  /** Show the slow-motion replay first (Settings: Full), or only the winner (Short). */
+  replay: boolean;
 }
 
 type Phase = 'replay' | 'hold' | 'winner';
@@ -116,7 +118,7 @@ export class Cinematic {
     this.done = done;
     this.age = 0;
     const death = this.recorder.lastDeath;
-    const start = death && real.tick - death.tick < 30 ? this.recorder.stateAt(Math.max(0, death.tick - REPLAY_TICKS)) : null;
+    const start = info.replay && death && real.tick - death.tick < 30 ? this.recorder.stateAt(Math.max(0, death.tick - REPLAY_TICKS)) : null;
     if (death && start) {
       this.replay = start;
       this.endTick = death.tick;

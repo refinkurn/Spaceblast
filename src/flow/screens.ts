@@ -69,6 +69,10 @@ export class Screens {
     btn.focus();
   }
 
+  hideStory(): void {
+    $('story').hidden = true;
+  }
+
   /** Enter / Space on the story card continues. */
   pressStory(): void {
     if (this.storyOpen) $<HTMLButtonElement>('story-btn').click();

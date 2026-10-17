@@ -11,7 +11,7 @@ export class TouchSource {
   private pointer = -1;
   private cx = 0;
   private cy = 0;
-  private readonly radius = 56;
+  private radius = 56;
   private readonly deadZone = 0.22;
 
   constructor(
@@ -86,5 +86,11 @@ export class TouchSource {
     this.base.classList.remove('active');
     this.base.style.left = '50%';
     this.base.style.top = '62%';
+  }
+
+  /** Settings: bigger or smaller controls (the CSS sizes follow --ctl). */
+  setScale(scale: number): void {
+    this.radius = 56 * scale;
+    document.documentElement.style.setProperty('--ctl', String(scale));
   }
 }

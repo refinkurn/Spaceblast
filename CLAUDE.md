@@ -44,4 +44,4 @@ server/    the room relay: room.ts (shared), dev_relay.ts (npm run dev), worker.
 ## Game rules reference
 
 The design doc (Spaceblast — Development Plan) is the source of truth for rule
-numbers: 13x11 arena, pillars on odd/odd tiles, 2.5 s fuse, 1-tile beams; Beam Range+, Extra Charge and Speed Boost stack to 5, Oxygen Vest armor to 3, etc. Level and boss data: src/sim/levels.ts and src/sim/boss.ts (3 waves, each wait half the one before); story text: src/flow/story.ts. Developer level select: src/flow/dev.ts (open the page with #dev or tap the menu title 5 times).
+numbers: 13x11 arena, pillars on odd/odd tiles, 2.5 s fuse, 1-tile beams; Beam Range+, Extra Charge and Speed Boost stack to 5, Oxygen Vest armor to 3, etc. Level and boss data: src/sim/levels.ts and src/sim/boss.ts (3 waves, each wait half the one before); story text: src/flow/story.ts, cutscene scripts: src/flow/story_scenes.ts. Developer level select: src/flow/dev.ts (open the page with #dev or tap the menu title 5 times).

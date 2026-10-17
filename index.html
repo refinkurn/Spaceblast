@@ -79,6 +79,7 @@
     </div>
     <div id="menu">
       <div class="menu-corner">
+        <button id="menu-settings" class="sound-btn" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
         <button id="menu-full" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
         <button id="menu-sound" class="sound-btn" type="button" aria-label="Sound"></button>
       </div>
@@ -176,6 +177,61 @@
       <p class="tagline">Animal astronauts vs hungry Martians</p>
       <p class="tap">Tap to start</p>
       <p id="start-tip" class="start-tip" hidden>Tip: add Spaceblast to your Home Screen to play full screen</p>
+    </div>
+    <div id="cutscene" hidden>
+      <div class="cut-bar top"><button id="cut-skip" type="button">Skip ›</button></div>
+      <div id="cut-reveal" class="cut-reveal" hidden></div>
+      <div class="cut-bar bottom">
+        <div id="cut-speaker" class="cut-speaker"></div>
+        <div id="cut-text" class="cut-text"></div>
+        <div class="cut-hint">Tap to continue ▸</div>
+      </div>
+    </div>
+    <div id="story-hub" hidden>
+      <div class="hub-card">
+        <div class="kicker">Story Mode</div>
+        <button id="hub-continue" type="button" class="primary"></button>
+        <div id="hub-stars" class="hub-stars"></div>
+        <div id="hub-levels" class="hub-levels"></div>
+        <button id="hub-back" type="button" class="quiet">Back</button>
+      </div>
+    </div>
+    <div id="ending" hidden>
+      <div class="ending-card">
+        <div class="kicker">Mission accomplished</div>
+        <h2>The Astro Paws are going home!</h2>
+        <ul id="ending-stats"></ul>
+        <p id="ending-text"></p>
+        <button id="ending-btn" type="button" class="primary">Back to menu</button>
+      </div>
+    </div>
+    <div id="settings" hidden>
+      <div class="settings-card">
+        <div class="kicker">Settings</div>
+        <label class="setting-line">Music
+          <input id="set-music" type="range" min="0" max="100" step="5" />
+          <output id="set-music-value"></output>
+        </label>
+        <label class="setting-line">Effects
+          <input id="set-sfx" type="range" min="0" max="100" step="5" />
+          <output id="set-sfx-value"></output>
+        </label>
+        <div class="setting-line">Touch controls
+          <div id="set-controls" class="segmented">
+            <button type="button" data-value="small">Small</button>
+            <button type="button" data-value="normal">Normal</button>
+            <button type="button" data-value="large">Large</button>
+          </div>
+        </div>
+        <div class="setting-line">Round replays
+          <div id="set-cinematic" class="segmented">
+            <button type="button" data-value="full">Full</button>
+            <button type="button" data-value="short">Short</button>
+            <button type="button" data-value="off">Off</button>
+          </div>
+        </div>
+        <button id="settings-done" type="button" class="primary">Done</button>
+      </div>
     </div>
     <div id="install" hidden>
       <div class="install-card">

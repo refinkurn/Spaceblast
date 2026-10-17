@@ -61,6 +61,10 @@ export class GameAudio {
     });
   }
 
+  setVolumes(music: number, sfx: number): void {
+    this.engine.setVolumes(music, sfx);
+  }
+
   get started(): boolean {
     return $('start-screen').hasAttribute('hidden');
   }
