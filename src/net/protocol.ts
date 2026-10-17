@@ -34,9 +34,19 @@ export interface RoomSettings {
   blackout: boolean;
   /** Bots added to the match; humans + bots never exceed MAX_PLAYERS. */
   bots: number;
+  botLevel: BotLevel;
+  /** Best of 3 (first to 2 round wins) or first to 3 round wins. */
+  match: MatchFormat;
 }
 
-export const DEFAULT_SETTINGS: RoomSettings = { time: 120, maze: false, blackout: false, bots: 0 };
+export const BOT_LEVELS = ['easy', 'normal', 'hard'] as const;
+export type BotLevel = (typeof BOT_LEVELS)[number];
+export const MATCH_FORMATS = ['bo3', 'ft3'] as const;
+export type MatchFormat = (typeof MATCH_FORMATS)[number];
+/** Round wins needed to take the match. */
+export const WINS_NEEDED: Record<MatchFormat, number> = { bo3: 2, ft3: 3 };
+
+export const DEFAULT_SETTINGS: RoomSettings = { time: 120, maze: false, blackout: false, bots: 0, botLevel: 'normal', match: 'ft3' };
 
 /** Trims a typed name to something safe to show; empty becomes "Player N". */
 export function cleanName(raw: unknown, slot: number): string {
@@ -48,7 +58,9 @@ export function cleanName(raw: unknown, slot: number): string {
 export function cleanSettings(raw: Partial<RoomSettings> | undefined, humans: number): RoomSettings {
   const time = ROUND_SECONDS.includes(Number(raw?.time)) ? Number(raw!.time) : DEFAULT_SETTINGS.time;
   const bots = Math.max(0, Math.min(MAX_PLAYERS - humans, Math.floor(Number(raw?.bots) || 0)));
-  return { time, maze: raw?.maze === true, blackout: raw?.blackout === true, bots };
+  const botLevel = BOT_LEVELS.find((l) => l === raw?.botLevel) ?? DEFAULT_SETTINGS.botLevel;
+  const match = MATCH_FORMATS.find((m) => m === raw?.match) ?? DEFAULT_SETTINGS.match;
+  return { time, maze: raw?.maze === true, blackout: raw?.blackout === true, bots, botLevel, match };
 }
 
 /** Browser -> server. Name and colour wishes go in the URL: /room/CODE?name=..&color=.. */

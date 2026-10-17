@@ -22,6 +22,8 @@ export class HeroView {
     new THREE.MeshBasicMaterial({ color: 0xffe14d }),
   );
   private markerTime = 0;
+  /** Seconds into the victory dance, 0 when not celebrating. */
+  private cheering = 0;
   private suitMaterial: THREE.MeshLambertMaterial;
 
   constructor(color = 0x3a7bff) {
@@ -49,6 +51,12 @@ export class HeroView {
     this.suitMaterial.color.setHex(color);
   }
 
+  /** Victory dance for the round-end cinematic: hops and spins. */
+  celebrate(on: boolean): void {
+    this.cheering = on ? 0.001 : 0;
+    if (!on) this.body.rotation.z = 0;
+  }
+
   /** Shows the "this is you" arrow. */
   setYou(on: boolean): void {
     this.marker.visible = on;
@@ -74,6 +82,12 @@ export class HeroView {
     const diff = Math.atan2(Math.sin(yaw - this.body.rotation.y), Math.cos(yaw - this.body.rotation.y));
     this.body.rotation.y += diff * k;
 
+    if (this.cheering > 0) {
+      this.cheering += dt;
+      this.body.position.y = Math.abs(Math.sin(this.cheering * 6)) * 0.45;
+      this.body.rotation.y += dt * 7;
+      return;
+    }
     const moving = prev.x !== p.x || prev.y !== p.y;
     this.bob = moving ? this.bob + dt * 14 : 0;
     this.body.position.y += (Math.abs(Math.sin(this.bob)) * 0.06 - this.body.position.y) * k;

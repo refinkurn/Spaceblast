@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Bot } from '../input/bot';
-import { Cell, COLLAPSE_EVERY, GRID_H, GRID_W, Item, TILE } from './constants';
+import { Cell, COLLAPSE_EVERY, COLLAPSE_WARNING_TICKS, EVENT_WARNING_TICKS, GRID_H, GRID_W, Item, LevelEvent, TILE } from './constants';
 import { NO_COMMAND } from './command';
 import { collapseOrder } from './collapse';
 import { dangerMap, SAFE } from './danger';
@@ -86,5 +86,32 @@ describe('arena collapse', () => {
     const a = run(), b = run();
     expect(a.hash).toBe(b.hash);
     expect(a.kinds.has('event_warning') && (a.kinds.has('maze_shift') || a.kinds.has('blackout_start'))).toBe(true);
+  });
+});
+
+describe('events and the collapse', () => {
+  const rules = { ...NO_EVENTS, mazeShift: true, blackout: true };
+
+  it('a Blackout never overlaps the collapse warning or the collapse', () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      for (const secs of [60, 90, 120]) {
+        const s = createGame(seed, { mode: 'battle', players: 4, rules, roundTicks: secs * 60 });
+        for (let t = 0; t < secs * 60 + 300 && s.status === 'playing'; t++) {
+          step(s, idle);
+          const dark = s.event === LevelEvent.Blackout && (s.eventWarning > 0 || s.eventActive > 0);
+          if (s.timeLeft <= COLLAPSE_WARNING_TICKS) expect(dark, `seed ${seed}, ${secs}s, tick ${s.tick}`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('no new event starts once the collapse is close', () => {
+    const s = createGame(9, { mode: 'battle', rules, roundTicks: 60 * 60 });
+    let lastWarning = -1;
+    for (let t = 0; t < 60 * 60 + 200 && s.status === 'playing'; t++) {
+      step(s, idle);
+      if (s.events.some((e) => e.type === 'event_warning')) lastWarning = s.timeLeft;
+    }
+    expect(lastWarning === -1 || lastWarning > COLLAPSE_WARNING_TICKS + EVENT_WARNING_TICKS).toBe(true);
   });
 });

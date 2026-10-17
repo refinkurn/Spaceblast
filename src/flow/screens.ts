@@ -3,20 +3,43 @@
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 export type MenuChoice = 'survival' | 'battle' | 'online';
+export type BotLevel = 'easy' | 'normal' | 'hard';
+const BOT_KEY = 'spaceblast.botLevel';
 
 export class Screens {
   private menu = $('menu');
   private banner = $('banner');
   private primary = $<HTMLButtonElement>('banner-btn');
   private onPrimary = () => {};
+  /** Difficulty for Battle vs bot (remembered). */
+  botLevel: BotLevel = 'normal';
 
   constructor(onMode: (mode: MenuChoice) => void, onMenu: () => void) {
     $('mode-survival').addEventListener('click', () => onMode('survival'));
     $('mode-battle').addEventListener('click', () => onMode('battle'));
     $('mode-online').addEventListener('click', () => onMode('online'));
+    try {
+      const saved = localStorage.getItem(BOT_KEY);
+      if (saved === 'easy' || saved === 'normal' || saved === 'hard') this.botLevel = saved;
+    } catch { /* private mode */ }
+    for (const el of $('menu-bot-level').children) {
+      const b = el as HTMLButtonElement;
+      b.addEventListener('click', () => {
+        this.botLevel = b.dataset.level as BotLevel;
+        try { localStorage.setItem(BOT_KEY, this.botLevel); } catch { /* private mode */ }
+        this.renderBotLevel();
+      });
+    }
+    this.renderBotLevel();
     this.primary.addEventListener('click', () => this.onPrimary());
     $('banner-menu').addEventListener('click', onMenu);
     $('menu-btn').addEventListener('click', onMenu);
+  }
+
+  private renderBotLevel(): void {
+    for (const el of $('menu-bot-level').children) {
+      el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.level === this.botLevel));
+    }
   }
 
   get menuOpen(): boolean {

@@ -14,6 +14,16 @@ export class CameraRig {
   borderInFrame = 0.35;
   private base = new THREE.Vector3();
   private shakeLeft = 0;
+  /** Where the fitted camera looks, and how far away it sits. */
+  private aim = new THREE.Vector3();
+  private dist = 20;
+  private dir = new THREE.Vector3();
+  /** Cinematic close-up: current and wanted look-at point and zoom (1 = normal view). */
+  private look = new THREE.Vector3();
+  private lookGoal = new THREE.Vector3();
+  private zoom = 1;
+  private zoomGoal = 1;
+  private focused = false;
 
   /** Free area in CSS pixels: the camera keeps the board inside it. */
   fit(viewW: number, viewH: number, left: number, right: number, top: number, bottom: number): void {
@@ -75,6 +85,27 @@ export class CameraRig {
     }
     place(dist);
     this.base.copy(cam.position);
+    this.aim.copy(aim);
+    this.dist = dist;
+    this.dir.copy(dir);
+    if (!this.focused) {
+      this.look.copy(aim);
+      this.lookGoal.copy(aim);
+    }
+  }
+
+  /** Glides in on `point` (zoom < 1 = closer), or back to the normal view with null. */
+  focus(point: THREE.Vector3 | null, zoom = 0.45): void {
+    this.focused = point !== null;
+    this.lookGoal.copy(point ?? this.aim);
+    this.zoomGoal = point ? zoom : 1;
+  }
+
+  /** Jumps straight back to the normal view. */
+  reset(): void {
+    this.focus(null);
+    this.look.copy(this.aim);
+    this.zoom = 1;
   }
 
   shake(seconds = 0.18): void {
@@ -84,10 +115,16 @@ export class CameraRig {
   update(dt: number): void {
     this.shakeLeft = Math.max(0, this.shakeLeft - dt);
     const a = this.shakeLeft > 0 ? 0.06 : 0;
-    this.camera.position.set(
-      this.base.x + (Math.random() - 0.5) * a,
-      this.base.y + (Math.random() - 0.5) * a,
-      this.base.z + (Math.random() - 0.5) * a,
-    );
+    const k = 1 - Math.exp(-4 * dt);
+    this.look.lerp(this.lookGoal, k);
+    this.zoom += (this.zoomGoal - this.zoom) * k;
+    const moved = this.zoom < 0.999 || this.look.distanceToSquared(this.aim) > 1e-6;
+    // Normal view: the fitted position. Close-up: same angle, nearer, aimed at the point.
+    if (moved) this.camera.position.copy(this.look).addScaledVector(this.dir, this.dist * this.zoom);
+    else this.camera.position.copy(this.base);
+    this.camera.lookAt(moved ? this.look : this.aim);
+    this.camera.position.x += (Math.random() - 0.5) * a;
+    this.camera.position.y += (Math.random() - 0.5) * a;
+    this.camera.position.z += (Math.random() - 0.5) * a;
   }
 }

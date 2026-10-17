@@ -45,12 +45,12 @@ describe('room', () => {
     const room = new Room();
     const a = peer(), b = peer(), c = peer();
     room.join(a, true);
-    room.message(0, msg({ t: 'settings', s: { time: 90, maze: true, blackout: false, bots: 3 } }));
-    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 90, maze: true, blackout: false, bots: 3 } });
-    room.message(0, msg({ t: 'settings', s: { time: 999, maze: 'yes', blackout: true, bots: 9 } }));
-    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 3 } });
+    room.message(0, msg({ t: 'settings', s: { time: 90, maze: true, blackout: false, bots: 3, botLevel: 'hard', match: 'bo3' } }));
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 90, maze: true, blackout: false, bots: 3, botLevel: 'hard', match: 'bo3' } });
+    room.message(0, msg({ t: 'settings', s: { time: 999, maze: 'yes', blackout: true, bots: 9, botLevel: 'godlike', match: 'bo99' } }));
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 3, botLevel: 'normal', match: 'ft3' } });
     room.join(b, false);
-    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 2 } });
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 2, botLevel: 'normal', match: 'ft3' } });
     room.join(c, false);
     room.message(1, msg({ t: 'settings', s: { time: 60, maze: false, blackout: false, bots: 0 } })); // not the host
     expect(c.got.at(-1)?.t).toBe('welcome');

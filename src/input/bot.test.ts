@@ -4,7 +4,7 @@ import type { PlayerCommand } from '../sim/command';
 import { step } from '../sim/sim';
 import { createGame } from '../sim/state';
 import { dangerMap } from '../sim/danger';
-import { Bot } from './bot';
+import { Bot, type BotSkill } from './bot';
 
 const idle: PlayerCommand = { dir: Dir.None, alt: Dir.None, place: false };
 
@@ -94,5 +94,40 @@ describe('battle rules', () => {
     step(g, [idle, idle]);
     step(g, [idle, idle]);
     expect(g.events.some((e) => e.type === 'tile_collapsed')).toBe(true);
+  });
+});
+
+describe('bot difficulty', () => {
+  /** Plays `rounds` bot-vs-bot rounds; returns player 0's wins and losses. */
+  function duel(a: BotSkill, b: BotSkill, rounds: number) {
+    let wins = 0, losses = 0;
+    for (let seed = 1; seed <= rounds; seed++) {
+      const g = createGame(seed, { mode: 'battle', roundTicks: 60 * 60 });
+      const bots = [new Bot(0, seed, a), new Bot(1, seed, b)];
+      while (g.status === 'playing') step(g, bots.map((x) => x.think(g)));
+      if (g.winner === 0) wins++;
+      if (g.winner === 1) losses++;
+    }
+    return { wins, losses };
+  }
+
+  it('normal beats easy and hard beats normal (bot-vs-bot rounds often end in draws)', () => {
+    const ne = duel('normal', 'easy', 12);
+    expect(ne.wins).toBeGreaterThanOrEqual(8);
+    expect(ne.wins).toBeGreaterThan(ne.losses * 3);
+    const hn = duel('hard', 'normal', 12);
+    expect(hn.wins).toBeGreaterThan(hn.losses);
+  }, 30000);
+
+  it('an easy bot rarely blows itself up against an idle player', () => {
+    let selfKills = 0;
+    for (let seed = 1; seed <= 30; seed++) {
+      const g = createGame(seed, { mode: 'battle', roundTicks: 40 * 60 });
+      const bot = new Bot(1, seed, 'easy');
+      g.players[0].shield = 1e6; // the idle player can't be hit
+      while (g.status === 'playing' && g.timeLeft > 0) step(g, [idle, bot.think(g)]);
+      if (!g.players[1].alive) selfKills++;
+    }
+    expect(selfKills).toBeLessThanOrEqual(3);
   });
 });

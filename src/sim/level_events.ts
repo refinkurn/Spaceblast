@@ -1,5 +1,5 @@
 import {
-  BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, Cell, EVENT_GAP_FAST_MAX_TICKS, EVENT_GAP_FAST_MIN_TICKS, EVENT_GAP_MAX_TICKS,
+  BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, COLLAPSE_WARNING_TICKS, Cell, EVENT_GAP_FAST_MAX_TICKS, EVENT_GAP_FAST_MIN_TICKS, EVENT_GAP_MAX_TICKS,
   EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS, GATE_WAIT_TICKS, Item, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, TILE,
 } from './constants';
 import { nextInt } from './rng';
@@ -14,8 +14,19 @@ export function updateLevelEvents(state: GameState): void {
   if (state.mode === 'survival') updateGateWander(state);
 }
 
+/**
+ * Battle: ticks left for an event before the arena-collapse warning, with a
+ * 1 s gap, so a Blackout never overlaps the collapse. Survival: unlimited.
+ */
+function eventRoom(state: GameState): number {
+  if (state.mode !== 'battle') return 0x3fffffff;
+  return state.timeLeft - COLLAPSE_WARNING_TICKS - 60;
+}
+
 function updateTimedEvent(state: GameState): void {
   const { rules } = state;
+  // Safety net: a Blackout still running when the collapse warning starts ends now.
+  if (state.event === LevelEvent.Blackout && state.eventActive > 0 && eventRoom(state) < -60) finish(state);
   if (state.event === LevelEvent.None) {
     // Running events always finish; new ones only start on levels that have them.
     if ((rules.mazeShift || rules.blackout) && --state.nextEvent <= 0) announce(state);
@@ -29,8 +40,16 @@ function updateTimedEvent(state: GameState): void {
 /** Picks the next event (alternating when both are on) and starts its warning. */
 function announce(state: GameState): void {
   const { rules } = state;
-  let kind: LevelEvent = rules.mazeShift ? LevelEvent.MazeShift : LevelEvent.Blackout;
-  if (rules.mazeShift && rules.blackout) kind = nextInt(state, 2) === 0 ? LevelEvent.MazeShift : LevelEvent.Blackout;
+  // In battle, only events that finish before the collapse warning.
+  const room = eventRoom(state) - EVENT_WARNING_TICKS;
+  const maze = rules.mazeShift && room >= 0;
+  const blackout = rules.blackout && room >= BLACKOUT_MIN_TICKS;
+  if (!maze && !blackout) {
+    state.nextEvent = 0x3fffffff; // too close to the collapse: no more events this round
+    return;
+  }
+  let kind: LevelEvent = maze ? LevelEvent.MazeShift : LevelEvent.Blackout;
+  if (maze && blackout) kind = nextInt(state, 2) === 0 ? LevelEvent.MazeShift : LevelEvent.Blackout;
   warn(state, kind);
 }
 
@@ -47,7 +66,8 @@ function begin(state: GameState): void {
     applyShift(state);
     finish(state);
   } else {
-    state.eventActive = BLACKOUT_MIN_TICKS + nextInt(state, BLACKOUT_MAX_TICKS - BLACKOUT_MIN_TICKS + 1);
+    const length = BLACKOUT_MIN_TICKS + nextInt(state, BLACKOUT_MAX_TICKS - BLACKOUT_MIN_TICKS + 1);
+    state.eventActive = Math.max(1, Math.min(length, eventRoom(state)));
     state.events.push({ type: 'blackout_start' });
   }
 }

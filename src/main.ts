@@ -1,98 +1,54 @@
-import * as THREE from 'three';
+import { Announcer } from './flow/announcer';
+import { Cinematic, Recorder } from './flow/cinematic';
+import { Congrats, type Standing } from './flow/congrats';
 import { DevPanel, GOD_SHIELD } from './flow/dev';
-import { GameAudio } from './flow/sound';
 import { Hud } from './flow/hud';
 import { OnlineRoom, type RoundStart } from './flow/online';
-import { MatchScore, OnlineRound, ROUNDS_TO_WIN } from './flow/online_match';
+import { MatchScore, OnlineRound } from './flow/online_match';
 import { Screens, type MenuChoice } from './flow/screens';
+import { GameAudio } from './flow/sound';
 import { BOSS_NAMES, ENDING, SECTORS, briefing } from './flow/story';
 import { Bot } from './input/bot';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
-import { bossWarning } from './sim/boss';
-import { COLLAPSE_WARNING_TICKS, GRID_H, GRID_W, Kind, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, LevelEvent, TICK_MS } from './sim/constants';
 import type { PlayerCommand } from './sim/command';
+import { Kind, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS } from './sim/constants';
 import { LEVEL_COUNT, isSectorStart, levelRoster, levelSpec } from './sim/levels';
 import { hashState, step } from './sim/sim';
 import { createGame, type GameState, type SimEvent } from './sim/state';
-import { GateView, ItemsView, MartiansView, PortalsView } from './view/actors_view';
-import { BoardView } from './view/board_view';
-import { BossView, CrossPreviewView } from './view/boss_view';
-import { CameraRig } from './view/camera_rig';
-import { BeamsView, ChargesView, DebrisView } from './view/effects_view';
-import { HeroView } from './view/hero_view';
-import { LightingView, ShiftPreviewView } from './view/level_view';
+import { GameView } from './view/game_view';
+
+// Wiring: game modes (Story, Battle vs bot, online rooms), the round flow and
+// the fixed 60 Hz loop. Rendering lives in view/game_view.ts, online rounds in
+// flow/online_match.ts, the round-end cinematic in flow/cinematic.ts.
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-/** You (blue), the rival (orange: battle bot or the Renegade Pilot), then online players 3 and 4. */
+/** You (blue), the rival (orange: battle bot or the Renegade Pilot), then players 3 and 4. */
 const HERO_COLORS = [0x3a7bff, 0xff6a3d, 0x4fd17a, 0xc77dff];
 /** How long the level briefing stays up (the game waits meanwhile). */
 const CARD_MS = 3000;
+/** Battle vs bot: round wins to take the match. */
+const BATTLE_WINS = 3;
 
-// --- Rendering ---------------------------------------------------------------
-const canvas = $<HTMLCanvasElement>('game');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x14161d);
-const sky = new THREE.HemisphereLight(0xdfe8ff, 0x5a2a1c, 1.4);
-scene.add(sky);
-const sun = new THREE.DirectionalLight(0xfff1dd, 2.2);
-sun.position.set(-5, 12, 6);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
-scene.add(sun);
-
-const rig = new CameraRig();
-const board = new BoardView();
-const heroes = HERO_COLORS.map((c) => new HeroView(c));
-const charges = new ChargesView();
-const beams = new BeamsView(GRID_W * GRID_H);
-const debris = new DebrisView();
-const items = new ItemsView();
-const gate = new GateView();
-const martians = new MartiansView();
-const portals = new PortalsView();
-const boss = new BossView();
-const crossPreview = new CrossPreviewView(GRID_W * GRID_H);
-const shiftPreview = new ShiftPreviewView(GRID_W * GRID_H);
-scene.add(board.group, charges.group, beams.group, debris.group, items.group, gate.group, martians.group, portals.group);
-scene.add(boss.group, crossPreview.group, shiftPreview.group);
-for (const h of heroes) scene.add(h.group);
-const lighting = new LightingView([sky, sun], scene, scene.background as THREE.Color);
-
-// --- Input -------------------------------------------------------------------
+const view = new GameView($<HTMLCanvasElement>('game'));
 const keys = new KeyboardSource();
 const touch = new TouchSource($('stick-zone'), $('stick-base'), $('stick-knob'), $('place-btn'));
 
-// --- Session: mode, story level, battle score ------------------------------------
+// --- Session -----------------------------------------------------------------------
 let mode: MenuChoice = 'survival';
 let state: GameState;
 let bot: Bot | null = null;
 let level = 1;
-let round = 1;
-let score = [0, 0];
 /** Martian kinds the player has already met this run (for "New:" on the briefing). */
 const seenKinds = new Set<Kind>();
 /** The game waits while the briefing card is up. */
 let cardUntil = 0;
-let prevPlayers: { x: number; y: number }[] = [];
-const prevMartians = new Map<number, { x: number; y: number }>();
-
-const screens = new Screens(startMode, openMenu);
-const hud = new Hud();
-const online = new OnlineRoom();
-/** Sound starts on the tap-to-start screen (the menu is already open behind it). */
-const audio = new GameAudio(() => {});
+/** Battle round wins (offline and online). */
+const score = new MatchScore();
 /** The online round being played; null outside online play. */
 let net: OnlineRound | null = null;
-const netScore = new MatchScore();
 /** Sim player id of this browser's astronaut (always 0 offline). */
 let localId = 0;
 let lastWinner = -1;
@@ -101,6 +57,19 @@ let lastAlive = 0;
 let waitingSince = 0;
 /** Set when a run was started from the developer level select; enables its cheats. */
 let devRun = false;
+
+const screens = new Screens(startMode, openMenu);
+const hud = new Hud();
+const online = new OnlineRoom();
+const announcer = new Announcer();
+const congrats = new Congrats();
+const recorder = new Recorder();
+/** Sound starts on the tap-to-start screen (the menu is already open behind it). */
+const audio = new GameAudio(() => {});
+const cine = new Cinematic(view, recorder, (s) => {
+  for (const e of s.events) view.effect(e, s);
+  audio.events(s, localId);
+});
 const dev = new DevPanel(startAtLevel);
 
 /** Developer level select: jump straight to a Story level. */
@@ -123,20 +92,25 @@ function startMode(m: MenuChoice) {
   localId = 0;
   level = 1;
   devRun = false;
-  round = 1;
-  score = [0, 0];
   seenKinds.clear();
   screens.hideMenu();
-  if (mode === 'battle') newGame();
-  else beginLevel(true);
+  if (mode === 'battle') {
+    score.nextRound(true);
+    newGame();
+  } else {
+    beginLevel(true);
+  }
 }
 
 function openMenu() {
+  cine.stop();
+  congrats.hide();
   if (online.connected) online.exit(''); // leaving the room; onExit comes back here
   else screens.showMenu();
 }
 
-/** Story Mode: sector story card (levels 1, 6, 11, 16), then the level with its briefing. */
+// --- Story Mode ------------------------------------------------------------------------
+/** Sector story card (levels 1, 6, 11, 16), then the level with its briefing. */
 function beginLevel(withStory: boolean) {
   const spec = levelSpec(level);
   if (withStory && isSectorStart(level)) {
@@ -157,122 +131,6 @@ function briefLevel() {
   cardUntil = performance.now() + CARD_MS;
 }
 
-function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
-  // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
-  const spec = levelSpec(level);
-  state = mode === 'online' && net
-    ? createGame(seed, net.gameOptions())
-    : mode === 'battle'
-    ? createGame(seed, { mode: 'battle' })
-    : createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival });
-  if (devRun && mode === 'survival') applyCheats();
-  bot = mode === 'battle' ? new Bot(1, seed) : spec.rival ? new Bot(1, seed, 'hard') : null;
-  snapshot();
-  board.build(state);
-  charges.clear();
-  items.clear();
-  martians.clear();
-  screens.hideBanner();
-  screens.hideLevelCard();
-  cardUntil = 0;
-  heroes.forEach((h, i) => {
-    h.group.visible = i < state.players.length;
-    h.setColor(colorOf(i));
-    h.setYou(mode === 'online' && i === localId);
-  });
-}
-
-/** Astronaut colour: the room's pick online, else blue for you and orange for the rival. */
-function colorOf(id: number): number {
-  return (mode === 'online' && net?.colors[id]) || HERO_COLORS[id];
-}
-
-function applyCheats() {
-  const hero = state.players[0];
-  if (dev.opts.god) hero.shield = GOD_SHIELD;
-  if (dev.opts.maxPower) {
-    hero.range = MAX_RANGE;
-    hero.maxCharges = MAX_CHARGES;
-    hero.boots = MAX_BOOTS;
-  }
-}
-
-/** Positions before a tick, so the view can interpolate between ticks. */
-function snapshot() {
-  prevPlayers = state.players.map((p) => ({ x: p.x, y: p.y }));
-  prevMartians.clear();
-  for (const m of state.martians) prevMartians.set(m.id, { x: m.x, y: m.y });
-}
-
-function commands(): PlayerCommand[] {
-  const local = readLocalCommand(keys, touch);
-  return bot ? [local, bot.think(state)] : [local];
-}
-
-// --- Events -> effects and results ---------------------------------------------------
-function onEvent(e: SimEvent) {
-  switch (e.type) {
-    case 'rock_broken':
-      board.breakRock(e.tx, e.ty);
-      debris.burst(e.tx, e.ty, 0xd9773f);
-      break;
-    case 'charge_exploded':
-      rig.shake();
-      break;
-    case 'player_died':
-      debris.burst(e.tx, e.ty, colorOf(e.id), 14);
-      break;
-    case 'armor_hit':
-      flash('Oxygen Vest absorbed the hit!');
-      break;
-    case 'martian_killed':
-      debris.burst(e.tx, e.ty, 0x6fd14f, 12);
-      break;
-    case 'item_destroyed':
-      debris.burst(e.tx, e.ty, 0xffffff, 6);
-      break;
-    case 'rock_built':
-      board.addRock(e.tx, e.ty);
-      debris.burst(e.tx, e.ty, 0xc6e33a, 5);
-      break;
-    case 'maze_shift':
-      for (const i of e.removed) board.breakRock(i % GRID_W, Math.floor(i / GRID_W));
-      for (const i of e.added) {
-        board.addRock(i % GRID_W, Math.floor(i / GRID_W));
-        debris.burst(i % GRID_W, Math.floor(i / GRID_W), 0xd9773f, 4);
-      }
-      rig.shake(0.3);
-      break;
-    case 'boss_cross':
-      rig.shake(0.5);
-      break;
-    case 'boss_defeated':
-      if (state.boss) debris.burst(state.boss.tile % GRID_W, Math.floor(state.boss.tile / GRID_W), 0xffe9a8, 30);
-      break;
-    case 'gate_moved':
-      flash(e.hidden ? 'The Warp Gate moved under a rock!' : 'The Warp Gate moved!');
-      break;
-    case 'player_respawned': {
-      const p = state.players[e.id];
-      prevPlayers[e.id] = { x: p.x, y: p.y };
-      break;
-    }
-    case 'level_clear':
-      levelClear();
-      break;
-    case 'game_over':
-      screens.showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again', () => { level = 1; beginLevel(false); });
-      break;
-    case 'tile_collapsed':
-      board.dropBlock(e.tx, e.ty);
-      break;
-    case 'round_over':
-      if (mode === 'online') onlineRoundOver(e.winner);
-      else roundOver(e.winner);
-      break;
-  }
-}
-
 function levelClear() {
   const spec = levelSpec(level);
   if (level >= LEVEL_COUNT) {
@@ -285,15 +143,145 @@ function levelClear() {
   screens.showBanner(title, text, 'Next level', () => { level = next; beginLevel(true); });
 }
 
+// --- A new map ----------------------------------------------------------------------------
+function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
+  // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
+  const spec = levelSpec(level);
+  if (mode === 'online' && net) state = createGame(seed, net.gameOptions());
+  else if (mode === 'battle') state = createGame(seed, { mode: 'battle' });
+  else state = createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival });
+  if (devRun && mode === 'survival') applyCheats();
+  bot = mode === 'battle' ? new Bot(1, seed, screens.botLevel) : spec.rival ? new Bot(1, seed, 'hard') : null;
+  recorder.reset();
+  view.build(state, colors(), mode === 'online' ? localId : -1);
+  view.rig.reset();
+  screens.hideBanner();
+  screens.hideLevelCard();
+  cardUntil = 0;
+}
+
+/** Astronaut colours: the room's picks online, else blue for you and orange for the rival. */
+function colors(): number[] {
+  return mode === 'online' && net ? net.colors : HERO_COLORS;
+}
+
+function applyCheats() {
+  const hero = state.players[0];
+  if (dev.opts.god) hero.shield = GOD_SHIELD;
+  if (dev.opts.maxPower) {
+    hero.range = MAX_RANGE;
+    hero.maxCharges = MAX_CHARGES;
+    hero.boots = MAX_BOOTS;
+  }
+}
+
+/** Runs one tick with these commands, then its effects, sounds and results. */
+function runTick(cmds: PlayerCommand[]) {
+  recorder.before(state, cmds);
+  view.snapshot(state);
+  step(state, cmds);
+  recorder.after(state);
+  for (const e of state.events) {
+    view.effect(e, state);
+    onEvent(e);
+  }
+  audio.events(state, localId);
+}
+
+function localCommands(): PlayerCommand[] {
+  const local = readLocalCommand(keys, touch);
+  return bot ? [local, bot.think(state)] : [local];
+}
+
+function onEvent(e: SimEvent) {
+  switch (e.type) {
+    case 'armor_hit':
+      announcer.flash('Oxygen Vest absorbed the hit!');
+      break;
+    case 'gate_moved':
+      announcer.flash(e.hidden ? 'The Warp Gate moved under a rock!' : 'The Warp Gate moved!');
+      break;
+    case 'level_clear':
+      levelClear();
+      break;
+    case 'game_over':
+      screens.showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again', () => { level = 1; beginLevel(false); });
+      break;
+    case 'round_over':
+      roundOver(e.winner);
+      break;
+  }
+}
+
+// --- Battle rounds (offline and online) ---------------------------------------------------
+function playerKeys(): string[] {
+  return net && mode === 'online' ? net.keys : ['p0', 'p1'];
+}
+
+function playerName(id: number): string {
+  if (id === localId) return 'You';
+  return net && mode === 'online' ? net.names[id] : 'The bot';
+}
+
+function winsNeeded(): number {
+  return net && mode === 'online' ? net.winsNeeded : BATTLE_WINS;
+}
+
+/** A round ended: count the win, play the cinematic, then the score or the match result. */
 function roundOver(winner: number) {
-  if (winner >= 0) score[winner]++;
-  const title = winner === 0 ? 'You win the round!' : winner === 1 ? 'The bot wins the round' : 'Draw';
-  const tally = `You ${score[0]} – ${score[1]} Bot`;
-  if (Math.max(...score) >= ROUNDS_TO_WIN) {
-    const won = score[0] > score[1];
-    screens.showBanner(won ? 'You win the match!' : 'The bot wins the match', tally, 'Play again', () => startMode('battle'));
+  if (winner >= 0) score.win(playerKeys()[winner], winsNeeded());
+  lastWinner = winner;
+  const title = winner < 0 ? 'Draw!' : winner === localId ? 'You win!' : `${playerName(winner)} wins!`;
+  cine.start(state, {
+    winner,
+    kicker: `Round ${score.round}`,
+    title,
+    color: winner >= 0 ? colors()[winner] : 0xffffff,
+    colors: colors(),
+    local: mode === 'online' ? localId : -1,
+  }, afterRound);
+}
+
+function afterRound() {
+  if (score.over) showMatchWinner();
+  else showRoundScore();
+}
+
+function tally(): string {
+  return playerKeys().map((key, id) => `${playerName(id)} ${score.of(key)}`).join(' · ');
+}
+
+function showRoundScore() {
+  const title = lastWinner < 0 ? 'Draw' : lastWinner === localId ? 'You win the round!' : `${playerName(lastWinner)} wins the round`;
+  const goal = `First to ${winsNeeded()} wins`;
+  if (mode !== 'online') {
+    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => { score.nextRound(false); newGame(); });
+  } else if (online.total < 2) {
+    screens.showBanner(title, `${tally()} · Everyone else left.`, 'Back to room', () => { screens.hideBanner(); online.showLobby(); });
+  } else if (online.isHost) {
+    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => online.startRound());
   } else {
-    screens.showBanner(title, tally, 'Next round', () => { round++; newGame(); });
+    screens.showBanner(title, `${tally()} · ${goal}`, 'Waiting for host…', () => {});
+  }
+}
+
+function showMatchWinner() {
+  const keyList = playerKeys();
+  const cols = colors();
+  const standings: Standing[] = keyList.map((key, id) => ({
+    name: net && mode === 'online' ? net.names[id] : id === 0 ? 'You' : 'Bot',
+    color: cols[id],
+    wins: score.of(key),
+    you: id === localId,
+  }));
+  const winner = standings.find((s) => s.wins >= winsNeeded()) ?? null;
+  if (mode === 'online') {
+    congrats.show(winner, standings, [{ label: 'Back to room', primary: true, onClick: () => { congrats.hide(); online.showLobby(); } }]);
+  } else {
+    congrats.show(winner, standings, [
+      { label: 'Play again', primary: true, onClick: () => { congrats.hide(); startMode('battle'); } },
+      { label: 'Menu', onClick: openMenu },
+    ]);
   }
 }
 
@@ -301,7 +289,9 @@ function roundOver(winner: number) {
 online.onRoundStart = (s: RoundStart) => {
   // A browser a few ticks behind finishes the old round first, so every score agrees.
   while (mode === 'online' && net && state.status === 'playing' && net.lockstep.ready()) onlineStep();
-  netScore.nextRound(mode !== 'online');
+  cine.stop();
+  congrats.hide();
+  score.nextRound(mode !== 'online');
   mode = 'online';
   net = new OnlineRound(s);
   localId = s.local;
@@ -311,13 +301,15 @@ online.onRoundStart = (s: RoundStart) => {
 online.onInput = (slot, r, tick, c) => net?.receive(slot, r, tick, c);
 online.onLeft = (slot, lastTick) => {
   net?.playerLeft(slot, lastTick);
-  if (mode === 'online' && screens.bannerOpen) onlineBanner(); // the host may have changed
+  if (mode === 'online' && screens.bannerOpen) showRoundScore(); // the host may have changed
 };
 online.onHash = (r, tick, h) => {
   if (net?.otherHash(r, tick, h)) desync(tick);
 };
 online.onExit = (reason) => {
   net = null;
+  cine.stop();
+  congrats.hide();
   if (mode === 'online') mode = 'battle';
   localId = 0;
   if (!reason) {
@@ -331,10 +323,7 @@ function onlineStep(): boolean {
   if (!net || state.status !== 'playing') return true;
   const cmds = net.commands(readLocalCommand(keys, touch), state);
   if (!cmds) return false;
-  snapshot();
-  step(state, cmds);
-  for (const e of state.events) onEvent(e);
-  audio.events(state, localId);
+  runTick(cmds);
   if (state.tick % 60 === 0) {
     const h = hashState(state);
     online.sendHash(net.r, state.tick, h);
@@ -359,73 +348,22 @@ function sendInputs(now: number) {
 
 function desync(tick: number) {
   console.error(`Online desync at tick ${tick}`);
-  flash('Out of sync with the other players!');
+  announcer.flash('Out of sync with the other players!');
 }
 
-function onlineRoundOver(winner: number) {
-  if (net && winner >= 0) netScore.win(net.keys[winner]);
-  lastWinner = winner;
-  onlineBanner();
-}
-
-function onlineBanner() {
-  if (!net) return;
-  const n = net;
-  const name = (id: number) => (id === localId ? 'You' : n.names[id]);
-  const unit = netScore.over ? 'match' : 'round';
-  const title = lastWinner < 0 ? 'Draw' : lastWinner === localId ? `You win the ${unit}!` : `${name(lastWinner)} wins the ${unit}`;
-  const tally = n.keys.map((key, id) => `${name(id)} ${netScore.of(key)}`).join(' · ');
-  if (online.total < 2) {
-    screens.showBanner(title, `${tally} · Everyone else left.`, 'Back to lobby', () => { screens.hideBanner(); online.showLobby(); });
-  } else if (online.isHost) {
-    screens.showBanner(title, tally, netScore.over ? 'Play again' : 'Next round', () => online.startRound());
-  } else {
-    screens.showBanner(title, tally, 'Waiting for host…', () => {});
-  }
-}
-
-// --- Event warnings ------------------------------------------------------------------
-const alertEl = $('alert');
-let flashUntil = 0;
-let flashText = '';
-/** Shows a short message in the warning pill for 2 s. */
-function flash(text: string) {
-  flashText = text;
-  flashUntil = performance.now() + 2000;
-}
-function updateAlert(now: number) {
-  const secs = (ticks: number) => Math.ceil(ticks / 60);
-  const parts: string[] = [];
-  if (state.boss && bossWarning(state)) parts.push(`Boss wave ${state.boss.wave + 1} in ${secs(state.boss.timer)}`);
-  if (state.event !== LevelEvent.None && state.eventWarning > 0) {
-    if (!state.boss) parts.push(`${state.event === LevelEvent.MazeShift ? 'Maze Shift' : 'Blackout'} in ${secs(state.eventWarning)}`);
-  } else if (state.event === LevelEvent.Blackout && state.eventActive > 0) {
-    parts.push(`Blackout · ${secs(state.eventActive)}s`);
-  }
-  // Battle: the arena collapse when the clock runs out.
-  if (state.mode === 'battle' && state.status === 'playing') {
-    if (state.timeLeft > 0 && state.timeLeft <= COLLAPSE_WARNING_TICKS) parts.push(`Arena collapses in ${secs(state.timeLeft)}`);
-    else if (state.timeLeft === 0) parts.push('Arena collapsing!');
-  }
-  // A short wait is normal lag; after half a second, say who we're waiting for.
-  if (net && waitingSince && now - waitingSince > 500) {
-    const who = net.waitingFor().join(', ');
-    if (who) parts.push(`Waiting for ${who}…`);
-  }
-  if (parts.length === 0 && now < flashUntil) parts.push(flashText);
-  const text = parts.join(' · ');
-  alertEl.hidden = text === '' || state.status !== 'playing' || screens.menuOpen || screens.storyOpen;
-  if (alertEl.textContent !== text) alertEl.textContent = text;
-}
-
+// --- Keys, taps, layout -------------------------------------------------------------
 window.addEventListener('keydown', (e) => {
   if (screens.menuOpen || online.screenOpen) return;
+  const confirm = e.code === 'Enter' || e.code === 'Space';
   if (e.code === 'Escape') openMenu();
-  else if ((e.code === 'Enter' || e.code === 'Space') && screens.storyOpen) screens.pressStory();
-  else if ((e.code === 'Enter' || e.code === 'Space') && screens.bannerOpen) screens.pressPrimary();
-  else if ((e.code === 'Enter' || e.code === 'Space') && cardUntil > 0) skipCard();
+  else if (confirm && cine.active) cine.skip();
+  else if (confirm && congrats.open) congrats.pressPrimary();
+  else if (confirm && screens.storyOpen) screens.pressStory();
+  else if (confirm && screens.bannerOpen) screens.pressPrimary();
+  else if (confirm && cardUntil > 0) skipCard();
 });
 $('level-card').addEventListener('click', skipCard);
+$('game').addEventListener('pointerdown', () => cine.skip());
 
 /** Tap or Enter dismisses the briefing early. */
 function skipCard() {
@@ -433,7 +371,6 @@ function skipCard() {
   screens.hideLevelCard();
 }
 
-// --- Layout --------------------------------------------------------------------
 /** Gutter width for the touch controls: about 16% of the width, 110-170 px. */
 function layout() {
   const w = window.innerWidth;
@@ -442,8 +379,7 @@ function layout() {
   const hudHeight = 44;
   document.documentElement.style.setProperty('--gutter', `${gutter}px`);
   document.documentElement.style.setProperty('--hud', `${hudHeight}px`);
-  renderer.setSize(w, h, false);
-  rig.fit(w, h, gutter, gutter, hudHeight + 2, 4);
+  view.layout(w, h, gutter, hudHeight);
 }
 window.addEventListener('resize', layout);
 layout();
@@ -454,12 +390,13 @@ newGame();
 openMenu();
 let acc = 0;
 let last = performance.now();
-renderer.setAnimationLoop((now: number) => {
+view.renderer.setAnimationLoop((now: number) => {
   const dt = Math.min(now - last, 250);
   last = now;
   acc += dt;
   if (cardUntil > 0 && now >= cardUntil) skipCard();
-  const paused = screens.menuOpen || screens.storyOpen || cardUntil > 0 || online.screenOpen || (mode === 'online' && !net);
+  const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open;
+  const paused = overlay || cardUntil > 0 || cine.active || (mode === 'online' && !net);
   let steps = 0;
   while (acc >= TICK_MS && steps < 5) {
     if (!paused && mode === 'online') {
@@ -468,10 +405,7 @@ renderer.setAnimationLoop((now: number) => {
         break;
       }
     } else if (!paused) {
-      snapshot();
-      step(state, commands());
-      for (const e of state.events) onEvent(e);
-      audio.events(state, localId);
+      runTick(localCommands());
     }
     acc -= TICK_MS;
     steps++;
@@ -479,29 +413,19 @@ renderer.setAnimationLoop((now: number) => {
   if (steps === 5 && mode !== 'online') acc = 0; // too far behind (tab was hidden): drop the backlog
   sendInputs(now);
   const seconds = dt / 1000;
-  const time = now / 1000;
-  const alpha = paused ? 1 : acc / TICK_MS;
-  state.players.forEach((p, i) => heroes[i].update(prevPlayers[i] ?? p, p, alpha, seconds));
-  charges.sync(state);
-  beams.sync(state);
-  items.sync(state, time);
-  gate.sync(state, time);
-  martians.sync(state, prevMartians, alpha, time);
-  portals.sync(state, time);
-  boss.sync(state, time);
-  crossPreview.sync(state, time);
-  shiftPreview.sync(state, time);
-  lighting.sync(state, state.players.map((_, i) => heroes[i].group), seconds);
-  board.update(seconds);
-  updateAlert(now);
+  // During the cinematic the view shows its replay (or the final moment).
+  const alpha = cine.active ? cine.update(seconds) : paused ? 1 : acc / TICK_MS;
+  view.render(cine.state ?? state, alpha, seconds, now / 1000);
+  const waiting = net && waitingSince && now - waitingSince > 500 ? net.waitingFor().join(', ') : '';
+  announcer.update(state, now, waiting, overlay || cine.active);
   audio.update(state, screens.menuOpen || online.screenOpen || screens.storyOpen);
-  debris.update(seconds);
-  rig.update(seconds);
-  const keys = net?.keys ?? [];
-  const mine = netScore.of(keys[localId] ?? '');
-  const best = Math.max(0, ...keys.filter((_, i) => i !== localId).map((k) => netScore.of(k)));
-  hud.update(state, { mode, level, sector: levelSpec(level).sector, round: mode === 'online' ? netScore.round : round, score, local: localId, online: { mine, best } });
-  renderer.render(scene, rig.camera);
+  const keyList = playerKeys();
+  const mine = score.of(keyList[localId] ?? '');
+  const best = Math.max(0, ...keyList.filter((_, i) => i !== localId).map((k) => score.of(k)));
+  hud.update(state, {
+    mode, level, sector: levelSpec(level).sector, round: score.round,
+    score: [score.of('p0'), score.of('p1')], local: localId, online: { mine, best },
+  });
 });
 
 // Dev-only console hooks for debugging (`spaceblast.state`, `spaceblast.startLevel(n)`)
@@ -514,6 +438,7 @@ if (import.meta.env.DEV) {
       /** Jump straight to a story level, e.g. spaceblast.startLevel(15). */
       startLevel(n: number, story = false) { mode = 'survival'; level = n; screens.hideMenu(); beginLevel(story); },
       dev,
+      cine,
     },
   });
 }

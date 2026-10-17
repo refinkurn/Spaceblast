@@ -8,10 +8,14 @@ and share the 4-letter code; the others type their name and the code and tap
   collapses: blocks fall from the edge inwards and crush anyone underneath.
 - **Scenarios**: Maze Shift and/or Blackout, at random moments (with the usual
   3 s warning).
-- **Bots**: fill empty seats. Players + bots = 4 at most; the host can even
-  play alone against bots.
+- **Match**: Best of 3 (first to 2 round wins) or First to 3 wins.
+- **Bots**: fill empty seats, Easy / Normal / Hard. Players + bots = 4 at
+  most; the host can even play alone against bots.
 
-First to 3 round wins takes the match.
+After each round a short cinematic replays the last knock-out in slow motion
+and shows the winner. When someone wins the match everyone sees the
+congratulations screen, then "Back to room" returns to the lobby for the next
+match. Blackouts never overlap the arena collapse.
 
 ## How it works (short version)
 

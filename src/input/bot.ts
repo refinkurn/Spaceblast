@@ -20,11 +20,31 @@ interface Path {
 }
 
 /**
- * How long the bot waits between charges, in ticks: a base plus a random part.
- * Normal is today's battle bot (about 4/5); Hard is the level 20 Renegade Pilot.
+ * Difficulty: Easy for beginners, Normal a fair fight, Hard about 4/5 (and the
+ * level 20 Renegade Pilot).
  */
-export type BotSkill = 'normal' | 'hard';
-const COOLDOWN: Record<BotSkill, [number, number]> = { normal: [20, 40], hard: [6, 14] };
+export type BotSkill = 'easy' | 'normal' | 'hard';
+export const BOT_SKILLS: readonly BotSkill[] = ['easy', 'normal', 'hard'];
+
+interface SkillProfile {
+  /** Ticks between charges: a base plus a random part. */
+  cooldown: [number, number];
+  /** Starts escaping only once a blast is this close (ticks); slower to react. */
+  reactAt: number;
+  /** Chance (in %) per tick to dawdle instead of moving on when safe. */
+  dawdle: number;
+  /** Places charges to hit astronauts and walks after them. */
+  hunts: boolean;
+}
+
+const SKILLS: Record<BotSkill, SkillProfile> = {
+  // Slow to react, rarely bombs, never hunts you: blasts rocks and wanders.
+  easy: { cooldown: [80, 80], reactAt: 75, dawdle: 30, hunts: false },
+  // A fair fight: slower to bomb and a little hesitant.
+  normal: { cooldown: [45, 45], reactAt: 9999, dawdle: 12, hunts: true },
+  // The original battle bot's play with quick charges (also the Renegade Pilot).
+  hard: { cooldown: [6, 14], reactAt: 9999, dawdle: 0, hunts: true },
+};
 
 export class Bot {
   private rng: RngState;
@@ -50,8 +70,9 @@ export class Bot {
     // movement rules would glide on to the next tile, maybe into a blast.
     const stay = { ...none, dir: toCentre(me) };
 
-    // 1) Escape if any tile the body overlaps is threatened.
-    if (overlapped(me).some(([x, y]) => danger[y * w + x] !== SAFE)) {
+    const skill = SKILLS[this.skill];
+    // 1) Escape if any tile the body overlaps is threatened (an easy bot only notices late).
+    if (overlapped(me).some(([x, y]) => danger[y * w + x] !== SAFE && danger[y * w + x] <= skill.reactAt)) {
       const out = search(state, me, danger, perTile, (x, y) => danger[y * w + x] === SAFE, true);
       return out && out.length > 0 ? { ...none, dir: out.first } : stay;
     }
@@ -60,28 +81,30 @@ export class Bot {
     // Release the button for a tick after pressing, so the next press counts.
     if (this.wasPlacing) {
       this.wasPlacing = false;
-    } else if (this.cooldown === 0 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, tx, ty)) {
+    } else if (this.cooldown === 0 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, tx, ty, skill.hunts)) {
       const after = dangerMap(state, { tx, ty, range: me.range });
       const out = search(state, me, after, perTile, (x, y) => after[y * w + x] === SAFE, true);
-      if (out && out.length * perTile < FUSE_TICKS - 30) {
-        const [base, spread] = COOLDOWN[this.skill];
+      // Only if the way out is short enough for this bot's reaction time.
+      if (out && out.length * perTile < Math.min(FUSE_TICKS - 30, skill.reactAt - 15)) {
+        const [base, spread] = skill.cooldown;
         this.cooldown = base + nextInt(this.rng, spread);
         this.wasPlacing = true;
         return { ...stay, place: true };
       }
     }
 
-    // 3) Go somewhere useful without walking into danger.
+    // 3) Go somewhere useful without walking into danger (an easy bot dawdles now and then).
+    if (skill.dawdle > 0 && nextInt(this.rng, 100) < skill.dawdle) return stay;
     // The nearest opponent (battles can have up to 4 astronauts).
     const foe = state.players
       .filter((p) => p.id !== this.id && p.alive)
       .sort((a, b) => Math.abs(a.x - me.x) + Math.abs(a.y - me.y) - (Math.abs(b.x - me.x) + Math.abs(b.y - me.y)) || a.id - b.id)[0];
     const goal = (x: number, y: number) =>
       itemAt(state, x, y) !== Item.None ||
-      (this.cooldown < 10 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, x, y));
+      (this.cooldown < 10 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, x, y, skill.hunts));
     const path = search(state, me, danger, perTile, goal, false);
     if (path && path.length > 0) return { ...none, dir: path.first };
-    if (foe) {
+    if (foe && skill.hunts) {
       const [fx, fy] = playerTile(foe);
       const chase = search(state, me, danger, perTile, (x, y) => Math.abs(x - fx) + Math.abs(y - fy) <= 1, false);
       if (chase && chase.length > 0) return { ...none, dir: chase.first };
@@ -93,12 +116,13 @@ export class Bot {
     return state.charges.filter((c) => c.owner === this.id).length;
   }
 
-  /** Would a charge on (x, y) hit a rock or a rival astronaut? */
-  private worthPlacing(state: GameState, me: Player, x: number, y: number): boolean {
+  /** Would a charge on (x, y) hit a rock (or, when hunting, a rival astronaut)? */
+  private worthPlacing(state: GameState, me: Player, x: number, y: number, hunts: boolean): boolean {
     if (state.charges.some((c) => c.tx === x && c.ty === y)) return false;
     let hit = false;
     forEachBeamTile(state, x, y, me.range, (bx, by, cell) => {
       if (cell === Cell.Rock) hit = true;
+      if (!hunts) return;
       for (const p of state.players) {
         if (p.id === me.id || !p.alive) continue;
         const [px, py] = playerTile(p);

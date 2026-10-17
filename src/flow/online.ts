@@ -105,6 +105,8 @@ export class OnlineRoom {
 
   /** Shows the name + create / join screen. */
   open(): void {
+    // Status and Back sit under the choices here, and in the lobby's left column there.
+    this.screen.querySelector('.online-card')!.append(this.status, $('online-back'));
     this.screen.hidden = false;
     $('online-choose').hidden = false;
     $('online-lobby').hidden = true;
@@ -114,6 +116,7 @@ export class OnlineRoom {
 
   /** Back to the lobby (the connection stays open). */
   showLobby(note = ''): void {
+    $('lobby-left').append(this.status, $('online-back'));
     this.screen.hidden = false;
     $('online-choose').hidden = true;
     $('online-lobby').hidden = false;
@@ -277,6 +280,14 @@ export class OnlineRoom {
     }
     $('set-maze').addEventListener('click', () => this.changeSettings({ maze: !this.settings.maze }));
     $('set-blackout').addEventListener('click', () => this.changeSettings({ blackout: !this.settings.blackout }));
+    for (const el of $('set-match').children) {
+      const b = el as HTMLButtonElement;
+      b.addEventListener('click', () => this.changeSettings({ match: b.dataset.match as RoomSettings['match'] }));
+    }
+    for (const el of $('set-bot-level').children) {
+      const b = el as HTMLButtonElement;
+      b.addEventListener('click', () => this.changeSettings({ botLevel: b.dataset.level as RoomSettings['botLevel'] }));
+    }
     $('bots-less').addEventListener('click', () => this.changeSettings({ bots: this.settings.bots - 1 }));
     $('bots-more').addEventListener('click', () => this.changeSettings({ bots: this.settings.bots + 1 }));
   }
@@ -323,6 +334,16 @@ export class OnlineRoom {
       $(id).setAttribute('aria-pressed', String(on));
       $<HTMLButtonElement>(id).disabled = !host;
     };
+    for (const el of $('set-match').children) {
+      const b = el as HTMLButtonElement;
+      b.setAttribute('aria-pressed', String(b.dataset.match === this.settings.match));
+      b.disabled = !host;
+    }
+    for (const el of $('set-bot-level').children) {
+      const b = el as HTMLButtonElement;
+      b.setAttribute('aria-pressed', String(b.dataset.level === this.settings.botLevel));
+      b.disabled = !host || this.settings.bots === 0;
+    }
     toggle('set-maze', this.settings.maze);
     toggle('set-blackout', this.settings.blackout);
     $('bots-count').textContent = String(this.settings.bots);

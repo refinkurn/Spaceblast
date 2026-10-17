@@ -1,6 +1,6 @@
 import { Bot } from '../input/bot';
 import { Lockstep } from '../net/lockstep';
-import { PLAYER_COLORS, type Profile, type RoomSettings } from '../net/protocol';
+import { PLAYER_COLORS, WINS_NEEDED, type Profile, type RoomSettings } from '../net/protocol';
 import type { PlayerCommand } from '../sim/command';
 import { NO_EVENTS } from '../sim/levels';
 import type { GameOptions, GameState } from '../sim/state';
@@ -9,9 +9,6 @@ import { botColorsFor, type RoundStart } from './online';
 // One online round: who plays (humans from the room, then bots), the lockstep
 // input sync, and the desync check. Every browser builds exactly the same
 // round from the server's start message.
-
-/** Battle: first to this many round wins takes the match. */
-export const ROUNDS_TO_WIN = 3;
 
 const hex = (css: string) => parseInt(css.slice(1), 16);
 
@@ -48,8 +45,13 @@ export class OnlineRound {
       this.names.push(`Bot ${i + 1}`);
       this.colors.push(hex(PLAYER_COLORS[botColors[i]]));
       this.keys.push(`b${i}`);
-      return new Bot(s.players.length + i, s.seed);
+      return new Bot(s.players.length + i, s.seed, s.settings.botLevel);
     });
+  }
+
+  /** Round wins needed to take the match. */
+  get winsNeeded(): number {
+    return WINS_NEEDED[this.settings.match];
   }
 
   get players(): number {
@@ -111,7 +113,7 @@ export class OnlineRound {
   }
 }
 
-/** Round wins across a match, by player key (room slot or bot number). */
+/** Round wins across a match, by player key (room slot or bot number, or index offline). */
 export class MatchScore {
   round = 0;
   over = false;
@@ -127,9 +129,9 @@ export class MatchScore {
     this.round++;
   }
 
-  win(key: string): void {
+  win(key: string, needed: number): void {
     this.wins.set(key, this.of(key) + 1);
-    this.over = this.of(key) >= ROUNDS_TO_WIN;
+    this.over = this.of(key) >= needed;
   }
 
   of(key: string): number {

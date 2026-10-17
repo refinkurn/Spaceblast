@@ -26,6 +26,27 @@
       <button id="place-btn" type="button" aria-label="Place charge">CHARGE</button>
     </div>
     <div id="alert" hidden></div>
+    <div id="cine" class="cine" hidden aria-live="polite">
+      <div class="cine-kicker"></div>
+      <div class="cine-title"></div>
+      <div class="cine-hint">Tap to skip</div>
+    </div>
+    <div id="cine-tag" class="cine-tag" hidden>Replay · slow motion</div>
+    <div id="congrats" hidden>
+      <div id="congrats-confetti" class="confetti" aria-hidden="true"></div>
+      <div class="congrats-card">
+        <svg class="trophy" viewBox="0 0 64 64" aria-hidden="true"><path d="M18 6h28v14a14 14 0 0 1-28 0z"/><path d="M18 10H8v4a10 10 0 0 0 10 10M46 10h10v4a10 10 0 0 1-10 10" fill="none" stroke-width="4"/><path d="M28 34h8v10h-8zM20 50h24v8H20z"/></svg>
+        <div id="congrats-kicker" class="kicker"></div>
+        <div id="congrats-name" class="congrats-name"></div>
+        <div id="congrats-line" class="congrats-line"></div>
+        <ol id="congrats-standings"></ol>
+        <div id="congrats-actions" class="actions"></div>
+      </div>
+    </div>
+    <div id="announce" class="announce" hidden aria-live="assertive">
+      <div id="announce-title" class="announce-title"></div>
+      <div id="announce-count" class="announce-count"></div>
+    </div>
     <div id="banner" hidden>
       <div id="banner-title"></div>
       <div id="banner-text"></div>
@@ -66,6 +87,14 @@
           <span>Battle friends with a room code, 2–4 players</span>
         </button>
       </div>
+      <div class="menu-bot">
+        <span>Battle bot</span>
+        <div id="menu-bot-level" class="segmented">
+          <button type="button" data-level="easy">Easy</button>
+          <button type="button" data-level="normal">Normal</button>
+          <button type="button" data-level="hard">Hard</button>
+        </div>
+      </div>
       <p class="controls">Move: arrows / WASD or drag on the left · Charge: Space / X or the right button</p>
     </div>
     <div id="online" hidden>
@@ -82,7 +111,7 @@
           </div>
         </div>
         <div id="online-lobby" hidden>
-          <div class="lobby-col">
+          <div class="lobby-col" id="lobby-left">
             <div class="online-code-label">Room code</div>
             <div id="online-room" class="online-room"></div>
             <ul id="online-players"></ul>
@@ -103,11 +132,25 @@
               </div>
             </div>
             <div class="setting-row">
+              <span>Match</span>
+              <div id="set-match" class="segmented">
+                <button type="button" data-match="bo3">Best of 3</button>
+                <button type="button" data-match="ft3">First to 3 wins</button>
+              </div>
+            </div>
+            <div class="setting-row">
               <span>Bots</span>
-              <div class="stepper">
-                <button id="bots-less" type="button" aria-label="Fewer bots">−</button>
-                <output id="bots-count">0</output>
-                <button id="bots-more" type="button" aria-label="More bots">+</button>
+              <div class="bots-row">
+                <div class="stepper">
+                  <button id="bots-less" type="button" aria-label="Fewer bots">−</button>
+                  <output id="bots-count">0</output>
+                  <button id="bots-more" type="button" aria-label="More bots">+</button>
+                </div>
+                <div id="set-bot-level" class="segmented">
+                  <button type="button" data-level="easy">Easy</button>
+                  <button type="button" data-level="normal">Normal</button>
+                  <button type="button" data-level="hard">Hard</button>
+                </div>
               </div>
             </div>
             <button id="online-start" type="button" class="primary">Start match</button>
