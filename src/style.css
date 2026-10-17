@@ -302,3 +302,50 @@ html, body {
 @media (orientation: portrait) and (max-width: 900px) {
   #rotate { display: flex; }
 }
+
+/* Developer level select (unlocked with #dev or 5 taps on the title). */
+#dev-toggle {
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-quiet);
+  background: #ffffff0c;
+  border: 1px dashed #ffffff40;
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-height: 32px;
+}
+#dev-toggle[hidden], #dev-panel[hidden] { display: none; }
+#dev-panel {
+  position: absolute;
+  inset: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  overflow: auto;
+  background: #14161df5;
+  border: 1px solid #5ad1ff55;
+  border-radius: 12px;
+}
+#dev-panel .dev-head { display: flex; flex-direction: column; gap: 2px; }
+#dev-panel .dev-head span { font-size: 12px; color: var(--ink-quiet); }
+#dev-panel .dev-levels { display: grid; grid-template-columns: repeat(5, 48px); gap: 6px; }
+#dev-panel button {
+  font: inherit;
+  color: var(--ink);
+  background: #ffffff12;
+  border: 1px solid #ffffff30;
+  border-radius: 8px;
+  min-height: 40px;
+}
+#dev-panel .dev-levels button.boss { border-color: #ff6b5a; color: #ffb3aa; }
+#dev-panel .dev-levels button.duel { border-color: #ffd25a; color: #ffe7a8; }
+#dev-panel .dev-levels button:hover { background: #5ad1ff22; }
+#dev-panel .dev-toggles { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 14px; }
+#dev-panel .dev-close { padding: 0 18px; }

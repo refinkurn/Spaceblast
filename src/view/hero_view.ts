@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { DIR_DX, DIR_DY } from '../sim/constants';
 import type { Player } from '../sim/state';
 import { toWorld } from './coords';
+import { GOD_SHIELD } from '../flow/dev';
 
 /** Placeholder astronaut: a suit sphere, a glass helmet and a "nose" for facing. */
 export class HeroView {
@@ -39,7 +40,8 @@ export class HeroView {
   update(prev: { x: number; y: number }, p: Player, alpha: number, dt: number): void {
     this.group.visible = p.alive;
     // Shield after a hit or a respawn: blink. Oxygen Vest armor: a bubble while any is left.
-    this.body.visible = p.shield === 0 || Math.floor(p.shield / 6) % 2 === 0;
+    // (A huge shield is the dev god mode: no blinking.)
+    this.body.visible = p.shield === 0 || p.shield > GOD_SHIELD / 2 || Math.floor(p.shield / 6) % 2 === 0;
     this.bubble.visible = p.armor > 0;
     toWorld(prev.x, prev.y, 0, this.from);
     toWorld(p.x, p.y, 0, this.to);

@@ -123,9 +123,21 @@ export const BOSS_OWNER = 255;
 export const BOSS_TILE: readonly [number, number] = [6, 5];
 /** Gooplings spouted per boss wave. */
 export const BOSS_SPOUT = 3;
-/** Seconds between waves; the boss dies when the last interval runs out. */
-export const BOSS_WAVES_SECONDS: Record<number, readonly number[]> = {
-  [BossKind.GooplingHive]: [60, 60, 60, 60],
-  [BossKind.DarknessHive]: [60, 30, 15],
-  [BossKind.MazeMaster]: [50, 35, 20, 10],
+/** Every boss fires 3 waves; each wait is half the one before it. */
+export const BOSS_WAVES = 3;
+/** First wait per boss, in seconds; later bosses start faster. */
+export const BOSS_FIRST_WAIT_SECONDS: Record<number, number> = {
+  [BossKind.GooplingHive]: 60,
+  [BossKind.DarknessHive]: 48,
+  [BossKind.MazeMaster]: 40,
 };
+/**
+ * Seconds to wait after each wave (the boss dies when the last one runs out):
+ * halving each time, e.g. 60 -> 30 -> 15.
+ */
+export const BOSS_WAVES_SECONDS: Record<number, readonly number[]> = Object.fromEntries(
+  Object.entries(BOSS_FIRST_WAIT_SECONDS).map(([kind, first]) => [
+    kind,
+    Array.from({ length: BOSS_WAVES }, (_, i) => first / 2 ** i),
+  ]),
+);

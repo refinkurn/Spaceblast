@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { Hud } from './flow/hud';
 import { Screens, type MenuChoice } from './flow/screens';
 import { BOSS_NAMES, ENDING, SECTORS, briefing } from './flow/story';
@@ -7,7 +8,7 @@ import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
 import { bossWarning } from './sim/boss';
-import { GRID_H, GRID_W, Kind, LevelEvent, TICK_MS } from './sim/constants';
+import { GRID_H, GRID_W, Kind, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, LevelEvent, TICK_MS } from './sim/constants';
 import type { PlayerCommand } from './sim/command';
 import { LEVEL_COUNT, isSectorStart, levelRoster, levelSpec } from './sim/levels';
 import { step } from './sim/sim';
@@ -85,10 +86,24 @@ const prevMartians = new Map<number, { x: number; y: number }>();
 
 const screens = new Screens(startMode, openMenu);
 const hud = new Hud();
+/** Set when a run was started from the developer level select; enables its cheats. */
+let devRun = false;
+const dev = new DevPanel(startAtLevel);
+
+/** Developer level select: jump straight to a Story level. */
+function startAtLevel(n: number) {
+  mode = 'survival';
+  level = n;
+  devRun = true;
+  dev.hide();
+  screens.hideMenu();
+  beginLevel(dev.opts.story);
+}
 
 function startMode(m: MenuChoice) {
   mode = m;
   level = 1;
+  devRun = false;
   round = 1;
   score = [0, 0];
   seenKinds.clear();
@@ -128,6 +143,7 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   state = mode === 'battle'
     ? createGame(seed, { mode: 'battle' })
     : createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival });
+  if (devRun && mode === 'survival') applyCheats();
   bot = mode === 'battle' ? new Bot(1, seed) : spec.rival ? new Bot(1, seed, 'hard') : null;
   snapshot();
   board.build(state);
@@ -138,6 +154,16 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   screens.hideLevelCard();
   cardUntil = 0;
   heroes.forEach((h, i) => (h.group.visible = i < state.players.length));
+}
+
+function applyCheats() {
+  const hero = state.players[0];
+  if (dev.opts.god) hero.shield = GOD_SHIELD;
+  if (dev.opts.maxPower) {
+    hero.range = MAX_RANGE;
+    hero.maxCharges = MAX_CHARGES;
+    hero.boots = MAX_BOOTS;
+  }
 }
 
 /** Positions before a tick, so the view can interpolate between ticks. */
@@ -342,6 +368,7 @@ if (import.meta.env.DEV) {
       get state() { return state; },
       /** Jump straight to a story level, e.g. spaceblast.startLevel(15). */
       startLevel(n: number, story = false) { mode = 'survival'; level = n; screens.hideMenu(); beginLevel(story); },
+      dev,
     },
   });
 }

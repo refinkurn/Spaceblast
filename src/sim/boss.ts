@@ -10,10 +10,11 @@ import { playerTile, type Boss, type GameState } from './state';
 // never be hurt, and fires waves on a timer; it dies after its last interval,
 // so outlasting it is the only way to win. Each wave is announced 3 s ahead.
 //
-//   Goopling Hive (5):   3 Gooplings every 60 s, 4 waves (about 4 minutes)
-//   Darkness Hive (10):  3 Gooplings + a Blackout; 60 s -> 30 s -> 15 s
+// Every boss fires 3 waves, and each wait is half the one before it:
+//   Goopling Hive (5):   3 Gooplings per wave; 60 -> 30 -> 15 s
+//   Darkness Hive (10):  3 Gooplings + a Blackout; 48 -> 24 -> 12 s
 //   Maze Master (15):    3 Gooplings + Maze Shift + a cross blast along the
-//                        boss's whole row and column; 50 -> 35 -> 20 -> 10 s
+//                        boss's whole row and column; 40 -> 20 -> 10 s
 
 export function bossIntervals(kind: BossKind): number[] {
   return (BOSS_WAVES_SECONDS[kind] ?? []).map((s) => s * 60);
