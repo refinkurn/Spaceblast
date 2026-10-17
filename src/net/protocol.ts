@@ -20,8 +20,15 @@ export type ClientMsg =
   | { t: 'start'; seed: number }
   /** Packed commands for ticks `tick`, `tick + 1`, ... of round `r`. */
   | { t: 'in'; r: number; tick: number; c: number[] }
+  /** Sent every second while this browser's game is running (inputs also count). */
+  | { t: 'alive' }
   /** State hash after `tick` of round `r`, to spot desyncs. */
   | { t: 'hash'; r: number; tick: number; h: number };
+
+/** WebSocket close code for a player dropped for being away (app in background). */
+export const CLOSE_AWAY = 4001;
+/** A player silent this long while others play is dropped from the room. */
+export const AWAY_MS = 8000;
 
 export type ErrorReason = 'taken' | 'not_found' | 'full' | 'bad_code';
 

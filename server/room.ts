@@ -1,4 +1,4 @@
-import { MAX_PLAYERS, isPacked, type ClientMsg, type ErrorReason, type ServerMsg } from '../src/net/protocol';
+import { AWAY_MS, CLOSE_AWAY, MAX_PLAYERS, isPacked, type ClientMsg, type ErrorReason, type ServerMsg } from '../src/net/protocol';
 
 // One online room. Used by both the local dev relay (server/dev_relay.ts) and
 // the Cloudflare Worker (server/worker.ts). It knows nothing about the game:
@@ -20,6 +20,8 @@ export class Room {
   private lastTick = new Map<number, number>();
   /** Round counter, so late inputs from the previous round are dropped. */
   private r = 0;
+  /** When each player last showed their game was running. */
+  private seen = new Map<number, number>();
 
   get empty(): boolean {
     return this.peers.size === 0;
@@ -44,18 +46,24 @@ export class Room {
     return slot;
   }
 
-  message(slot: number, raw: string): void {
+  message(slot: number, raw: string, now = Date.now()): void {
     let msg: ClientMsg;
     try {
       msg = JSON.parse(raw);
     } catch {
       return;
     }
+    if (msg.t === 'alive' || msg.t === 'in') {
+      this.seen.set(slot, now);
+      this.dropAway(now);
+    }
     if (msg.t === 'start') {
       if (slot !== this.host || this.peers.size < 2 || !Number.isInteger(msg.seed)) return;
       this.round = this.slots();
       this.lastTick.clear();
       this.r++;
+      this.seen.clear();
+      for (const s of this.round) this.seen.set(s, now);
       this.broadcast({ t: 'start', r: this.r, seed: msg.seed >>> 0, slots: this.round });
     } else if (msg.t === 'in') {
       if (msg.r !== this.r || !this.round?.includes(slot) || !Number.isInteger(msg.tick) || msg.tick < 0) return;
@@ -67,8 +75,25 @@ export class Room {
     }
   }
 
+  /**
+   * A phone that leaves the app stops sending, which freezes the round for
+   * everyone (lockstep waits for its input). Drop a player who has been silent
+   * for AWAY_MS while someone else is still playing.
+   */
+  private dropAway(now: number): void {
+    if (!this.round) return;
+    for (const slot of this.round) {
+      const peer = this.peers.get(slot);
+      const last = this.seen.get(slot);
+      if (!peer || last === undefined || now - last < AWAY_MS) continue;
+      peer.close(CLOSE_AWAY, 'away');
+      this.leave(slot);
+    }
+  }
+
   leave(slot: number): void {
     if (!this.peers.delete(slot)) return;
+    this.seen.delete(slot);
     if (this.host === slot) this.host = this.empty ? -1 : Math.min(...this.peers.keys());
     const lastTick = this.lastTick.get(slot) ?? -1;
     this.lastTick.delete(slot);

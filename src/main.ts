@@ -103,6 +103,9 @@ let heroOf = [0, 1, 2, 3];
 const myHashes = new Map<number, number>();
 const pendingHashes = new Map<number, number[]>();
 let lastWinner = -1;
+/** When the game last told the room it is running, and since when it has been waiting for input. */
+let lastAlive = 0;
+let waitingSince = 0;
 /** Set when a run was started from the developer level select; enables its cheats. */
 let devRun = false;
 const dev = new DevPanel(startAtLevel);
@@ -180,7 +183,10 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   screens.hideBanner();
   screens.hideLevelCard();
   cardUntil = 0;
-  heroes.forEach((h, i) => (h.group.visible = heroOf.slice(0, state.players.length).includes(i)));
+  heroes.forEach((h, i) => {
+    h.group.visible = heroOf.slice(0, state.players.length).includes(i);
+    h.setYou(mode === 'online' && i === heroOf[localId]);
+  });
 }
 
 function applyCheats() {
@@ -353,8 +359,14 @@ function onlineStep(): boolean {
   return true;
 }
 
-function sendInputs() {
+function sendInputs(now: number) {
   if (!lockstep) return;
+  // While the round runs, tell the room we're here (a stalled game sends no inputs).
+  if (state.status === 'playing' && now - lastAlive > 1000) {
+    online.sendAlive();
+    lastAlive = now;
+  }
+  waitingSince = state.status === 'playing' && !lockstep.ready() ? waitingSince || now : 0;
   // Waiting on others (or the round is over): send what we have right away.
   const out = lockstep.takeOutgoing(state.status !== 'playing' || !lockstep.ready());
   if (out) online.sendInput(netRound, out.tick, out.c);
@@ -403,6 +415,11 @@ function updateAlert(now: number) {
     if (!state.boss) parts.push(`${state.event === LevelEvent.MazeShift ? 'Maze Shift' : 'Blackout'} in ${secs(state.eventWarning)}`);
   } else if (state.event === LevelEvent.Blackout && state.eventActive > 0) {
     parts.push(`Blackout · ${secs(state.eventActive)}s`);
+  }
+  // A short wait is normal lag; after half a second, say who we're waiting for.
+  if (lockstep && waitingSince && now - waitingSince > 500) {
+    const who = lockstep.waitingFor().map((id) => `Player ${netSlots[id] + 1}`).join(', ');
+    if (who) parts.push(`Waiting for ${who}…`);
   }
   if (parts.length === 0 && now < flashUntil) parts.push(flashText);
   const text = parts.join(' · ');
@@ -468,7 +485,7 @@ renderer.setAnimationLoop((now: number) => {
     steps++;
   }
   if (steps === 5 && mode !== 'online') acc = 0; // too far behind (tab was hidden): drop the backlog
-  sendInputs();
+  sendInputs(now);
   const seconds = dt / 1000;
   const time = now / 1000;
   const alpha = paused ? 1 : acc / TICK_MS;

@@ -16,6 +16,13 @@ export class HeroView {
     new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false }),
   );
 
+  /** Bobbing arrow over this browser's own astronaut in online matches. */
+  private marker = new THREE.Mesh(
+    new THREE.ConeGeometry(0.28, 0.5, 4),
+    new THREE.MeshBasicMaterial({ color: 0xffe14d }),
+  );
+  private markerTime = 0;
+
   constructor(color = 0x3a7bff) {
     const suit = new THREE.Mesh(
       new THREE.SphereGeometry(0.34, 24, 16),
@@ -33,7 +40,14 @@ export class HeroView {
     this.body.add(suit, helmet, nose);
     this.bubble.position.y = 0.42;
     this.bubble.visible = false;
-    this.group.add(this.body, this.bubble);
+    this.marker.rotation.x = Math.PI; // point down at the astronaut
+    this.marker.visible = false;
+    this.group.add(this.body, this.bubble, this.marker);
+  }
+
+  /** Shows the "this is you" arrow. */
+  setYou(on: boolean): void {
+    this.marker.visible = on;
   }
 
   /** Places the hero between the previous and current tick (alpha in [0, 1]). */
@@ -43,6 +57,10 @@ export class HeroView {
     // (A huge shield is the dev god mode: no blinking.)
     this.body.visible = p.shield === 0 || p.shield > GOD_SHIELD / 2 || Math.floor(p.shield / 6) % 2 === 0;
     this.bubble.visible = p.armor > 0;
+    if (this.marker.visible) {
+      this.markerTime += dt;
+      this.marker.position.y = 1.45 + Math.sin(this.markerTime * 4) * 0.1;
+    }
     toWorld(prev.x, prev.y, 0, this.from);
     toWorld(p.x, p.y, 0, this.to);
     this.group.position.lerpVectors(this.from, this.to, alpha);

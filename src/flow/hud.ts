@@ -51,7 +51,8 @@ export class Hud {
 
   update(state: GameState, info: HudInfo): void {
     const p = state.players[info.local] ?? state.players[0];
-    const hearts = Math.max(START_LIVES, p.lives);
+    // Battle rounds give one life, so show one heart there.
+    const hearts = info.mode === 'survival' ? Math.max(START_LIVES, p.lives) : Math.max(1, p.lives);
     const health =
       Array.from({ length: hearts }, (_, i) => `<span class="${i < p.lives ? '' : 'lost'}">${HEART}</span>`).join('') +
       Array.from({ length: p.armor }, () => OXYGEN).join('');

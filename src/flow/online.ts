@@ -1,5 +1,5 @@
 import { NetClient, randomCode } from '../net/client';
-import { CODE_LETTERS, isRoomCode, MAX_PLAYERS, type ServerMsg } from '../net/protocol';
+import { CLOSE_AWAY, CODE_LETTERS, isRoomCode, MAX_PLAYERS, type ServerMsg } from '../net/protocol';
 
 // The "Play online" screens: create or join a room, then the lobby where the
 // host starts the match. During a match main.ts gets the inputs through the
@@ -45,7 +45,8 @@ export class OnlineRoom {
 
   constructor() {
     this.net.onMessage = (m) => this.handle(m);
-    this.net.onDrop = () => this.exit('Connection to the room was lost.');
+    this.net.onDrop = (code) =>
+      this.exit(code === CLOSE_AWAY ? 'You were away from the game too long, so you left the room.' : 'Connection to the room was lost.');
     $('online-create').addEventListener('click', () => this.create());
     $('online-join').addEventListener('click', () => this.join(this.codeInput.value));
     this.codeInput.addEventListener('input', () => {
@@ -117,6 +118,11 @@ export class OnlineRoom {
 
   sendInput(r: number, tick: number, c: number[]): void {
     this.net.send({ t: 'in', r, tick, c });
+  }
+
+  /** Tells the room this browser's game is running (see Room.dropAway). */
+  sendAlive(): void {
+    this.net.send({ t: 'alive' });
   }
 
   sendHash(r: number, tick: number, h: number): void {

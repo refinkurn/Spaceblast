@@ -66,4 +66,31 @@ describe('room', () => {
     room.leave(2);
     expect(room.empty).toBe(true);
   });
+
+  it('drops a player who stops sending while the others play', () => {
+    const room = new Room();
+    const a = peer(), b = peer();
+    room.join(a, true);
+    room.join(b, false);
+    room.message(0, JSON.stringify({ t: 'start', seed: 1 }), 0);
+    room.message(0, JSON.stringify({ t: 'alive' }), 5000);
+    expect(b.closed).toBe(false);
+    room.message(1, JSON.stringify({ t: 'in', r: 1, tick: 6, c: [0, 0] }), 1000);
+    room.message(0, JSON.stringify({ t: 'alive' }), 8999);
+    expect(b.closed).toBe(false);
+    room.message(0, JSON.stringify({ t: 'alive' }), 9000);
+    expect(b.closed).toBe(true);
+    expect(a.got.at(-1)).toEqual({ t: 'left', slot: 1, host: 0, lastTick: 7 });
+  });
+
+  it('nobody is dropped while everyone waits between rounds', () => {
+    const room = new Room();
+    const a = peer(), b = peer();
+    room.join(a, true);
+    room.join(b, false);
+    room.message(0, JSON.stringify({ t: 'start', seed: 1 }), 0);
+    room.message(0, JSON.stringify({ t: 'start', seed: 2 }), 60_000);
+    room.message(0, JSON.stringify({ t: 'alive' }), 61_000);
+    expect(b.closed).toBe(false);
+  });
 });

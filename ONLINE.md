@@ -51,9 +51,14 @@ Note: the claude.ai preview link can't open rooms; use the Cloudflare link.
 - `server/dev_relay.ts` — relay inside `npm run dev`
 - `server/worker.ts` + `wrangler.toml` — the Cloudflare server
 
+## Leaving the app
+
+If a player switches apps or locks their phone, the others see "Waiting for
+Player N…". After 8 seconds that player is dropped from the room (their
+astronaut is out for the round) and the match goes on. They see a message and
+can join again with the code from the next round.
+
 ## Not done yet
 
-- A phone that leaves the app (switches app, locks the screen) pauses the
-  match for everyone until it comes back; leaving the room ends their round.
 - Reconnecting after a dropped connection.
 - Online co-op Story Mode.

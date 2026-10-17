@@ -17,8 +17,8 @@ export function randomCode(): string {
 
 export class NetClient {
   onMessage: (msg: ServerMsg) => void = () => {};
-  /** The connection dropped (not called after close()). */
-  onDrop: () => void = () => {};
+  /** The connection dropped (not called after close()), with the close code. */
+  onDrop: (code: number) => void = () => {};
   private ws: WebSocket | null = null;
 
   /** Opens the room; resolves on the first server message (welcome or error). */
@@ -43,9 +43,9 @@ export class NetClient {
         this.onMessage(msg);
       };
       ws.onerror = () => first && reject(new Error('Could not reach the room server'));
-      ws.onclose = () => {
+      ws.onclose = (e) => {
         if (first) reject(new Error('Could not reach the room server'));
-        else if (this.ws === ws) this.onDrop();
+        else if (this.ws === ws) this.onDrop(e.code);
         if (this.ws === ws) this.ws = null;
       };
     });

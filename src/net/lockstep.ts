@@ -48,6 +48,12 @@ export class Lockstep {
     return this.inputs.every((list, p) => t > this.leftAfter[p] || list[t] !== undefined);
   }
 
+  /** Players whose input for the next tick hasn't arrived. */
+  waitingFor(): number[] {
+    const t = this.tick;
+    return this.inputs.flatMap((list, p) => (t > this.leftAfter[p] || list[t] !== undefined ? [] : [p]));
+  }
+
   /**
    * Records the local input (it runs `delay` ticks from now) and returns the
    * commands for the next tick. Only call when ready().
