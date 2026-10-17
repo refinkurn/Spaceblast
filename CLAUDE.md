@@ -19,6 +19,7 @@ src/
   input/   devices -> PlayerCommand (keyboard, touch, bots)
   net/     online rooms: protocol, lockstep input sync, WebSocket client
   view/    Three.js rendering; reads sim state, never writes it
+  audio/   synthesised sound effects and music (Web Audio, no files); driven by sim events
   flow/    menus, HUD, story, online lobby
   main.ts  wiring + fixed 60 Hz loop
 server/    the room relay: room.ts (shared), dev_relay.ts (npm run dev), worker.ts (Cloudflare)

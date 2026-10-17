@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { DevPanel, GOD_SHIELD } from './flow/dev';
+import { GameAudio } from './flow/sound';
 import { Hud } from './flow/hud';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound, ROUNDS_TO_WIN } from './flow/online_match';
@@ -87,6 +88,8 @@ const prevMartians = new Map<number, { x: number; y: number }>();
 const screens = new Screens(startMode, openMenu);
 const hud = new Hud();
 const online = new OnlineRoom();
+/** Sound starts on the tap-to-start screen (the menu is already open behind it). */
+const audio = new GameAudio(() => {});
 /** The online round being played; null outside online play. */
 let net: OnlineRound | null = null;
 const netScore = new MatchScore();
@@ -331,6 +334,7 @@ function onlineStep(): boolean {
   snapshot();
   step(state, cmds);
   for (const e of state.events) onEvent(e);
+  audio.events(state, localId);
   if (state.tick % 60 === 0) {
     const h = hashState(state);
     online.sendHash(net.r, state.tick, h);
@@ -467,6 +471,7 @@ renderer.setAnimationLoop((now: number) => {
       snapshot();
       step(state, commands());
       for (const e of state.events) onEvent(e);
+      audio.events(state, localId);
     }
     acc -= TICK_MS;
     steps++;
@@ -489,6 +494,7 @@ renderer.setAnimationLoop((now: number) => {
   lighting.sync(state, state.players.map((_, i) => heroes[i].group), seconds);
   board.update(seconds);
   updateAlert(now);
+  audio.update(state, screens.menuOpen || online.screenOpen || screens.storyOpen);
   debris.update(seconds);
   rig.update(seconds);
   const keys = net?.keys ?? [];

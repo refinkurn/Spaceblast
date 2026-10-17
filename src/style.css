@@ -411,3 +411,41 @@ html, body {
 .stepper output { min-width: 24px; font: 700 18px system-ui, sans-serif; color: var(--ink); }
 .online-status { min-height: 18px; font-size: 14px; color: var(--ink-quiet); }
 .online-status.error { color: #ffb4a2; }
+
+/* Tap to start: the first tap also unlocks sound on phones. */
+#start-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  cursor: pointer;
+  background: radial-gradient(ellipse at 50% 120%, #7a3420, #14161d 65%);
+}
+#start-screen[hidden] { display: none; }
+#start-screen h1 { margin: 0; font-size: clamp(36px, 9vw, 72px); letter-spacing: 0.18em; color: var(--accent); }
+#start-screen .tagline { margin: 0; color: var(--ink-quiet); }
+#start-screen .tap { margin: 18px 0 0; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; animation: tap-pulse 1.4s ease-in-out infinite; }
+@keyframes tap-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { #start-screen .tap { animation: none; } }
+
+/* Sound: all on / effects only / off. */
+.sound-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 32px;
+  padding: 4px 8px;
+  color: var(--ink);
+  background: #ffffff14;
+  border: 1px solid #ffffff30;
+  border-radius: 8px;
+}
+.sound-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#menu-sound { position: absolute; top: 12px; right: max(12px, env(safe-area-inset-right)); min-width: 48px; min-height: 48px; }
