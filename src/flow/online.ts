@@ -1,13 +1,15 @@
-import { NetClient, randomCode } from '../net/client';
+import { randomCode } from '../net/client';
+import { RoomLink, savedSeat } from '../net/link';
 import {
-  CLOSE_AWAY, CODE_LETTERS, DEFAULT_SETTINGS, MAX_PLAYERS, PLAYER_COLORS, isRoomCode,
+  CODE_LETTERS, DEFAULT_SETTINGS, MAX_PLAYERS, PLAYER_COLORS, isRoomCode,
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
 import { ROUND_SECONDS } from '../sim/constants';
 
 // The "Play online" screens: your name, create or join a room, then the lobby
 // (colour, and the host's match settings). During a match main.ts gets the
-// inputs through the callbacks below.
+// server's frames through the callbacks below; the connection itself (ping,
+// reconnecting) lives in net/link.ts.
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -19,6 +21,8 @@ export interface RoundStart {
   settings: RoomSettings;
   /** This browser's sim player id. */
   local: number;
+  /** Reconnecting mid-round: every tick so far, to catch up from the start. */
+  frames?: number[][];
 }
 
 const ERRORS: Record<string, string> = {
@@ -26,6 +30,7 @@ const ERRORS: Record<string, string> = {
   not_found: 'No room with that code. Check the letters.',
   full: 'That room is full (4 players).',
   bad_code: 'Room codes are 4 letters.',
+  expired: 'That game has moved on without you.',
 };
 
 const PREFS_KEY = 'spaceblast.online';
@@ -46,8 +51,12 @@ const timeLabel = (s: number) => (s < 120 ? `${s}s` : `${Math.floor(s / 60)}:${S
 
 export class OnlineRoom {
   onRoundStart: (s: RoundStart) => void = () => {};
-  onInput: (slot: number, r: number, tick: number, c: number[]) => void = () => {};
-  onLeft: (slot: number, lastTick: number) => void = () => {};
+  onFrames: (r: number, tick: number, c: number[][]) => void = () => {};
+  onLeft: (slot: number) => void = () => {};
+  /** A player's connection dropped (they're reconnecting) or came back. */
+  onAway: (slot: number, away: boolean) => void = () => {};
+  /** This browser lost its connection and is reconnecting (true), or is back (false). */
+  onReconnecting: (on: boolean) => void = () => {};
   onHash: (r: number, tick: number, h: number) => void = () => {};
   /** The room was closed: by Back/Leave (reason '') or a dropped connection. */
   onExit: (reason: string) => void = () => {};
@@ -57,7 +66,7 @@ export class OnlineRoom {
   players: Profile[] = [];
   settings: RoomSettings = { ...DEFAULT_SETTINGS };
   code = '';
-  private net = new NetClient();
+  private net = new RoomLink();
   private screen = $('online');
   private status = $('online-status');
   private codeInput = $<HTMLInputElement>('online-code');
@@ -67,8 +76,9 @@ export class OnlineRoom {
 
   constructor() {
     this.net.onMessage = (m) => this.handle(m);
-    this.net.onDrop = (code) =>
-      this.exit(code === CLOSE_AWAY ? 'You were away from the game too long, so you left the room.' : 'Connection to the room was lost.');
+    this.net.onLost = (reason) => this.exit(reason);
+    this.net.onReconnecting = (on) => this.onReconnecting(on);
+    $('online-rejoin').addEventListener('click', () => this.rejoinSaved());
     this.nameInput.value = this.prefs.name;
     $('online-create').addEventListener('click', () => this.create());
     $('online-join').addEventListener('click', () => this.join(this.codeInput.value));
@@ -87,8 +97,23 @@ export class OnlineRoom {
     this.buildLobbyControls();
   }
 
+  /** In a room (connected, or reconnecting to our seat). */
   get connected(): boolean {
-    return this.net.open;
+    return this.net.open || this.net.reconnecting;
+  }
+
+  /** Smoothed ping to the room server, in ms. */
+  get rtt(): number {
+    return this.net.rtt;
+  }
+
+  get reconnecting(): boolean {
+    return this.net.reconnecting;
+  }
+
+  /** The connection looks stuck: reconnect now. */
+  retryNow(): void {
+    this.net.retryNow();
   }
 
   get isHost(): boolean {
@@ -113,6 +138,11 @@ export class OnlineRoom {
     $('online-lobby').hidden = true;
     $('online-back').textContent = 'Back';
     this.setStatus('');
+    // After a page reload mid-match: offer to get back into the seat.
+    const seat = savedSeat();
+    const rejoin = $('online-rejoin');
+    rejoin.hidden = !seat;
+    if (seat) rejoin.textContent = `Rejoin room ${seat.code}`;
   }
 
   /** Back to the lobby (the connection stays open). */
@@ -132,7 +162,7 @@ export class OnlineRoom {
 
   /** Leaves the room and tells main.ts. With a reason, the online screen stays up to show it. */
   exit(reason: string): void {
-    this.net.close();
+    this.net.leave();
     this.you = this.host = -1;
     this.players = [];
     if (reason) {
@@ -159,9 +189,9 @@ export class OnlineRoom {
     this.net.send({ t: 'in', r, tick, c });
   }
 
-  /** Tells the room this browser's game is running (see Room.dropAway). */
-  sendAlive(): void {
-    this.net.send({ t: 'alive' });
+  /** This browser's round is over (lets the server stop its clock). */
+  sendOver(r: number): void {
+    this.net.send({ t: 'over', r });
   }
 
   sendHash(r: number, tick: number, h: number): void {
@@ -213,6 +243,23 @@ export class OnlineRoom {
     }
   }
 
+  /** After a page reload: back into the saved seat. */
+  private async rejoinSaved(): Promise<void> {
+    const seat = savedSeat();
+    if (!seat || this.busy) return;
+    this.busy = true;
+    this.code = seat.code;
+    this.setStatus('Rejoining…');
+    try {
+      const first = await this.net.rejoin(seat);
+      if (first.t === 'error') this.setStatus(ERRORS[first.reason] ?? first.reason, true);
+    } catch {
+      this.setStatus('Could not reach the room server.', true);
+    } finally {
+      this.busy = false;
+    }
+  }
+
   /** Returns 'ok', an error reason, or 'offline'. */
   private async connect(code: string, create: boolean): Promise<string> {
     this.code = code; // the welcome (and the lobby) can arrive before connect() resolves
@@ -231,13 +278,16 @@ export class OnlineRoom {
 
   private handle(m: ServerMsg): void {
     switch (m.t) {
-      case 'welcome':
+      case 'welcome': {
+        const back = this.you === m.you && this.code !== '' && !this.screenOpen;
         this.you = m.you;
         this.host = m.host;
         this.players = m.players;
         this.settings = m.settings;
-        this.showLobby(m.playing ? 'A match is on. You will join from the next round.' : '');
+        // Reconnected mid-match: stay in the game (a resume follows) instead of the lobby.
+        if (!back) this.showLobby(m.playing ? 'A match is on. You will join from the next round.' : '');
         break;
+      }
       case 'profile': {
         const others = this.players.filter((p) => p.slot !== m.player.slot);
         this.players = [...others, m.player].sort((a, b) => a.slot - b.slot);
@@ -256,7 +306,10 @@ export class OnlineRoom {
         this.players = this.players.filter((p) => p.slot !== m.slot);
         this.host = m.host;
         if (this.screenOpen) this.renderLobby();
-        this.onLeft(m.slot, m.lastTick);
+        this.onLeft(m.slot);
+        break;
+      case 'away':
+        this.onAway(m.slot, m.away);
         break;
       case 'start': {
         const local = m.players.findIndex((p) => p.slot === this.you);
@@ -266,9 +319,16 @@ export class OnlineRoom {
         this.onRoundStart({ r: m.r, seed: m.seed, players: m.players, settings: m.settings, local });
         break;
       }
-      case 'in':
-        this.onInput(m.slot, m.r, m.tick, m.c);
+      case 'f':
+        this.onFrames(m.r, m.tick, m.c);
         break;
+      case 'resume': {
+        const local = m.players.findIndex((p) => p.slot === this.you);
+        if (local < 0) return;
+        this.hide();
+        this.onRoundStart({ r: m.r, seed: m.seed, players: m.players, settings: m.settings, local, frames: m.c });
+        break;
+      }
       case 'hash':
         this.onHash(m.r, m.tick, m.h);
         break;

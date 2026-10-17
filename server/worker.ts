@@ -1,5 +1,5 @@
 import { isRoomCode } from '../src/net/protocol';
-import { Room, wishFromUrl } from './room';
+import { Room, requestFromUrl, type Peer } from './room';
 
 // Cloudflare Worker: serves the game (the dist/ folder, via static assets) and
 // runs one Durable Object per room code at /room/CODE. Free tier is plenty for
@@ -21,22 +21,40 @@ export default {
   },
 };
 
-/** One room. Lives in memory while anyone is connected. */
+/** One room. Lives in memory while anyone is connected; its clock runs only during rounds. */
 export class RoomObject implements DurableObject {
   private room = new Room();
+  private timer: ReturnType<typeof setInterval> | null = null;
 
   async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-    const create = url.searchParams.has('create');
     const [client, server] = Object.values(new WebSocketPair());
     server.accept();
-    const slot = this.room.join({ send: (d) => server.send(d), close: (c, r) => server.close(c, r) }, create, wishFromUrl(url));
+    const peer: Peer = { send: (d) => server.send(d), close: (c, r) => server.close(c, r) };
+    const slot = this.room.connect(peer, requestFromUrl(new URL(request.url)));
     if (slot !== null) {
-      server.addEventListener('message', (e) => this.room.message(slot, typeof e.data === 'string' ? e.data : ''));
-      const leave = () => this.room.leave(slot);
-      server.addEventListener('close', leave);
-      server.addEventListener('error', leave);
+      server.addEventListener('message', (e) => {
+        this.room.message(slot, typeof e.data === 'string' ? e.data : '');
+        this.clock();
+      });
+      server.addEventListener('close', (e) => {
+        this.room.closed(slot, peer, e.code);
+        this.clock();
+      });
+      server.addEventListener('error', () => this.room.closed(slot, peer, 1006));
     }
+    this.clock();
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  /** Runs the room clock while it is needed, and stops it after. */
+  private clock(): void {
+    if (this.timer || !this.room.busy) return;
+    this.timer = setInterval(() => {
+      this.room.pump();
+      if (!this.room.busy && this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+    }, 16);
   }
 }

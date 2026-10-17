@@ -1,4 +1,4 @@
-import { CODE_LENGTH, CODE_LETTERS, type ClientMsg, type ServerMsg } from './protocol';
+import { CLOSE_LEAVE, CODE_LENGTH, CODE_LETTERS, type ClientMsg, type ServerMsg } from './protocol';
 
 // WebSocket connection to the relay. The relay lives on the same host as the
 // page (Vite dev server or the Cloudflare Worker) unless VITE_RELAY_URL points
@@ -22,12 +22,17 @@ export class NetClient {
   private ws: WebSocket | null = null;
 
   /** Opens the room; resolves on the first server message (welcome or error). */
-  connect(code: string, create: boolean, name = '', color = -1): Promise<ServerMsg> {
+  /** `rejoin`: the seat and token from an earlier welcome, to get back into a dropped seat. */
+  connect(code: string, create: boolean, name = '', color = -1, rejoin?: { slot: number; token: string }): Promise<ServerMsg> {
     this.close();
     return new Promise((resolve, reject) => {
       let ws: WebSocket;
       try {
         const q = new URLSearchParams({ name, color: String(color) });
+        if (rejoin) {
+          q.set('rejoin', String(rejoin.slot));
+          q.set('token', rejoin.token);
+        }
         if (create) q.set('create', '1');
         ws = new WebSocket(`${relayBase()}/room/${code}?${q}`);
       } catch (e) {
@@ -61,9 +66,10 @@ export class NetClient {
     if (this.open) this.ws!.send(JSON.stringify(msg));
   }
 
-  close(): void {
+  /** Closes the connection. CLOSE_LEAVE frees the seat; another code keeps it for a rejoin. */
+  close(code = CLOSE_LEAVE): void {
     const ws = this.ws;
     this.ws = null;
-    ws?.close();
+    ws?.close(code);
   }
 }

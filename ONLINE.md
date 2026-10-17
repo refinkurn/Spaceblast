@@ -20,13 +20,20 @@ match. Blackouts never overlap the arena collapse.
 ## How it works (short version)
 
 - Every phone runs the same game. Only button presses travel over the
-  network (about 30 tiny messages a second per player), never the game
-  itself. This is called *lockstep* and it is why `src/sim` must stay
+  network, never the game itself, which is why `src/sim` must stay
   deterministic.
-- Your input is used 0.1 s after you press it, so it reaches everyone in
-  time. If someone's connection hiccups, everybody waits a moment.
-- The server is a small relay: it seats players, lets the host start
-  rounds and forwards inputs in order (`server/room.ts`).
+- The room server keeps the clock: 60 times a second it sends everyone's
+  presses for that moment. Each phone plays those moments in order, so all
+  games stay identical.
+- **A slow connection only hurts its owner.** A press that reaches the
+  server late doesn't hold anyone up: that astronaut keeps doing what it was
+  doing. Each phone measures its own ping and sends its presses just early
+  enough for its connection (a bad connection means slower controls for
+  that player only, and a "Weak connection" note).
+- **Dropped connection:** the phone reconnects by itself and replays the
+  round so far to catch up; the others just see "Bo lost connection,
+  reconnecting…". After a page reload, Play online shows "Rejoin room".
+  Someone gone for more than 20 seconds is out for that round.
 - Every second the phones compare a fingerprint of the game state. If they
   ever differ, the game shows "Out of sync" (that would be a bug in `src/sim`).
 
@@ -57,10 +64,11 @@ Note: the claude.ai preview link can't open rooms; use the Cloudflare link.
 ## Files
 
 - `src/net/protocol.ts` — messages and room code rules
-- `src/net/lockstep.ts` — input delay and waiting for everyone's input
+- `src/net/frames.ts` — plays the server's frames, aims your presses ahead by your ping
+- `src/net/link.ts` — the connection: ping, automatic reconnect, rejoin after reload
 - `src/net/client.ts` — the WebSocket connection
 - `src/flow/online.ts` — create / join / lobby screens
-- `server/room.ts` — the relay logic (shared by both servers below)
+- `server/room.ts` — the room: seats, settings, the round clock, rejoining (shared by both servers below)
 - `server/dev_relay.ts` — relay inside `npm run dev`
 - `server/worker.ts` + `wrangler.toml` — the Cloudflare server
 
@@ -73,5 +81,18 @@ can join again with the code from the next round.
 
 ## Not done yet
 
-- Reconnecting after a dropped connection.
 - Online co-op Story Mode.
+
+## Hosting and databases (for later)
+
+- **Why Cloudflare and not Vercel:** Vercel can host the web page for free,
+  but it can't keep the live connections an online game needs (its
+  functions stop after each request). Cloudflare runs both the page and the
+  rooms on one free account. The page could still move to Vercel later:
+  build it with `VITE_RELAY_URL=wss://spaceblast.<you>.workers.dev` and it
+  will use the Cloudflare rooms.
+- **Database:** not needed yet (progress and settings live on each device).
+  For accounts, cloud saves or leaderboards later, Cloudflare D1 (a free
+  SQL database on the same account) is the natural choice; Supabase or
+  Firebase also have free tiers. Saving goes through `src/flow/progress.ts`
+  and `src/flow/settings.ts`, so that is the one place to switch over.

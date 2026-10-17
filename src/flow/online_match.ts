@@ -1,13 +1,13 @@
 import { Bot } from '../input/bot';
-import { Lockstep } from '../net/lockstep';
+import { FrameSync } from '../net/frames';
 import { PLAYER_COLORS, WINS_NEEDED, type Profile, type RoomSettings } from '../net/protocol';
 import type { PlayerCommand } from '../sim/command';
 import { NO_EVENTS } from '../sim/levels';
 import type { GameOptions, GameState } from '../sim/state';
 import { botColorsFor, type RoundStart } from './online';
 
-// One online round: who plays (humans from the room, then bots), the lockstep
-// input sync, and the desync check. Every browser builds exactly the same
+// One online round: who plays (humans from the room, then bots), the server's
+// frames, and the desync check. Every browser builds exactly the same
 // round from the server's start message.
 
 const hex = (css: string) => parseInt(css.slice(1), 16);
@@ -18,13 +18,16 @@ export class OnlineRound {
   readonly local: number;
   readonly humans: Profile[];
   readonly settings: RoomSettings;
-  readonly lockstep: Lockstep;
+  /** The server's frames for this round. */
+  readonly sync: FrameSync;
   /** Bots run on every browser from the same seed, so they agree too. */
   readonly bots: Bot[];
   /** Per sim player: display name, colour (0xRRGGBB) and score key. */
   readonly names: string[] = [];
   readonly colors: number[] = [];
   readonly keys: string[] = [];
+  /** Told the server this round is over. */
+  overSent = false;
   private myHashes = new Map<number, number>();
   private pendingHashes = new Map<number, number[]>();
 
@@ -34,7 +37,8 @@ export class OnlineRound {
     this.local = s.local;
     this.humans = s.players;
     this.settings = s.settings;
-    this.lockstep = new Lockstep(s.players.length, s.local);
+    this.sync = new FrameSync(s.players.length);
+    if (s.frames) this.sync.receive(0, s.frames);
     const botColors = botColorsFor(s.players);
     for (const p of s.players) {
       this.names.push(p.name);
@@ -73,24 +77,21 @@ export class OnlineRound {
     return this.humans.findIndex((p) => p.slot === slot);
   }
 
-  /** Commands for the next tick (humans via lockstep, then bots), or null while waiting for input. */
-  commands(local: PlayerCommand, state: GameState): PlayerCommand[] | null {
-    if (!this.lockstep.ready()) return null;
+  /** Commands for the next tick (humans from the server's frame, then bots), or null until it arrives. */
+  commands(state: GameState): PlayerCommand[] | null {
+    if (!this.sync.ready()) return null;
     const bots = this.bots.map((b) => b.think(state));
-    return [...this.lockstep.advance(local), ...bots];
+    return [...this.sync.next(), ...bots];
   }
 
-  receive(slot: number, r: number, tick: number, c: number[]): void {
-    if (r === this.r) this.lockstep.receive(this.idOf(slot), tick, c);
+  /** Frames from the server. */
+  receive(r: number, tick: number, c: number[][]): void {
+    if (r === this.r) this.sync.receive(tick, c);
   }
 
-  playerLeft(slot: number, lastTick: number): void {
-    this.lockstep.playerLeft(this.idOf(slot), lastTick);
-  }
-
-  /** Names of the humans whose input hasn't arrived. */
-  waitingFor(): string[] {
-    return this.lockstep.waitingFor().map((id) => this.names[id]);
+  /** This browser's command now (sent ahead to the server). */
+  input(local: PlayerCommand): void {
+    this.sync.input(local);
   }
 
   /** Records this browser's hash; true if another browser reported a different one. */

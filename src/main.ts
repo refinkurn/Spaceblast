@@ -52,9 +52,6 @@ let net: OnlineRound | null = null;
 /** Sim player id of this browser's astronaut (always 0 offline). */
 let localId = 0;
 let lastWinner = -1;
-/** When the game last told the room it is running, and since when it has been waiting for input. */
-let lastAlive = 0;
-let waitingSince = 0;
 /** Set when a run was started from the developer level select; enables its cheats. */
 let devRun = false;
 
@@ -183,10 +180,10 @@ function runTick(cmds: PlayerCommand[]) {
   step(state, cmds);
   recorder.after(state);
   for (const e of state.events) {
-    view.effect(e, state);
+    if (!quiet) view.effect(e, state);
     onEvent(e);
   }
-  audio.events(state, localId);
+  if (!quiet) audio.events(state, localId);
   if (mode === 'survival') {
     story.tick();
     for (const e of state.events) story.event(e);
@@ -292,21 +289,32 @@ function showMatchWinner() {
 
 // --- Online rooms --------------------------------------------------------------------
 online.onRoundStart = (s: RoundStart) => {
-  // A browser a few ticks behind finishes the old round first, so every score agrees.
-  while (mode === 'online' && net && state.status === 'playing' && net.lockstep.ready()) onlineStep();
+  const resume = s.frames !== undefined;
+  const sameRound = resume && mode === 'online' && net?.r === s.r;
+  // Reconnected into a round this browser already finished: nothing to catch up.
+  if (sameRound && state.status !== 'playing') return;
+  // A new round while this browser is a few ticks behind: finish the old one first, so every score agrees.
+  if (!resume) while (mode === 'online' && net && state.status === 'playing' && net.sync.ready()) onlineStep();
   cine.stop();
   congrats.hide();
-  score.nextRound(mode !== 'online');
+  if (!sameRound) score.nextRound(mode !== 'online');
   mode = 'online';
   net = new OnlineRound(s);
   localId = s.local;
   screens.hideMenu();
   newGame(s.seed);
+  if (resume) catchUp();
 };
-online.onInput = (slot, r, tick, c) => net?.receive(slot, r, tick, c);
-online.onLeft = (slot, lastTick) => {
-  net?.playerLeft(slot, lastTick);
+online.onFrames = (r, tick, c) => net?.receive(r, tick, c);
+online.onLeft = () => {
   if (mode === 'online' && screens.bannerOpen) showRoundScore(); // the host may have changed
+};
+online.onAway = (slot, away) => {
+  const name = net?.humans.find((p) => p.slot === slot)?.name ?? 'A player';
+  announcer.flash(away ? `${name} lost connection, reconnecting…` : `${name} is back!`);
+};
+online.onReconnecting = (on) => {
+  if (!on) announcer.flash('Reconnected!');
 };
 online.onHash = (r, tick, h) => {
   if (net?.otherHash(r, tick, h)) desync(tick);
@@ -323,13 +331,16 @@ online.onExit = (reason) => {
   }
 };
 
-/** Runs one online tick if everyone's input is in. Returns false while waiting. */
+/** Quiet ticks (catching up after a reconnect): no effects, sounds or hash messages. */
+let quiet = false;
+
+/** Runs the next online tick if the server's frame for it has arrived. Returns false while waiting. */
 function onlineStep(): boolean {
   if (!net || state.status !== 'playing') return true;
-  const cmds = net.commands(readLocalCommand(keys, touch), state);
+  const cmds = net.commands(state);
   if (!cmds) return false;
   runTick(cmds);
-  if (state.tick % 60 === 0) {
+  if (state.tick % 60 === 0 && !quiet) {
     const h = hashState(state);
     online.sendHash(net.r, state.tick, h);
     if (net.ownHash(state.tick, h)) desync(state.tick);
@@ -337,18 +348,39 @@ function onlineStep(): boolean {
   return true;
 }
 
-function sendInputs(now: number) {
+/** Reconnected: replay the round so far at full speed, then show where it stands. */
+function catchUp() {
+  quiet = true;
+  while (net && state.status === 'playing' && net.sync.ready()) onlineStep();
+  quiet = false;
+  view.build(state, colors(), localId);
+}
+
+/** Per frame: aim this browser's command at the server, and watch the connection. */
+function onlineFrame(now: number) {
   if (!net) return;
-  const ls = net.lockstep;
-  // While the round runs, tell the room we're here (a stalled game sends no inputs).
-  if (state.status === 'playing' && now - lastAlive > 1000) {
-    online.sendAlive();
-    lastAlive = now;
+  const sync = net.sync;
+  sync.setRtt(online.rtt);
+  if (state.status === 'playing') {
+    net.input(readLocalCommand(keys, touch));
+    // Commands go out in pairs (30 messages a second) to keep server costs down.
+    const out = sync.takeOutgoing(2);
+    if (out) online.sendInput(net.r, out.tick, out.c);
+    // No frames for 4 s on an open connection: it's stuck, reconnect.
+    if (!online.reconnecting && sync.lastFrameAt > 0 && now - sync.lastFrameAt > 4000) online.retryNow();
+  } else if (!net.overSent) {
+    net.overSent = true;
+    online.sendOver(net.r);
   }
-  waitingSince = state.status === 'playing' && !ls.ready() ? waitingSince || now : 0;
-  // Waiting on others (or the round is over): send what we have right away.
-  const out = ls.takeOutgoing(state.status !== 'playing' || !ls.ready());
-  if (out) online.sendInput(net.r, out.tick, out.c);
+}
+
+/** The small note about this browser's connection, or ''. */
+function connectionNote(now: number): string {
+  if (!net || state.status !== 'playing') return '';
+  if (online.reconnecting) return 'Connection lost, reconnecting…';
+  if (net.sync.lastFrameAt > 0 && now - net.sync.lastFrameAt > 1000) return 'Waiting for the server…';
+  if (online.rtt > 250) return `Weak connection · ping ${Math.round(online.rtt)} ms`;
+  return '';
 }
 
 function desync(tick: number) {
@@ -421,7 +453,7 @@ view.renderer.setAnimationLoop((now: number) => {
   while (acc >= TICK_MS && steps < 5) {
     if (!paused && mode === 'online') {
       if (!onlineStep()) {
-        acc = Math.min(acc, TICK_MS); // waiting for another player's input
+        acc = Math.min(acc, TICK_MS); // the server's next frame hasn't arrived yet
         break;
       }
     } else if (!paused) {
@@ -431,7 +463,11 @@ view.renderer.setAnimationLoop((now: number) => {
     steps++;
   }
   if (steps === 5 && mode !== 'online') acc = 0; // too far behind (tab was hidden): drop the backlog
-  sendInputs(now);
+  // Online and behind the server (a lag spike): catch up a few extra ticks per frame.
+  for (let extra = 0; !paused && mode === 'online' && net && net.sync.buffered > 3 && extra < 12; extra++) {
+    if (!onlineStep()) break;
+  }
+  onlineFrame(now);
   const seconds = dt / 1000;
   // During the cinematic the view shows its replay (or the final moment).
   cutscene.update(seconds);
@@ -439,8 +475,7 @@ view.renderer.setAnimationLoop((now: number) => {
   document.body.classList.toggle('scene', cutscene.active || cine.active || story.endingOpen);
   const alpha = cine.active ? cine.update(seconds) : paused ? 1 : acc / TICK_MS;
   view.render(cine.state ?? state, alpha, seconds, now / 1000);
-  const waiting = net && waitingSince && now - waitingSince > 500 ? net.waitingFor().join(', ') : '';
-  announcer.update(state, now, waiting, overlay || cine.active || cutscene.active);
+  announcer.update(state, now, connectionNote(now), overlay || cine.active || cutscene.active);
   audio.update(state, screens.menuOpen || online.screenOpen || screens.storyOpen);
   const keyList = playerKeys();
   const mine = score.of(keyList[localId] ?? '');

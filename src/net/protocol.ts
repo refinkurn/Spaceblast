@@ -1,9 +1,9 @@
 import { Dir, ROUND_SECONDS } from '../sim/constants';
 import type { PlayerCommand } from '../sim/command';
 
-// Online rooms: the messages between a browser and the relay server.
-// The relay only forwards inputs; every browser runs the same deterministic
-// sim (lockstep), so the game itself never travels over the network.
+// Online rooms: the messages between a browser and the room server.
+// The server only collects and sends out commands on its clock; every browser
+// runs the same deterministic sim, so the game itself never travels over the network.
 
 export const MAX_PLAYERS = 4;
 /** Room codes: 4 letters, no I or O (they look like 1 and 0). */
@@ -65,7 +65,10 @@ export function cleanSettings(raw: Partial<RoomSettings> | undefined, humans: nu
   return { time, maze: raw?.maze === true, blackout: raw?.blackout === true, bots, botLevel, match };
 }
 
-/** Browser -> server. Name and colour wishes go in the URL: /room/CODE?name=..&color=.. */
+/**
+ * Browser -> server. Name and colour wishes go in the URL: /room/CODE?name=..&color=..
+ * A reconnecting browser adds ?rejoin=SLOT&token=TOKEN (from its welcome).
+ */
 export type ClientMsg =
   /** Host only: start a round with everyone in the room. */
   | { t: 'start'; seed: number }
@@ -73,31 +76,53 @@ export type ClientMsg =
   | { t: 'profile'; name: string; color: number }
   /** Host only: lobby settings. */
   | { t: 'settings'; s: RoomSettings }
-  /** Packed commands for ticks `tick`, `tick + 1`, ... of round `r`. */
+  /** Your packed commands for ticks `tick`, `tick + 1`, ... of round `r` (future ticks). */
   | { t: 'in'; r: number; tick: number; c: number[] }
-  /** Sent every second while this browser's game is running (inputs also count). */
-  | { t: 'alive' }
+  /** Round-trip time check; the server answers with the same id at once. */
+  | { t: 'ping'; id: number }
+  /** This browser's round `r` is over (the server can stop its clock). */
+  | { t: 'over'; r: number }
   /** State hash after `tick` of round `r`, to spot desyncs. */
   | { t: 'hash'; r: number; tick: number; h: number };
 
-/** WebSocket close code for a player dropped for being away (app in background). */
+/** WebSocket close code for a player who was gone too long. */
 export const CLOSE_AWAY = 4001;
-/** A player silent this long while others play is dropped from the room. */
-export const AWAY_MS = 8000;
+/** Close code for a peer that flooded the server. */
+export const CLOSE_FLOOD = 4002;
+/** Close code a browser uses when the player chose to leave (no seat kept). */
+export const CLOSE_LEAVE = 1000;
+/** Close code a browser uses to drop a stuck connection and reconnect at once. */
+export const CLOSE_RETRY = 4003;
+/** A dropped player may reconnect for this long before they're out for the round. */
+export const REJOIN_MS = 20000;
 
-export type ErrorReason = 'taken' | 'not_found' | 'full' | 'bad_code';
+/**
+ * Online rounds run on the server's clock: every tick it sends each player's
+ * command. A player whose command arrives late keeps doing what they were
+ * doing (without placing again), so nobody waits for a slow connection.
+ * Frame values are packed commands, IDLE when absent, or LEFT once a player is out.
+ */
+export const FRAME_LEFT = 255;
+
+export type ErrorReason = 'taken' | 'not_found' | 'full' | 'bad_code' | 'expired';
 
 /** Server -> browser. A slot is a seat in the room (0-3) and stays the same all match. */
 export type ServerMsg =
-  | { t: 'welcome'; you: number; host: number; players: Profile[]; settings: RoomSettings; playing: boolean }
+  /** `token` lets this browser rejoin its seat after a dropped connection. */
+  | { t: 'welcome'; you: number; host: number; players: Profile[]; settings: RoomSettings; playing: boolean; token: string }
   /** Someone joined, or changed name or colour. */
   | { t: 'profile'; player: Profile }
   | { t: 'settings'; s: RoomSettings }
-  /** `lastTick`: the last tick this player sent input for in the current round (-1 if none). */
-  | { t: 'left'; slot: number; host: number; lastTick: number }
+  | { t: 'left'; slot: number; host: number }
+  /** A player's connection dropped (reconnecting) or came back. */
+  | { t: 'away'; slot: number; away: boolean }
   /** Round `r` starts. Sim player i is `players[i]`; bots come after them. */
   | { t: 'start'; r: number; seed: number; players: Profile[]; settings: RoomSettings }
-  | { t: 'in'; slot: number; r: number; tick: number; c: number[] }
+  /** Commands of every player for ticks `tick`, `tick + 1`, ... (c[i][player]). */
+  | { t: 'f'; r: number; tick: number; c: number[][] }
+  /** To a reconnecting player: the round so far, to catch up from the start. */
+  | { t: 'resume'; r: number; seed: number; players: Profile[]; settings: RoomSettings; c: number[][] }
+  | { t: 'pong'; id: number }
   | { t: 'hash'; slot: number; r: number; tick: number; h: number }
   | { t: 'error'; reason: ErrorReason };
 

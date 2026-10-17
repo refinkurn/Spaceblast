@@ -1,96 +1,171 @@
 import {
-  AWAY_MS, CLOSE_AWAY, DEFAULT_SETTINGS, MAX_PLAYERS, PLAYER_COLORS, cleanName, cleanSettings, isPacked,
+  CLOSE_AWAY, CLOSE_FLOOD, CLOSE_LEAVE, CLOSE_RETRY, DEFAULT_SETTINGS, FRAME_LEFT, MAX_PLAYERS, PLAYER_COLORS, REJOIN_MS, cleanName, cleanSettings, isPacked,
   type ClientMsg, type ErrorReason, type Profile, type RoomSettings, type ServerMsg,
 } from '../src/net/protocol';
 
 // One online room. Used by both the local dev relay (server/dev_relay.ts) and
-// the Cloudflare Worker (server/worker.ts). It knows nothing about the game:
-// it seats players (name + colour), keeps the host's settings, lets the host
-// start rounds and forwards inputs in order.
+// the Cloudflare Worker (server/worker.ts). It knows nothing about the game
+// rules: it seats players (name + colour), keeps the host's settings, starts
+// rounds, and runs the round clock.
+//
+// The clock: 60 times a second the room sends every player's command for the
+// next tick. A command that arrives late doesn't hold anyone up: that player
+// keeps doing what they did (without placing again), so a slow connection only
+// hurts its owner. A dropped player may reconnect within REJOIN_MS and gets
+// the round so far to catch up; after that they are out for the round.
 
 export interface Peer {
   send(data: string): void;
   close(code?: number, reason?: string): void;
 }
 
-/** Name and colour wishes from the join URL. */
-export interface JoinWish {
+/** What a browser asks for in its join URL. */
+export interface JoinRequest {
+  create: boolean;
   name?: string | null;
   color?: number | null;
+  /** Reconnecting: the seat and the token from its welcome. */
+  rejoin?: number | null;
+  token?: string | null;
 }
 
-/** Reads ?name=..&color=.. from a join URL. */
-export function wishFromUrl(url: URL): JoinWish {
-  const color = url.searchParams.get('color');
-  return { name: url.searchParams.get('name'), color: color === null ? null : Number(color) };
+/** Reads ?create, ?name, ?color, ?rejoin and ?token from a join URL. */
+export function requestFromUrl(url: URL): JoinRequest {
+  const num = (k: string) => (url.searchParams.has(k) ? Number(url.searchParams.get(k)) : null);
+  return {
+    create: url.searchParams.has('create'),
+    name: url.searchParams.get('name'),
+    color: num('color'),
+    rejoin: num('rejoin'),
+    token: url.searchParams.get('token'),
+  };
 }
 
+export const TICK_MS = 1000 / 60;
 /** Most commands one message may carry (half a second). */
 const MAX_BATCH = 30;
-/** A round's first input may start this late (the browsers' input delay is 6 ticks). */
-const MAX_FIRST_TICK = 60;
+/** Inputs may be sent at most this far ahead of the clock (10 s). */
+const MAX_AHEAD = 600;
 /** Biggest message a browser ever needs to send. */
 const MAX_MESSAGE = 2048;
+/** A connected browser that sends nothing for this long is gone (it pings every second). */
+const SILENT_MS = 30000;
+/** A round's clock stops this long after its time and collapse could possibly last. */
+const ROUND_SLACK_MS = 90000;
 /**
- * Flood guard: a browser sends ~32 messages a second (inputs, heartbeat, hash).
+ * Flood guard: a browser sends ~32 messages a second (inputs, ping, hash).
  * Each peer gets a bucket of BURST messages refilled at RATE per second; one
  * that empties it is disconnected, so a broken or cheating client can't run up
  * the server bill or swamp the others.
  */
 const RATE = 90;
 const BURST = 150;
-/** Close code for a flooding peer. */
-export const CLOSE_FLOOD = 4002;
+
+interface Seat {
+  peer: Peer | null;
+  profile: Profile;
+  token: string;
+  /** When the connection dropped (seat kept for REJOIN_MS). */
+  droppedAt: number;
+  lastMsg: number;
+  bucket: { tokens: number; at: number };
+}
+
+interface Round {
+  r: number;
+  seed: number;
+  players: Profile[];
+  settings: RoomSettings;
+  startAt: number;
+  /** Ticks already sent; inputs for earlier ticks are too late. */
+  sent: number;
+  /** Every tick's commands so far (for reconnecting players). */
+  frames: number[][];
+  pending: Map<number, number>[];
+  last: number[];
+  left: boolean[];
+  over: Set<number>;
+  active: boolean;
+  endBy: number;
+}
+
+function newToken(): string {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 export class Room {
-  private peers = new Map<number, Peer>();
-  private profiles = new Map<number, Profile>();
+  private seats = new Map<number, Seat>();
   private settings: RoomSettings = { ...DEFAULT_SETTINGS };
   private host = -1;
-  /** Slots in the round being played, or null before the first start. */
-  private round: number[] | null = null;
-  private lastTick = new Map<number, number>();
-  /** Round counter, so late inputs from the previous round are dropped. */
+  private round: Round | null = null;
   private r = 0;
-  /** When each player last showed their game was running. */
-  private seen = new Map<number, number>();
-  private buckets = new Map<number, { tokens: number; at: number }>();
 
   get empty(): boolean {
-    return this.peers.size === 0;
+    return this.seats.size === 0;
   }
 
-  /** Seats a new peer. Returns its slot, or null after sending an error. */
-  join(peer: Peer, create: boolean, wish: JoinWish = {}): number | null {
+  /** True while the room needs pump() calls (a round clock or a seat waiting for its player). */
+  get busy(): boolean {
+    return !!this.round?.active || [...this.seats.values()].some((s) => !s.peer);
+  }
+
+  /** Seats a peer (new or reconnecting). Returns its slot, or null after sending an error. */
+  connect(peer: Peer, req: JoinRequest, now = Date.now()): number | null {
     const fail = (reason: ErrorReason) => {
       peer.send(JSON.stringify({ t: 'error', reason } satisfies ServerMsg));
       peer.close(4000, reason);
       return null;
     };
-    if (create && !this.empty) return fail('taken');
-    if (!create && this.empty) return fail('not_found');
-    if (this.peers.size >= MAX_PLAYERS) return fail('full');
+    if (req.rejoin !== null && req.rejoin !== undefined) {
+      const seat = this.seats.get(req.rejoin);
+      if (!seat || seat.token !== req.token) return fail('expired');
+      // The old connection may still look open (a phone that lost Wi-Fi often
+      // never closes it): the token proves it's the same player, so swap it out.
+      if (seat.peer) {
+        const old = seat.peer;
+        seat.peer = null;
+        try { old.close(CLOSE_RETRY, 'replaced'); } catch { /* already gone */ }
+      }
+      return this.reattach(req.rejoin, seat, peer, now);
+    }
+    if (req.create && !this.empty) return fail('taken');
+    if (!req.create && this.empty) return fail('not_found');
+    if (this.seats.size >= MAX_PLAYERS) return fail('full');
     let slot = 0;
-    while (this.peers.has(slot)) slot++;
-    const player: Profile = { slot, name: cleanName(wish.name, slot), color: this.freeColor(wish.color ?? -1) };
-    this.broadcast({ t: 'profile', player });
-    this.peers.set(slot, peer);
-    this.profiles.set(slot, player);
+    while (this.seats.has(slot)) slot++;
+    const profile: Profile = { slot, name: cleanName(req.name, slot), color: this.freeColor(req.color ?? -1) };
+    this.broadcast({ t: 'profile', player: profile });
+    this.seats.set(slot, { peer, profile, token: newToken(), droppedAt: 0, lastMsg: now, bucket: { tokens: BURST, at: now } });
     if (this.host < 0) this.host = slot;
     this.clampBots();
-    this.sendTo(slot, {
-      t: 'welcome', you: slot, host: this.host, players: this.players(), settings: this.settings, playing: this.round !== null,
-    });
+    this.welcome(slot);
     return slot;
   }
 
-  message(slot: number, raw: string, now = Date.now()): void {
-    if (!this.peers.has(slot)) return;
-    if (!this.take(slot, now)) {
-      this.peers.get(slot)?.close(CLOSE_FLOOD, 'flood');
-      this.leave(slot);
+  /** The peer's connection closed. A deliberate leave frees the seat; a drop keeps it for REJOIN_MS. */
+  closed(slot: number, peer: Peer, code: number, now = Date.now()): void {
+    const seat = this.seats.get(slot);
+    if (!seat || seat.peer !== peer) return; // an old connection of a seat that already rejoined
+    if (code === CLOSE_LEAVE) {
+      this.remove(slot);
       return;
     }
+    seat.peer = null;
+    seat.droppedAt = now;
+    this.broadcast({ t: 'away', slot, away: true });
+  }
+
+  message(slot: number, raw: string, now = Date.now()): void {
+    const seat = this.seats.get(slot);
+    if (!seat?.peer) return;
+    if (!this.take(seat, now)) {
+      seat.peer.close(CLOSE_FLOOD, 'flood');
+      this.remove(slot);
+      return;
+    }
+    seat.lastMsg = now;
     if (raw.length > MAX_MESSAGE) return;
     let msg: ClientMsg;
     try {
@@ -98,93 +173,163 @@ export class Room {
     } catch {
       return;
     }
-    if (msg.t === 'alive' || msg.t === 'in') {
-      this.seen.set(slot, now);
-      this.dropAway(now);
-    }
-    if (msg.t === 'start') {
-      if (slot !== this.host || !Number.isInteger(msg.seed)) return;
-      this.settings = cleanSettings(this.settings, this.peers.size);
-      // Alone is fine with bots; otherwise it takes two.
-      if (this.peers.size + this.settings.bots < 2) return;
-      this.round = this.slots();
-      this.lastTick.clear();
-      this.r++;
-      this.seen.clear();
-      for (const s of this.round) this.seen.set(s, now);
-      this.broadcast({ t: 'start', r: this.r, seed: msg.seed >>> 0, players: this.players(), settings: this.settings });
-    } else if (msg.t === 'profile') {
-      const me = this.profiles.get(slot);
-      if (!me) return;
-      const color = Number.isInteger(msg.color) && this.colorFree(msg.color, slot) ? msg.color : me.color;
-      const player = { slot, name: cleanName(msg.name, slot), color };
-      this.profiles.set(slot, player);
-      this.broadcast({ t: 'profile', player });
-    } else if (msg.t === 'settings') {
-      if (slot !== this.host) return;
-      this.settings = cleanSettings(msg.s, this.peers.size);
-      this.broadcast({ t: 'settings', s: this.settings });
-    } else if (msg.t === 'in') {
-      if (msg.r !== this.r || !this.round?.includes(slot) || !Number.isInteger(msg.tick) || msg.tick < 0) return;
-      if (!Array.isArray(msg.c) || msg.c.length === 0 || msg.c.length > MAX_BATCH || !msg.c.every(isPacked)) return;
-      // Inputs must follow on from the last ones: a gap or a jump far ahead would
-      // leave the other browsers waiting forever for ticks that never come.
-      const last = this.lastTick.get(slot);
-      if (last === undefined ? msg.tick > MAX_FIRST_TICK : msg.tick !== last + 1) return;
-      this.lastTick.set(slot, msg.tick + msg.c.length - 1);
-      this.broadcast({ t: 'in', slot, r: this.r, tick: msg.tick, c: msg.c }, slot);
-    } else if (msg.t === 'hash') {
-      if (msg.r === this.r && Number.isInteger(msg.tick) && Number.isInteger(msg.h)) this.broadcast({ t: 'hash', slot, r: msg.r, tick: msg.tick, h: msg.h }, slot);
+    switch (msg.t) {
+      case 'start':
+        if (slot === this.host && Number.isInteger(msg.seed)) this.start(msg.seed >>> 0, now);
+        break;
+      case 'profile': {
+        const color = Number.isInteger(msg.color) && this.colorFree(msg.color, slot) ? msg.color : seat.profile.color;
+        seat.profile = { slot, name: cleanName(msg.name, slot), color };
+        this.broadcast({ t: 'profile', player: seat.profile });
+        break;
+      }
+      case 'settings':
+        if (slot !== this.host) return;
+        this.settings = cleanSettings(msg.s, this.seats.size);
+        this.broadcast({ t: 'settings', s: this.settings });
+        break;
+      case 'in':
+        this.input(slot, msg);
+        break;
+      case 'ping':
+        if (Number.isInteger(msg.id)) this.sendTo(slot, { t: 'pong', id: msg.id });
+        break;
+      case 'over':
+        if (this.round && msg.r === this.round.r) {
+          this.round.over.add(slot);
+          // Everyone still connected has finished: stop the clock.
+          const still = this.round.players.filter((p, i) => !this.round!.left[i] && this.seats.get(p.slot)?.peer);
+          if (still.every((p) => this.round!.over.has(p.slot))) this.round.active = false;
+        }
+        break;
+      case 'hash':
+        if (msg.r === this.r && Number.isInteger(msg.tick) && Number.isInteger(msg.h)) this.broadcast({ t: 'hash', slot, r: msg.r, tick: msg.tick, h: msg.h }, slot);
+        break;
     }
   }
 
-  /**
-   * A phone that leaves the app stops sending, which freezes the round for
-   * everyone (lockstep waits for its input). Drop a player who has been silent
-   * for AWAY_MS while someone else is still playing.
-   */
-  private dropAway(now: number): void {
-    if (!this.round) return;
-    for (const slot of this.round) {
-      const peer = this.peers.get(slot);
-      const last = this.seen.get(slot);
-      if (!peer || last === undefined || now - last < AWAY_MS) continue;
-      peer.close(CLOSE_AWAY, 'away');
-      this.leave(slot);
+  /** Call often (every ~16-33 ms) while busy: sends due ticks and expires dropped seats. */
+  pump(now = Date.now()): void {
+    for (const [slot, seat] of this.seats) {
+      if (!seat.peer && now - seat.droppedAt > REJOIN_MS) this.remove(slot);
+      else if (seat.peer && now - seat.lastMsg > SILENT_MS) {
+        seat.peer.close(CLOSE_AWAY, 'away');
+        this.remove(slot);
+      }
     }
+    const round = this.round;
+    if (!round?.active) return;
+    if (now > round.endBy) {
+      round.active = false;
+      return;
+    }
+    const due = Math.floor((now - round.startAt) / TICK_MS);
+    if (due <= round.sent) return;
+    const first = round.sent;
+    const batch: number[][] = [];
+    for (let t = first; t < due; t++) batch.push(this.frame(round, t));
+    round.sent = due;
+    round.frames.push(...batch);
+    for (const p of round.players) this.sendTo(p.slot, { t: 'f', r: round.r, tick: first, c: batch });
+  }
+
+  /** Everyone's command for tick t. */
+  private frame(round: Round, t: number): number[] {
+    return round.players.map((p, i) => {
+      if (round.left[i]) return FRAME_LEFT;
+      const pending = round.pending[i];
+      const mine = pending.get(t);
+      for (const k of pending.keys()) if (k <= t) pending.delete(k);
+      if (mine !== undefined) {
+        round.last[i] = mine;
+        return mine;
+      }
+      // Late or missing: keep moving the same way, but never place again by accident.
+      if (!this.seats.get(p.slot)?.peer) return 0;
+      return round.last[i] & ~64;
+    });
+  }
+
+  private start(seed: number, now: number): void {
+    const connected = [...this.seats.entries()].filter(([, s]) => s.peer).sort(([a], [b]) => a - b);
+    this.settings = cleanSettings(this.settings, this.seats.size);
+    // Alone is fine with bots; otherwise it takes two.
+    if (connected.length + this.settings.bots < 2) return;
+    this.r++;
+    const players = connected.map(([, s]) => s.profile);
+    const n = players.length;
+    this.round = {
+      r: this.r, seed, players, settings: this.settings, startAt: now, sent: 0, frames: [],
+      pending: Array.from({ length: n }, () => new Map()), last: Array(n).fill(0), left: Array(n).fill(false),
+      over: new Set(), active: true, endBy: now + this.settings.time * 1000 + ROUND_SLACK_MS,
+    };
+    this.broadcast({ t: 'start', r: this.r, seed, players, settings: this.settings });
+  }
+
+  private input(slot: number, msg: Extract<ClientMsg, { t: 'in' }>): void {
+    const round = this.round;
+    if (!round?.active || msg.r !== round.r) return;
+    const i = round.players.findIndex((p) => p.slot === slot);
+    if (i < 0 || round.left[i]) return;
+    if (!Number.isInteger(msg.tick) || !Array.isArray(msg.c) || msg.c.length === 0 || msg.c.length > MAX_BATCH) return;
+    if (!msg.c.every(isPacked) || msg.tick > round.sent + MAX_AHEAD) return;
+    // Ticks already sent are too late; the rest wait for their turn.
+    msg.c.forEach((c, k) => {
+      if (msg.tick + k >= round.sent) round.pending[i].set(msg.tick + k, c);
+    });
+  }
+
+  private reattach(slot: number, seat: Seat, peer: Peer, now: number): number {
+    seat.peer = peer;
+    seat.droppedAt = 0;
+    seat.lastMsg = now;
+    seat.bucket = { tokens: BURST, at: now };
+    this.welcome(slot);
+    this.broadcast({ t: 'away', slot, away: false }, slot);
+    const round = this.round;
+    if (round && round.players.some((p, i) => p.slot === slot && !round.left[i])) {
+      this.sendTo(slot, { t: 'resume', r: round.r, seed: round.seed, players: round.players, settings: round.settings, c: round.frames });
+    }
+    return slot;
+  }
+
+  private welcome(slot: number): void {
+    const seat = this.seats.get(slot)!;
+    this.sendTo(slot, {
+      t: 'welcome', you: slot, host: this.host, players: this.profiles(), settings: this.settings,
+      playing: !!this.round?.active, token: seat.token,
+    });
+  }
+
+  /** Frees a seat for good: out of the current round from the next tick. */
+  private remove(slot: number): void {
+    if (!this.seats.delete(slot)) return;
+    if (this.host === slot) this.host = this.empty ? -1 : Math.min(...this.seats.keys());
+    const round = this.round;
+    const i = round ? round.players.findIndex((p) => p.slot === slot) : -1;
+    if (round && i >= 0) round.left[i] = true;
+    this.broadcast({ t: 'left', slot, host: this.host });
+    if (this.empty) this.round = null;
   }
 
   /** Takes one message from the peer's flood-guard bucket; false when it is empty. */
-  private take(slot: number, now: number): boolean {
-    const b = this.buckets.get(slot) ?? { tokens: BURST, at: now };
+  private take(seat: Seat, now: number): boolean {
+    const b = seat.bucket;
     b.tokens = Math.min(BURST, b.tokens + ((now - b.at) / 1000) * RATE) - 1;
     b.at = now;
-    this.buckets.set(slot, b);
     return b.tokens >= 0;
-  }
-
-  leave(slot: number): void {
-    if (!this.peers.delete(slot)) return;
-    this.buckets.delete(slot);
-    this.profiles.delete(slot);
-    this.seen.delete(slot);
-    if (this.host === slot) this.host = this.empty ? -1 : Math.min(...this.peers.keys());
-    const lastTick = this.lastTick.get(slot) ?? -1;
-    this.lastTick.delete(slot);
-    this.broadcast({ t: 'left', slot, host: this.host, lastTick });
-    if (this.empty) this.round = null;
   }
 
   /** A newcomer may push the total over 4: the host's bot count shrinks to fit. */
   private clampBots(): void {
-    const s = cleanSettings(this.settings, this.peers.size);
+    const s = cleanSettings(this.settings, this.seats.size);
     if (s.bots === this.settings.bots) return;
     this.settings = s;
     this.broadcast({ t: 'settings', s });
   }
 
   private colorFree(color: number, slot: number): boolean {
-    return color >= 0 && color < PLAYER_COLORS.length && ![...this.profiles.values()].some((p) => p.slot !== slot && p.color === color);
+    return color >= 0 && color < PLAYER_COLORS.length && ![...this.seats.values()].some((s) => s.profile.slot !== slot && s.profile.color === color);
   }
 
   /** The wished colour if nobody has it, else the first free one. */
@@ -195,19 +340,15 @@ export class Room {
     return c;
   }
 
-  private slots(): number[] {
-    return [...this.peers.keys()].sort((a, b) => a - b);
-  }
-
-  private players(): Profile[] {
-    return this.slots().map((s) => this.profiles.get(s)!);
+  private profiles(): Profile[] {
+    return [...this.seats.entries()].sort(([a], [b]) => a - b).map(([, s]) => s.profile);
   }
 
   private sendTo(slot: number, msg: ServerMsg): void {
-    try { this.peers.get(slot)?.send(JSON.stringify(msg)); } catch { /* closing */ }
+    try { this.seats.get(slot)?.peer?.send(JSON.stringify(msg)); } catch { /* closing */ }
   }
 
   private broadcast(msg: ServerMsg, except = -1): void {
-    for (const slot of this.peers.keys()) if (slot !== except) this.sendTo(slot, msg);
+    for (const slot of this.seats.keys()) if (slot !== except) this.sendTo(slot, msg);
   }
 }

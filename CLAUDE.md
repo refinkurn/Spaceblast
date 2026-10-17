@@ -17,17 +17,19 @@ Capacitor. Multiplayer is the main goal, so the simulation must stay determinist
 src/
   sim/     game rules: plain TypeScript, deterministic, no DOM, no Three.js
   input/   devices -> PlayerCommand (keyboard, touch, bots)
-  net/     online rooms: protocol, lockstep input sync, WebSocket client
+  net/     online rooms: protocol, server frames (frames.ts), connection + reconnect (link.ts)
   view/    Three.js rendering; reads sim state, never writes it
   audio/   synthesised sound effects and music (Web Audio, no files); driven by sim events
   flow/    menus, HUD, story, online lobby
   main.ts  wiring + fixed 60 Hz loop
-server/    the room relay: room.ts (shared), dev_relay.ts (npm run dev), worker.ts (Cloudflare)
+server/    the room server: room.ts (shared: seats, round clock, rejoin), dev_relay.ts (npm run dev), worker.ts (Cloudflare)
 ```
 
-- Online play is lockstep: browsers share only packed PlayerCommands, so any
+- Online play runs on the room server's clock: it sends every player's packed
+  PlayerCommand for each tick and every browser plays those frames, so any
   non-determinism in `sim/` becomes a desync. Never read local-only data
-  (time, window size, settings) inside `sim/`.
+  (time, window size, settings) inside `sim/`. Late commands never stall the
+  others (the server repeats the last move); see ONLINE.md.
 
 - `sim/` uses **integers only** for positions and timers: 1 tile = 1000 units
   (`TILE`), 60 ticks per second. No floats stored in state, no `Math.random()`,

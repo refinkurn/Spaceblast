@@ -53,8 +53,8 @@ export class Announcer {
     this.flashUntil = performance.now() + 2000;
   }
 
-  /** `waiting`: names of players whose input is late (online). `hidden`: a menu or card is open. */
-  update(state: GameState, now: number, waiting: string, hidden: boolean): void {
+  /** `note`: a connection note (online), or ''. `hidden`: a menu or card is open. */
+  update(state: GameState, now: number, note: string, hidden: boolean): void {
     const big = hidden ? null : bigFor(state);
     const key = big ? `${big.kind}|${big.title}` : '';
     if (key !== this.shown) {
@@ -83,7 +83,7 @@ export class Announcer {
     const parts: string[] = [];
     if (state.event === LevelEvent.Blackout && state.eventActive > 0) parts.push(`Blackout · ${secs(state.eventActive)}s`);
     if (state.mode === 'battle' && state.timeLeft === 0 && !big) parts.push('Arena collapsing!');
-    if (waiting) parts.push(`Waiting for ${waiting}…`);
+    if (note) parts.push(note);
     if (parts.length === 0 && now < this.flashUntil) parts.push(this.flashText);
     const text = parts.join(' · ');
     this.small.hidden = hidden || text === '' || state.status !== 'playing';

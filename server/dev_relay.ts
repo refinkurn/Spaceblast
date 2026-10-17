@@ -3,9 +3,9 @@ import type { Duplex } from 'node:stream';
 import type { Plugin } from 'vite';
 import { WebSocketServer } from 'ws';
 import { isRoomCode } from '../src/net/protocol';
-import { Room, wishFromUrl } from './room';
+import { Room, requestFromUrl, type Peer } from './room';
 
-// The relay for `npm run dev` and `npm run preview`: rooms run inside the Vite
+// The room server for `npm run dev` and `npm run preview`: rooms run inside the Vite
 // server at ws://<host>/room/CODE, so phones on the same Wi-Fi can play too.
 // Production uses server/worker.ts on Cloudflare instead; both share Room.
 
@@ -26,18 +26,27 @@ export function devRelay(): Plugin {
       }
       const room = rooms.get(code) ?? new Room();
       rooms.set(code, room);
-      const slot = room.join({ send: (d) => ws.send(d), close: (c, r) => ws.close(c, r) }, url.searchParams.has('create'), wishFromUrl(url));
+      const peer: Peer = { send: (d) => ws.send(d), close: (c, r) => ws.close(c, r) };
+      const slot = room.connect(peer, requestFromUrl(url));
       if (slot === null) {
         if (room.empty) rooms.delete(code);
         return;
       }
       ws.on('message', (data) => room.message(slot, data.toString()));
-      ws.on('close', () => {
-        room.leave(slot);
+      ws.on('close', (closeCode) => {
+        room.closed(slot, peer, closeCode);
         if (room.empty) rooms.delete(code);
       });
     });
   }
+
+  // One clock for all rooms: sends due ticks and expires dropped seats.
+  setInterval(() => {
+    for (const [code, room] of rooms) {
+      if (room.busy) room.pump();
+      if (room.empty) rooms.delete(code);
+    }
+  }, 16).unref();
 
   return {
     name: 'spaceblast-dev-relay',
