@@ -1,5 +1,5 @@
 import { isRoomCode } from '../src/net/protocol';
-import { Room } from './room';
+import { Room, wishFromUrl } from './room';
 
 // Cloudflare Worker: serves the game (the dist/ folder, via static assets) and
 // runs one Durable Object per room code at /room/CODE. Free tier is plenty for
@@ -26,10 +26,11 @@ export class RoomObject implements DurableObject {
   private room = new Room();
 
   async fetch(request: Request): Promise<Response> {
-    const create = new URL(request.url).searchParams.has('create');
+    const url = new URL(request.url);
+    const create = url.searchParams.has('create');
     const [client, server] = Object.values(new WebSocketPair());
     server.accept();
-    const slot = this.room.join({ send: (d) => server.send(d), close: (c, r) => server.close(c, r) }, create);
+    const slot = this.room.join({ send: (d) => server.send(d), close: (c, r) => server.close(c, r) }, create, wishFromUrl(url));
     if (slot !== null) {
       server.addEventListener('message', (e) => this.room.message(slot, typeof e.data === 'string' ? e.data : ''));
       const leave = () => this.room.leave(slot);

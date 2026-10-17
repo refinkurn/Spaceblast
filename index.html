@@ -70,6 +70,9 @@
       <div class="online-card">
         <div class="kicker">Play online</div>
         <div id="online-choose">
+          <label class="online-name">Your name
+            <input id="online-name" maxlength="12" autocomplete="nickname" spellcheck="false" placeholder="Astronaut" />
+          </label>
           <button id="online-create" type="button" class="primary">Create room</button>
           <div class="online-join">
             <input id="online-code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Room code" />
@@ -77,10 +80,36 @@
           </div>
         </div>
         <div id="online-lobby" hidden>
-          <div class="online-code-label">Room code</div>
-          <div id="online-room" class="online-room"></div>
-          <ul id="online-players"></ul>
-          <button id="online-start" type="button" class="primary">Start match</button>
+          <div class="lobby-col">
+            <div class="online-code-label">Room code</div>
+            <div id="online-room" class="online-room"></div>
+            <ul id="online-players"></ul>
+            <div class="online-code-label">Your colour</div>
+            <div id="online-colors" class="swatches"></div>
+          </div>
+          <div class="lobby-col">
+            <div class="online-code-label" id="settings-label">Match settings</div>
+            <div class="setting-row">
+              <span>Round time</span>
+              <div id="set-time" class="segmented"></div>
+            </div>
+            <div class="setting-row">
+              <span>Scenarios</span>
+              <div class="segmented">
+                <button id="set-maze" type="button" aria-pressed="false">Maze Shift</button>
+                <button id="set-blackout" type="button" aria-pressed="false">Blackout</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <span>Bots</span>
+              <div class="stepper">
+                <button id="bots-less" type="button" aria-label="Fewer bots">−</button>
+                <output id="bots-count">0</output>
+                <button id="bots-more" type="button" aria-label="More bots">+</button>
+              </div>
+            </div>
+            <button id="online-start" type="button" class="primary">Start match</button>
+          </div>
         </div>
         <div id="online-status" class="online-status"></div>
         <button id="online-back" type="button" class="quiet">Back</button>

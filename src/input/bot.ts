@@ -72,7 +72,10 @@ export class Bot {
     }
 
     // 3) Go somewhere useful without walking into danger.
-    const foe = state.players.find((p) => p.id !== this.id && p.alive);
+    // The nearest opponent (battles can have up to 4 astronauts).
+    const foe = state.players
+      .filter((p) => p.id !== this.id && p.alive)
+      .sort((a, b) => Math.abs(a.x - me.x) + Math.abs(a.y - me.y) - (Math.abs(b.x - me.x) + Math.abs(b.y - me.y)) || a.id - b.id)[0];
     const goal = (x: number, y: number) =>
       itemAt(state, x, y) !== Item.None ||
       (this.cooldown < 10 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, x, y));

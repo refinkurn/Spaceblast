@@ -87,8 +87,18 @@ export const START_LIVES = 3;
 export const SPAWN_SHIELD_TICKS = 90;
 
 // --- Battle ---------------------------------------------------------------------
-/** A battle round ends in a draw after 3 minutes (Hurry Up comes in Phase 2). */
-export const ROUND_TICKS = 3 * 60 * 60;
+/** Round clock for Battle vs bot (online rooms pick one of ROUND_SECONDS). */
+export const ROUND_TICKS = 2 * 60 * 60;
+/** Round time choices for online rooms, in seconds. */
+export const ROUND_SECONDS: readonly number[] = [60, 90, 120, 150, 180];
+/**
+ * When the clock runs out the arena collapses: unbreakable blocks fall one at a
+ * time, spiralling in from the edge, and crush whoever stands there.
+ * One block every 0.2 s: the whole arena is gone in about 25 s.
+ */
+export const COLLAPSE_EVERY = 12;
+/** The collapse is announced 3 s ahead. */
+export const COLLAPSE_WARNING_TICKS = 180;
 
 // --- Level events (survival) ------------------------------------------------------
 // Which levels have which events lives in levels.ts.

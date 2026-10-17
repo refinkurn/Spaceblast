@@ -350,20 +350,23 @@ html, body {
 #dev-panel .dev-toggles { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 14px; }
 #dev-panel .dev-close { padding: 0 18px; }
 
-/* Online rooms: create / join, then the lobby. */
+/* Online rooms: name, create / join, then the lobby. */
 #online {
   position: fixed;
   inset: 0;
   z-index: 9;
   display: flex;
-  align-items: center;
+  align-items: safe center;
   justify-content: center;
-  padding: 16px;
+  padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+  overflow-y: auto;
   background: #14161df2;
 }
 #online[hidden], #online [hidden] { display: none !important; }
-.online-card { width: min(420px, 92vw); display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
-#online-choose, #online-lobby { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; }
+.online-card { width: min(760px, 96vw); display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+#online-choose { display: flex; flex-direction: column; gap: 12px; align-items: center; width: min(420px, 100%); }
+#online-lobby { display: flex; gap: 24px; width: 100%; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+.lobby-col { display: flex; flex-direction: column; gap: 8px; align-items: center; min-width: 260px; flex: 1 1 280px; }
 #online button {
   min-height: 48px;
   padding: 0 22px;
@@ -377,13 +380,9 @@ html, body {
 #online button:disabled { opacity: 0.45; }
 #online button.quiet { min-height: 40px; font-weight: 500; }
 .online-join { display: flex; gap: 8px; }
-#online-code {
-  width: 140px;
+.online-name { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-quiet); }
+#online input {
   min-height: 48px;
-  font: 700 24px ui-monospace, monospace;
-  letter-spacing: 0.3em;
-  text-align: center;
-  text-transform: uppercase;
   color: var(--ink);
   background: #0e1118;
   border: 1px solid #5ad1ff66;
@@ -391,10 +390,24 @@ html, body {
   user-select: text;
   -webkit-user-select: text;
 }
+#online-name { width: 220px; padding: 0 12px; font: 600 18px system-ui, sans-serif; text-align: center; }
+#online-code { width: 140px; font: 700 24px ui-monospace, monospace; letter-spacing: 0.3em; text-align: center; text-transform: uppercase; }
 .online-code-label { font-size: 12px; color: var(--ink-quiet); }
-.online-room { font: 800 44px ui-monospace, monospace; letter-spacing: 0.25em; color: var(--accent); user-select: text; -webkit-user-select: text; }
-#online-players { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.online-room { font: 800 40px ui-monospace, monospace; letter-spacing: 0.25em; line-height: 1; color: var(--accent); user-select: text; -webkit-user-select: text; }
+#online-players { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 #online-players li { padding: 6px 12px; border-radius: 999px; background: #ffffff10; font-size: 14px; display: flex; gap: 6px; align-items: center; }
+#online-players li.bot { color: var(--ink-quiet); font-style: italic; }
 #online-players .dot { width: 10px; height: 10px; border-radius: 50%; }
+.swatches { display: grid; grid-template-columns: repeat(4, 40px); gap: 8px; }
+#online .swatches button { min-height: 40px; height: 40px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
+#online .swatches button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #14161d inset; }
+#online .swatches button:disabled { opacity: 0.2; }
+.setting-row { display: flex; flex-direction: column; gap: 4px; align-items: center; font-size: 13px; color: var(--ink-quiet); }
+.segmented { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+#online .segmented button { min-height: 40px; padding: 0 10px; font-size: 14px; }
+#online .segmented button[aria-pressed="true"] { color: #0e1118; background: var(--accent); border-color: var(--accent); }
+.stepper { display: flex; gap: 8px; align-items: center; }
+#online .stepper button { min-height: 40px; width: 48px; padding: 0; font-size: 20px; }
+.stepper output { min-width: 24px; font: 700 18px system-ui, sans-serif; color: var(--ink); }
 .online-status { min-height: 18px; font-size: 14px; color: var(--ink-quiet); }
 .online-status.error { color: #ffb4a2; }

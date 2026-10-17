@@ -1,8 +1,17 @@
 # Online rooms (room codes)
 
-Play Battle with 2–4 friends: one person taps **Play online → Create room**
-and shares the 4-letter code; the others tap **Play online**, type the code
-and **Join**. The host taps **Start match**. First to 3 round wins takes it.
+Play Battle with friends: type your name, tap **Play online → Create room**
+and share the 4-letter code; the others type their name and the code and tap
+**Join**. In the lobby everyone picks a colour. The host picks:
+
+- **Round time**: 60s, 90s, 2:00, 2:30 or 3:00. When it runs out the arena
+  collapses: blocks fall from the edge inwards and crush anyone underneath.
+- **Scenarios**: Maze Shift and/or Blackout, at random moments (with the usual
+  3 s warning).
+- **Bots**: fill empty seats. Players + bots = 4 at most; the host can even
+  play alone against bots.
+
+First to 3 round wins takes the match.
 
 ## How it works (short version)
 

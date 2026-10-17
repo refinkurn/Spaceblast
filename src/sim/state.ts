@@ -107,7 +107,8 @@ export type SimEvent =
   | { type: 'gate_opened' }
   | { type: 'level_clear' }
   | { type: 'game_over' }
-  | { type: 'round_over'; winner: number };
+  | { type: 'round_over'; winner: number }
+  | { type: 'tile_collapsed'; tx: number; ty: number };
 
 export interface GameOptions {
   mode?: Mode;
@@ -123,6 +124,8 @@ export interface GameOptions {
   boss?: BossKind;
   /** Survival duel: player 1 is the Renegade Pilot (level 20). */
   rival?: boolean;
+  /** Battle: ticks before the arena starts to collapse (default ROUND_TICKS). */
+  roundTicks?: number;
 }
 
 export interface GameState {
@@ -135,6 +138,9 @@ export interface GameState {
   winner: number;
   /** Battle: ticks left in the round. */
   timeLeft: number;
+  /** Battle: ticks since the arena started collapsing, and how far along the spiral it is. */
+  collapseTicks: number;
+  collapseNext: number;
   grid: Grid;
   /** Power-up per tile (Item), hidden while the tile is still a rock. */
   items: Uint8Array;
@@ -186,7 +192,9 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     mode,
     status: 'playing',
     winner: -1,
-    timeLeft: battle ? ROUND_TICKS : 0,
+    timeLeft: battle ? (options.roundTicks ?? ROUND_TICKS) : 0,
+    collapseTicks: 0,
+    collapseNext: 0,
     grid: undefined!,
     items: new Uint8Array(GRID_W * GRID_H),
     gate: -1,
@@ -201,7 +209,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     boss: null,
     rival,
     freeze: 0,
-    rules: battle ? NO_EVENTS : (options.rules ?? NO_EVENTS),
+    rules: options.rules ?? NO_EVENTS,
     event: LevelEvent.None,
     eventWarning: 0,
     eventActive: 0,

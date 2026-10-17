@@ -3,7 +3,7 @@ import type { Duplex } from 'node:stream';
 import type { Plugin } from 'vite';
 import { WebSocketServer } from 'ws';
 import { isRoomCode } from '../src/net/protocol';
-import { Room } from './room';
+import { Room, wishFromUrl } from './room';
 
 // The relay for `npm run dev` and `npm run preview`: rooms run inside the Vite
 // server at ws://<host>/room/CODE, so phones on the same Wi-Fi can play too.
@@ -26,7 +26,7 @@ export function devRelay(): Plugin {
       }
       const room = rooms.get(code) ?? new Room();
       rooms.set(code, room);
-      const slot = room.join({ send: (d) => ws.send(d), close: (c, r) => ws.close(c, r) }, url.searchParams.has('create'));
+      const slot = room.join({ send: (d) => ws.send(d), close: (c, r) => ws.close(c, r) }, url.searchParams.has('create'), wishFromUrl(url));
       if (slot === null) {
         if (room.empty) rooms.delete(code);
         return;

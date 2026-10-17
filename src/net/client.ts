@@ -22,12 +22,14 @@ export class NetClient {
   private ws: WebSocket | null = null;
 
   /** Opens the room; resolves on the first server message (welcome or error). */
-  connect(code: string, create: boolean): Promise<ServerMsg> {
+  connect(code: string, create: boolean, name = '', color = -1): Promise<ServerMsg> {
     this.close();
     return new Promise((resolve, reject) => {
       let ws: WebSocket;
       try {
-        ws = new WebSocket(`${relayBase()}/room/${code}${create ? '?create=1' : ''}`);
+        const q = new URLSearchParams({ name, color: String(color) });
+        if (create) q.set('create', '1');
+        ws = new WebSocket(`${relayBase()}/room/${code}?${q}`);
       } catch (e) {
         reject(e);
         return;

@@ -6,21 +6,66 @@ function peer() {
   const got: ServerMsg[] = [];
   return { got, closed: false, send(d: string) { got.push(JSON.parse(d)); }, close() { this.closed = true; } };
 }
+const msg = (m: object) => JSON.stringify(m);
 
 describe('room', () => {
-  it('seats players, lets only the host start, and forwards inputs to the others', () => {
+  it('seats players with names and colours, and only the host starts', () => {
     const room = new Room();
     const a = peer(), b = peer();
-    expect(room.join(a, true)).toBe(0);
-    expect(room.join(b, false)).toBe(1);
-    expect(b.got[0]).toEqual({ t: 'welcome', you: 1, host: 0, slots: [0, 1], playing: false });
-    room.message(1, JSON.stringify({ t: 'start', seed: 5 }));
+    expect(room.join(a, true, { name: 'Ana', color: 3 })).toBe(0);
+    expect(room.join(b, false, { name: '  Bo<b>  ', color: 3 })).toBe(1);
+    const welcome = b.got[0];
+    expect(welcome.t === 'welcome' && welcome.players).toEqual([
+      { slot: 0, name: 'Ana', color: 3 },
+      { slot: 1, name: 'Bob', color: 0 }, // colour 3 was taken
+    ]);
+    expect(a.got.at(-1)).toEqual({ t: 'profile', player: { slot: 1, name: 'Bob', color: 0 } });
+    room.message(1, msg({ t: 'start', seed: 5 }));
     expect(a.got.some((m) => m.t === 'start')).toBe(false);
-    room.message(0, JSON.stringify({ t: 'start', seed: 5 }));
-    expect(b.got.at(-1)).toEqual({ t: 'start', r: 1, seed: 5, slots: [0, 1] });
-    room.message(1, JSON.stringify({ t: 'in', r: 1, tick: 6, c: [1, 2] }));
+    room.message(0, msg({ t: 'start', seed: 5 }));
+    const start = b.got.at(-1);
+    expect(start?.t === 'start' && start.players.map((p) => p.slot)).toEqual([0, 1]);
+    room.message(1, msg({ t: 'in', r: 1, tick: 6, c: [1, 2] }));
     expect(a.got.at(-1)).toEqual({ t: 'in', slot: 1, r: 1, tick: 6, c: [1, 2] });
     expect(b.got.at(-1)?.t).toBe('start'); // not echoed back
+  });
+
+  it('gives an empty name a default and refuses a colour someone has', () => {
+    const room = new Room();
+    const a = peer(), b = peer();
+    room.join(a, true, { name: '', color: 1 });
+    room.join(b, false, {});
+    room.message(1, msg({ t: 'profile', name: 'Zed', color: 1 }));
+    expect(a.got.at(-1)).toEqual({ t: 'profile', player: { slot: 1, name: 'Zed', color: 0 } });
+    room.message(1, msg({ t: 'profile', name: '', color: 5 }));
+    expect(a.got.at(-1)).toEqual({ t: 'profile', player: { slot: 1, name: 'Player 2', color: 5 } });
+  });
+
+  it('host settings are validated and bots keep the total at 4', () => {
+    const room = new Room();
+    const a = peer(), b = peer(), c = peer();
+    room.join(a, true);
+    room.message(0, msg({ t: 'settings', s: { time: 90, maze: true, blackout: false, bots: 3 } }));
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 90, maze: true, blackout: false, bots: 3 } });
+    room.message(0, msg({ t: 'settings', s: { time: 999, maze: 'yes', blackout: true, bots: 9 } }));
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 3 } });
+    room.join(b, false);
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 2 } });
+    room.join(c, false);
+    room.message(1, msg({ t: 'settings', s: { time: 60, maze: false, blackout: false, bots: 0 } })); // not the host
+    expect(c.got.at(-1)?.t).toBe('welcome');
+  });
+
+  it('the host can start alone with bots, but not alone without', () => {
+    const room = new Room();
+    const a = peer();
+    room.join(a, true);
+    room.message(0, msg({ t: 'start', seed: 1 }));
+    expect(a.got.some((m) => m.t === 'start')).toBe(false);
+    room.message(0, msg({ t: 'settings', s: { time: 60, maze: false, blackout: false, bots: 1 } }));
+    room.message(0, msg({ t: 'start', seed: 1 }));
+    const start = a.got.at(-1);
+    expect(start?.t === 'start' && start.settings.bots).toBe(1);
   });
 
   it('drops inputs from an old round and bad commands', () => {
@@ -28,11 +73,11 @@ describe('room', () => {
     const a = peer(), b = peer();
     room.join(a, true);
     room.join(b, false);
-    room.message(0, JSON.stringify({ t: 'start', seed: 1 }));
-    room.message(0, JSON.stringify({ t: 'start', seed: 2 }));
+    room.message(0, msg({ t: 'start', seed: 1 }));
+    room.message(0, msg({ t: 'start', seed: 2 }));
     const before = b.got.length;
-    room.message(0, JSON.stringify({ t: 'in', r: 1, tick: 6, c: [1] }));
-    room.message(0, JSON.stringify({ t: 'in', r: 2, tick: 6, c: [999] }));
+    room.message(0, msg({ t: 'in', r: 1, tick: 6, c: [1] }));
+    room.message(0, msg({ t: 'in', r: 2, tick: 6, c: [999] }));
     room.message(0, 'not json');
     expect(b.got.length).toBe(before);
   });
@@ -58,8 +103,8 @@ describe('room', () => {
     room.join(a, true);
     room.join(b, false);
     room.join(c, false);
-    room.message(0, JSON.stringify({ t: 'start', seed: 1 }));
-    room.message(0, JSON.stringify({ t: 'in', r: 1, tick: 6, c: [0, 0, 0] }));
+    room.message(0, msg({ t: 'start', seed: 1 }));
+    room.message(0, msg({ t: 'in', r: 1, tick: 6, c: [0, 0, 0] }));
     room.leave(0);
     expect(b.got.at(-1)).toEqual({ t: 'left', slot: 0, host: 1, lastTick: 8 });
     room.leave(1);
@@ -72,13 +117,13 @@ describe('room', () => {
     const a = peer(), b = peer();
     room.join(a, true);
     room.join(b, false);
-    room.message(0, JSON.stringify({ t: 'start', seed: 1 }), 0);
-    room.message(0, JSON.stringify({ t: 'alive' }), 5000);
+    room.message(0, msg({ t: 'start', seed: 1 }), 0);
+    room.message(0, msg({ t: 'alive' }), 5000);
     expect(b.closed).toBe(false);
-    room.message(1, JSON.stringify({ t: 'in', r: 1, tick: 6, c: [0, 0] }), 1000);
-    room.message(0, JSON.stringify({ t: 'alive' }), 8999);
+    room.message(1, msg({ t: 'in', r: 1, tick: 6, c: [0, 0] }), 1000);
+    room.message(0, msg({ t: 'alive' }), 8999);
     expect(b.closed).toBe(false);
-    room.message(0, JSON.stringify({ t: 'alive' }), 9000);
+    room.message(0, msg({ t: 'alive' }), 9000);
     expect(b.closed).toBe(true);
     expect(a.got.at(-1)).toEqual({ t: 'left', slot: 1, host: 0, lastTick: 7 });
   });
@@ -88,9 +133,9 @@ describe('room', () => {
     const a = peer(), b = peer();
     room.join(a, true);
     room.join(b, false);
-    room.message(0, JSON.stringify({ t: 'start', seed: 1 }), 0);
-    room.message(0, JSON.stringify({ t: 'start', seed: 2 }), 60_000);
-    room.message(0, JSON.stringify({ t: 'alive' }), 61_000);
+    room.message(0, msg({ t: 'start', seed: 1 }), 0);
+    room.message(0, msg({ t: 'start', seed: 2 }), 60_000);
+    room.message(0, msg({ t: 'alive' }), 61_000);
     expect(b.closed).toBe(false);
   });
 });

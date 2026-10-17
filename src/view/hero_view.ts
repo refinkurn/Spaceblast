@@ -22,12 +22,11 @@ export class HeroView {
     new THREE.MeshBasicMaterial({ color: 0xffe14d }),
   );
   private markerTime = 0;
+  private suitMaterial: THREE.MeshLambertMaterial;
 
   constructor(color = 0x3a7bff) {
-    const suit = new THREE.Mesh(
-      new THREE.SphereGeometry(0.34, 24, 16),
-      new THREE.MeshLambertMaterial({ color }),
-    );
+    this.suitMaterial = new THREE.MeshLambertMaterial({ color });
+    const suit = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 16), this.suitMaterial);
     suit.position.y = 0.34;
     suit.castShadow = true;
     const helmet = new THREE.Mesh(
@@ -43,6 +42,11 @@ export class HeroView {
     this.marker.rotation.x = Math.PI; // point down at the astronaut
     this.marker.visible = false;
     this.group.add(this.body, this.bubble, this.marker);
+  }
+
+  /** Suit colour (online players pick theirs). */
+  setColor(color: number): void {
+    this.suitMaterial.color.setHex(color);
   }
 
   /** Shows the "this is you" arrow. */

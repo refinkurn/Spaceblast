@@ -1,4 +1,5 @@
-import { Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS } from './constants';
+import { COLLAPSE_EVERY, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS } from './constants';
+import { nextCollapseTiles } from './collapse';
 import { cellAt, inBounds } from './grid';
 import type { Charge, GameState } from './state';
 
@@ -24,6 +25,17 @@ export function forEachBeamTile(state: GameState, x: number, y: number, range: n
   }
 }
 
+/** Battle: tiles the collapse will crush in the next 1.5 s count as danger too. */
+const COLLAPSE_HORIZON = 90;
+function markCollapse(state: GameState, danger: Int16Array): void {
+  if (state.mode !== 'battle' || state.timeLeft > COLLAPSE_HORIZON) return;
+  const first = state.timeLeft > 0 ? state.timeLeft : (COLLAPSE_EVERY - (state.collapseTicks % COLLAPSE_EVERY)) % COLLAPSE_EVERY;
+  nextCollapseTiles(state, Math.ceil(COLLAPSE_HORIZON / COLLAPSE_EVERY)).forEach((i, k) => {
+    const t = first + k * COLLAPSE_EVERY;
+    if (t <= COLLAPSE_HORIZON && (danger[i] === SAFE || danger[i] > t)) danger[i] = t;
+  });
+}
+
 /**
  * Ticks until each tile is hit by a beam: 0 = beam now, SAFE = not threatened.
  * Accounts for chain reactions. `extra` adds a hypothetical new charge;
@@ -37,6 +49,7 @@ export function dangerMap(
   const { w, h } = state.grid;
   const danger = new Int16Array(w * h).fill(SAFE);
   state.beams.forEach((b, i) => { if (b > 0) danger[i] = 0; });
+  markCollapse(state, danger);
   const charges = state.charges.filter((c) => !only || only(c)).map((c) => ({ tx: c.tx, ty: c.ty, range: c.range, fuse: c.fuse }));
   if (extra) charges.push({ ...extra, fuse: FUSE_TICKS });
   // A few passes let chain reactions shorten fuses that a nearer blast will trigger.

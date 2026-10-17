@@ -87,12 +87,12 @@ describe('battle rules', () => {
     expect(g.winner).toBe(1);
   });
 
-  it('is a draw when time runs out', () => {
+  it('keeps playing when time runs out: the arena collapses instead', () => {
     const g = createGame(1, { mode: 'battle' });
     g.timeLeft = 2;
     step(g, [idle, idle]);
     step(g, [idle, idle]);
-    expect(g.status).toBe('round_over');
-    expect(g.winner).toBe(-1);
+    step(g, [idle, idle]);
+    expect(g.events.some((e) => e.type === 'tile_collapsed')).toBe(true);
   });
 });

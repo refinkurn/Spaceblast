@@ -1,4 +1,5 @@
 import { updateBoss } from './boss';
+import { updateCollapse } from './collapse';
 import { canWalk, tickCharges, tryPlace, updatePassable } from './charges';
 import { NO_COMMAND, type PlayerCommand } from './command';
 import { gateOpen, pickUpItems, playerSpeed } from './items';
@@ -31,6 +32,7 @@ export function step(state: GameState, commands: readonly PlayerCommand[]): void
   updateMartians(state);
   updateLevelEvents(state);
   updateBoss(state);
+  updateCollapse(state);
   updateLives(state);
   if (!gateWasOpen && gateOpen(state)) state.events.push({ type: 'gate_opened' });
   updateOutcome(state);
@@ -54,6 +56,8 @@ export function hashState(state: GameState): number {
   mix(state.mode === 'battle' ? 1 : 0);
   mix(state.winner);
   mix(state.timeLeft);
+  mix(state.collapseTicks);
+  mix(state.collapseNext);
   mix(state.gate);
   mix(state.freeze);
   for (const v of [state.event, state.eventWarning, state.eventActive, state.nextEvent, state.gateWait]) mix(v);

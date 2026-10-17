@@ -57,11 +57,14 @@ export function updateLives(state: GameState): void {
   }
 }
 
-/** Battle: last astronaut standing wins; the round is a draw when time runs out or nobody is left. */
+/**
+ * Battle: last astronaut standing wins; a draw when nobody is left. When the
+ * clock runs out the arena collapses (collapse.ts) until someone wins.
+ */
 function battleOutcome(state: GameState): void {
   if (state.timeLeft > 0) state.timeLeft--;
   const standing = state.players.filter((p) => p.alive);
-  if (standing.length > 1 && state.timeLeft > 0) return;
+  if (standing.length > 1) return;
   state.status = 'round_over';
   state.winner = standing.length === 1 ? standing[0].id : -1;
   state.events.push({ type: 'round_over', winner: state.winner });

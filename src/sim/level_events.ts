@@ -9,9 +9,9 @@ import { playerTile, type GameState } from './state';
 // overlapping), and the wandering Warp Gate. Bosses start events through warn().
 
 export function updateLevelEvents(state: GameState): void {
-  if (state.mode !== 'survival') return;
+  // Battle rooms can switch on Maze Shift and Blackout too; the gate is survival only.
   updateTimedEvent(state);
-  updateGateWander(state);
+  if (state.mode === 'survival') updateGateWander(state);
 }
 
 function updateTimedEvent(state: GameState): void {

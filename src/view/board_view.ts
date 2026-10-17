@@ -13,12 +13,22 @@ const PALETTE = {
   pillar: 0x3b3f4a,
   border: 0x2a2d35,
   rock: 0xd9773f,
+  collapse: 0x5b4652,
 };
+
+/** A collapse block falls from this height in FALL_SECONDS. */
+const FALL_FROM = 6;
+const FALL_SECONDS = 0.18;
+
+const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
 
 export class BoardView {
   readonly group = new THREE.Group();
   /** One rock instance per grid cell (hidden when there is no rock), so rocks can come and go. */
   private rockMesh?: THREE.InstancedMesh;
+  /** One collapse block per cell (Battle "Hurry Up"), hidden until it falls. */
+  private collapseMesh?: THREE.InstancedMesh;
+  private falling: { i: number; tx: number; ty: number; t: number }[] = [];
   private width = 0;
 
   build(state: GameState): void {
@@ -47,12 +57,35 @@ export class BoardView {
     this.width = w;
     for (const [x, y] of allCells) if (!rocks.some(([rx, ry]) => rx === x && ry === y)) this.breakRock(x, y);
     this.group.add(this.rockMesh);
+    this.collapseMesh = this.cubes(allCells, 1.0, PALETTE.collapse);
+    for (let i = 0; i < allCells.length; i++) this.collapseMesh.setMatrixAt(i, HIDDEN);
+    this.group.add(this.collapseMesh);
+    this.falling = [];
+  }
+
+  /** The arena collapse: a block falls onto (tx, ty); the sim has already made it solid. */
+  dropBlock(tx: number, ty: number): void {
+    this.breakRock(tx, ty);
+    this.falling.push({ i: ty * this.width + tx, tx, ty, t: 0 });
+  }
+
+  /** Animates falling blocks. */
+  update(dt: number): void {
+    if (!this.collapseMesh || this.falling.length === 0) return;
+    const m = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    for (const f of this.falling) {
+      f.t = Math.min(1, f.t + dt / FALL_SECONDS);
+      this.collapseMesh.setMatrixAt(f.i, m.makeTranslation(tileToWorld(f.tx, f.ty, 0.5 + FALL_FROM * (1 - f.t) ** 2, pos)));
+    }
+    this.collapseMesh.instanceMatrix.needsUpdate = true;
+    this.falling = this.falling.filter((f) => f.t < 1);
   }
 
   /** Hides a rock the sim has broken. */
   breakRock(tx: number, ty: number): void {
     if (!this.rockMesh) return;
-    this.rockMesh.setMatrixAt(ty * this.width + tx, new THREE.Matrix4().makeScale(0, 0, 0));
+    this.rockMesh.setMatrixAt(ty * this.width + tx, HIDDEN);
     this.rockMesh.instanceMatrix.needsUpdate = true;
   }
 

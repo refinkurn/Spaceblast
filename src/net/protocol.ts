@@ -1,4 +1,4 @@
-import { Dir } from '../sim/constants';
+import { Dir, ROUND_SECONDS } from '../sim/constants';
 import type { PlayerCommand } from '../sim/command';
 
 // Online rooms: the messages between a browser and the relay server.
@@ -14,10 +14,51 @@ export function isRoomCode(code: string): boolean {
   return code.length === CODE_LENGTH && [...code].every((c) => CODE_LETTERS.includes(c));
 }
 
-/** Browser -> server. */
+/** Astronaut colours to pick from (placeholder for characters). */
+export const PLAYER_COLORS = ['#3a7bff', '#ff6a3d', '#4fd17a', '#c77dff', '#ff5fa2', '#ffd23f', '#3fd8e0', '#e8ecf5'];
+export const NAME_MAX = 12;
+
+/** A human in the room. */
+export interface Profile {
+  slot: number;
+  name: string;
+  /** Index into PLAYER_COLORS. */
+  color: number;
+}
+
+/** What the host picks in the lobby. */
+export interface RoomSettings {
+  /** Round time in seconds before the arena collapses (one of ROUND_SECONDS). */
+  time: number;
+  maze: boolean;
+  blackout: boolean;
+  /** Bots added to the match; humans + bots never exceed MAX_PLAYERS. */
+  bots: number;
+}
+
+export const DEFAULT_SETTINGS: RoomSettings = { time: 120, maze: false, blackout: false, bots: 0 };
+
+/** Trims a typed name to something safe to show; empty becomes "Player N". */
+export function cleanName(raw: unknown, slot: number): string {
+  const name = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX) : '';
+  return name || `Player ${slot + 1}`;
+}
+
+/** Validates settings from a browser, keeping humans + bots within MAX_PLAYERS. */
+export function cleanSettings(raw: Partial<RoomSettings> | undefined, humans: number): RoomSettings {
+  const time = ROUND_SECONDS.includes(Number(raw?.time)) ? Number(raw!.time) : DEFAULT_SETTINGS.time;
+  const bots = Math.max(0, Math.min(MAX_PLAYERS - humans, Math.floor(Number(raw?.bots) || 0)));
+  return { time, maze: raw?.maze === true, blackout: raw?.blackout === true, bots };
+}
+
+/** Browser -> server. Name and colour wishes go in the URL: /room/CODE?name=..&color=.. */
 export type ClientMsg =
-  /** Host only: start a round with these players (all slots in the room). */
+  /** Host only: start a round with everyone in the room. */
   | { t: 'start'; seed: number }
+  /** Change your name or colour (a colour someone else has is refused). */
+  | { t: 'profile'; name: string; color: number }
+  /** Host only: lobby settings. */
+  | { t: 'settings'; s: RoomSettings }
   /** Packed commands for ticks `tick`, `tick + 1`, ... of round `r`. */
   | { t: 'in'; r: number; tick: number; c: number[] }
   /** Sent every second while this browser's game is running (inputs also count). */
@@ -34,12 +75,14 @@ export type ErrorReason = 'taken' | 'not_found' | 'full' | 'bad_code';
 
 /** Server -> browser. A slot is a seat in the room (0-3) and stays the same all match. */
 export type ServerMsg =
-  | { t: 'welcome'; you: number; host: number; slots: number[]; playing: boolean }
-  | { t: 'joined'; slot: number }
+  | { t: 'welcome'; you: number; host: number; players: Profile[]; settings: RoomSettings; playing: boolean }
+  /** Someone joined, or changed name or colour. */
+  | { t: 'profile'; player: Profile }
+  | { t: 'settings'; s: RoomSettings }
   /** `lastTick`: the last tick this player sent input for in the current round (-1 if none). */
   | { t: 'left'; slot: number; host: number; lastTick: number }
-  /** Round `r` starts; player id i in the sim is `slots[i]`. */
-  | { t: 'start'; r: number; seed: number; slots: number[] }
+  /** Round `r` starts. Sim player i is `players[i]`; bots come after them. */
+  | { t: 'start'; r: number; seed: number; players: Profile[]; settings: RoomSettings }
   | { t: 'in'; slot: number; r: number; tick: number; c: number[] }
   | { t: 'hash'; slot: number; r: number; tick: number; h: number }
   | { t: 'error'; reason: ErrorReason };
