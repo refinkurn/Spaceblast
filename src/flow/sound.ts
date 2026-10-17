@@ -33,7 +33,9 @@ export class GameAudio {
       goFullscreen();
       onStart();
     };
-    start.addEventListener('pointerdown', go);
+    // 'click', not 'pointerdown': hiding the screen on touch-down let the same
+    // tap land on the menu button underneath it.
+    start.addEventListener('click', go);
     window.addEventListener('keydown', go, { capture: true });
 
     for (const b of this.buttons) {
