@@ -27,6 +27,20 @@ export function wishFromUrl(url: URL): JoinWish {
 
 /** Most commands one message may carry (half a second). */
 const MAX_BATCH = 30;
+/** A round's first input may start this late (the browsers' input delay is 6 ticks). */
+const MAX_FIRST_TICK = 60;
+/** Biggest message a browser ever needs to send. */
+const MAX_MESSAGE = 2048;
+/**
+ * Flood guard: a browser sends ~32 messages a second (inputs, heartbeat, hash).
+ * Each peer gets a bucket of BURST messages refilled at RATE per second; one
+ * that empties it is disconnected, so a broken or cheating client can't run up
+ * the server bill or swamp the others.
+ */
+const RATE = 90;
+const BURST = 150;
+/** Close code for a flooding peer. */
+export const CLOSE_FLOOD = 4002;
 
 export class Room {
   private peers = new Map<number, Peer>();
@@ -40,6 +54,7 @@ export class Room {
   private r = 0;
   /** When each player last showed their game was running. */
   private seen = new Map<number, number>();
+  private buckets = new Map<number, { tokens: number; at: number }>();
 
   get empty(): boolean {
     return this.peers.size === 0;
@@ -70,6 +85,13 @@ export class Room {
   }
 
   message(slot: number, raw: string, now = Date.now()): void {
+    if (!this.peers.has(slot)) return;
+    if (!this.take(slot, now)) {
+      this.peers.get(slot)?.close(CLOSE_FLOOD, 'flood');
+      this.leave(slot);
+      return;
+    }
+    if (raw.length > MAX_MESSAGE) return;
     let msg: ClientMsg;
     try {
       msg = JSON.parse(raw);
@@ -105,7 +127,11 @@ export class Room {
     } else if (msg.t === 'in') {
       if (msg.r !== this.r || !this.round?.includes(slot) || !Number.isInteger(msg.tick) || msg.tick < 0) return;
       if (!Array.isArray(msg.c) || msg.c.length === 0 || msg.c.length > MAX_BATCH || !msg.c.every(isPacked)) return;
-      this.lastTick.set(slot, Math.max(this.lastTick.get(slot) ?? -1, msg.tick + msg.c.length - 1));
+      // Inputs must follow on from the last ones: a gap or a jump far ahead would
+      // leave the other browsers waiting forever for ticks that never come.
+      const last = this.lastTick.get(slot);
+      if (last === undefined ? msg.tick > MAX_FIRST_TICK : msg.tick !== last + 1) return;
+      this.lastTick.set(slot, msg.tick + msg.c.length - 1);
       this.broadcast({ t: 'in', slot, r: this.r, tick: msg.tick, c: msg.c }, slot);
     } else if (msg.t === 'hash') {
       if (msg.r === this.r && Number.isInteger(msg.tick) && Number.isInteger(msg.h)) this.broadcast({ t: 'hash', slot, r: msg.r, tick: msg.tick, h: msg.h }, slot);
@@ -128,8 +154,18 @@ export class Room {
     }
   }
 
+  /** Takes one message from the peer's flood-guard bucket; false when it is empty. */
+  private take(slot: number, now: number): boolean {
+    const b = this.buckets.get(slot) ?? { tokens: BURST, at: now };
+    b.tokens = Math.min(BURST, b.tokens + ((now - b.at) / 1000) * RATE) - 1;
+    b.at = now;
+    this.buckets.set(slot, b);
+    return b.tokens >= 0;
+  }
+
   leave(slot: number): void {
     if (!this.peers.delete(slot)) return;
+    this.buckets.delete(slot);
     this.profiles.delete(slot);
     this.seen.delete(slot);
     if (this.host === slot) this.host = this.empty ? -1 : Math.min(...this.peers.keys());

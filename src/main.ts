@@ -114,7 +114,19 @@ function startMode(m: MenuChoice) {
   }
 }
 
+/** Online: the first Menu press mid-round asks before leaving the room. */
+let leaveAsked = false;
+
 function openMenu() {
+  if (online.connected && mode === 'online' && net && state.status === 'playing' && !leaveAsked) {
+    leaveAsked = true;
+    screens.showBanner('Leave the match?', `You'll leave room ${online.code}, and your astronaut is out for this round.`, 'Keep playing', () => {
+      leaveAsked = false;
+      screens.hideBanner();
+    }, 'Leave');
+    return;
+  }
+  leaveAsked = false;
   cine.stop();
   cutscene.cancel();
   story.closeOverlays();
@@ -139,6 +151,14 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   screens.hideBanner();
   screens.hideLevelCard();
   cardUntil = 0;
+  leaveAsked = false;
+  clearPresses();
+}
+
+/** Drops charge presses queued before the round could see them. */
+function clearPresses() {
+  keys.clearPlace();
+  touch.readPlace();
 }
 
 /** Astronaut colours: the room's picks online, else blue for you and orange for the rival. */
@@ -339,6 +359,8 @@ function desync(tick: number) {
 // --- Keys, taps, layout -------------------------------------------------------------
 window.addEventListener('keydown', (e) => {
   if (screens.menuOpen || online.screenOpen || settings.isOpen || story.overlayOpen) return;
+  // Held keys repeat: a held Enter must not press "Next round" again and again.
+  if (e.repeat) return;
   const confirm = e.code === 'Enter' || e.code === 'Space';
   if (e.code === 'Escape') openMenu();
   else if (cutscene.active) {
@@ -379,13 +401,22 @@ newGame();
 openMenu();
 let acc = 0;
 let last = performance.now();
+let wasPaused = false;
+const portrait = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
 view.renderer.setAnimationLoop((now: number) => {
   const dt = Math.min(now - last, 250);
   last = now;
   acc += dt;
   if (cardUntil > 0 && now >= cardUntil) skipCard();
   const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open || settings.isOpen || story.overlayOpen;
-  const paused = overlay || cardUntil > 0 || cine.active || cutscene.active || (mode === 'online' && !net);
+  // Offline games pause while the phone is upright (the "rotate" screen is up).
+  const upright = portrait.matches && mode !== 'online';
+  const paused = overlay || upright || cardUntil > 0 || cine.active || cutscene.active || (mode === 'online' && !net);
+  // Something took over the screen: let go of the stick and the charge button.
+  // Coming back: forget presses made meanwhile (Space on a card must not drop a charge).
+  if (paused && !wasPaused) touch.release();
+  if (!paused && wasPaused) clearPresses();
+  wasPaused = paused;
   let steps = 0;
   while (acc >= TICK_MS && steps < 5) {
     if (!paused && mode === 'online') {

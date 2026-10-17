@@ -31,7 +31,7 @@ export class Screens {
       });
     }
     this.renderBotLevel();
-    this.primary.addEventListener('click', () => this.onPrimary());
+    this.primary.addEventListener('click', () => this.firePrimary());
     $('banner-menu').addEventListener('click', onMenu);
     $('menu-btn').addEventListener('click', onMenu);
   }
@@ -103,7 +103,9 @@ export class Screens {
     this.menu.hidden = true;
   }
 
-  showBanner(title: string, text: string, button: string, onClick: () => void): void {
+  /** `menuLabel` renames the second button (it always goes to the menu). */
+  showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = 'Menu'): void {
+    $('banner-menu').textContent = menuLabel;
     $('banner-title').textContent = title;
     $('banner-text').textContent = text;
     this.primary.textContent = button;
@@ -117,6 +119,13 @@ export class Screens {
 
   /** Enter / Space on an open banner presses its main button. */
   pressPrimary(): void {
-    if (this.bannerOpen) this.onPrimary();
+    if (this.bannerOpen) this.firePrimary();
+  }
+
+  /** The main button works once per banner: frantic taps can't skip rounds or levels. */
+  private firePrimary(): void {
+    const action = this.onPrimary;
+    this.onPrimary = () => {};
+    action();
   }
 }

@@ -291,7 +291,7 @@ html, body {
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 40;
   background: #14161d;
   align-items: center;
   justify-content: center;
@@ -684,3 +684,40 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 
 /* During cutscenes, round replays and the ending: no HUD or touch controls. */
 body.scene #hud, body.scene #stick-zone, body.scene #action-zone, body.scene #alert { visibility: hidden; }
+
+/* Overlays that can be taller than a phone held sideways: let them scroll
+   (the page itself blocks touch panning for the game). */
+#online, #congrats, #settings, #story-hub, #ending, #story, #install {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+
+/* Ending: stats in two columns so it fits a phone screen. */
+#ending-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#ending-stats li { padding: 5px 10px; font-size: 14px; gap: 12px; }
+.ending-card { max-width: min(560px, 62vw); }
+#ending { align-items: safe center; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+
+/* Short screens (phones in landscape): tighter overlays. */
+@media (max-height: 430px) {
+  .ending-card { gap: 5px; }
+  .ending-card h2 { font-size: 20px; }
+  #ending-text { font-size: 13px; line-height: 1.35; }
+  #ending-btn, #congrats button, #settings-done { min-height: 44px; }
+  .trophy { width: 40px; height: 40px; }
+  .congrats-name { font-size: 30px; }
+  .congrats-line { font-size: 15px; }
+  #congrats-standings li { padding: 4px 10px; font-size: 14px; }
+  .settings-card { gap: 6px; }
+  .story-card p { font-size: 14px; line-height: 1.45; }
+  .story-card h2 { font-size: 24px; }
+  .hub-levels button { min-height: 44px; }
+  .cut-bar.bottom { min-height: 30%; padding-top: 8px; padding-bottom: 8px; }
+  .cut-text { font-size: 15px; }
+}
+@media (max-width: 700px) {
+  .ending-card { max-width: 100%; }
+  #ending { background: #0b0d12e6; }
+}

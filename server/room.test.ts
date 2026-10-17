@@ -139,3 +139,45 @@ describe('room', () => {
     expect(b.closed).toBe(false);
   });
 });
+
+describe('room abuse', () => {
+  function started() {
+    const room = new Room();
+    const a = peer(), b = peer();
+    room.join(a, true);
+    room.join(b, false);
+    room.message(0, msg({ t: 'start', seed: 1 }), 0);
+    return { room, a, b };
+  }
+
+  it('ignores inputs that skip ahead, so a cheater cannot freeze the room', () => {
+    const { room, a, b } = started();
+    room.message(1, msg({ t: 'in', r: 1, tick: 1_000_000, c: [0] }), 10);
+    expect(a.got.at(-1)?.t).not.toBe('in');
+    room.message(1, msg({ t: 'in', r: 1, tick: 6, c: [0, 0] }), 20);
+    room.message(1, msg({ t: 'in', r: 1, tick: 50, c: [0] }), 30); // a gap
+    room.message(1, msg({ t: 'in', r: 1, tick: 8, c: [0] }), 40);
+    expect(a.got.filter((m) => m.t === 'in').map((m) => m.t === 'in' && m.tick)).toEqual([6, 8]);
+    // Leaving reports the last real tick, not the bogus one.
+    room.leave(1);
+    expect(a.got.at(-1)).toEqual({ t: 'left', slot: 1, host: 0, lastTick: 8 });
+    expect(b.closed).toBe(false);
+  });
+
+  it('disconnects a client that floods messages, but not a normal one', () => {
+    const { room, a, b } = started();
+    // Normal: ~32 messages a second for 10 seconds.
+    for (let i = 0; i < 320; i++) room.message(0, msg({ t: 'alive' }), i * 31);
+    expect(a.closed).toBe(false);
+    for (let i = 0; i < 400; i++) room.message(1, msg({ t: 'alive' }), 10_000);
+    expect(b.closed).toBe(true);
+    expect(a.got.some((m) => m.t === 'left' && m.slot === 1)).toBe(true);
+  });
+
+  it('ignores oversized messages', () => {
+    const { room, a } = started();
+    const before = a.got.length;
+    room.message(1, msg({ t: 'profile', name: 'x'.repeat(5000), color: 2 }), 5);
+    expect(a.got.length).toBe(before);
+  });
+});

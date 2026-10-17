@@ -50,7 +50,9 @@ export const DEFAULT_SETTINGS: RoomSettings = { time: 120, maze: false, blackout
 
 /** Trims a typed name to something safe to show; empty becomes "Player N". */
 export function cleanName(raw: unknown, slot: number): string {
-  const name = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX) : '';
+  const clean = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim() : '';
+  // Cut by characters, not UTF-16 units, so an emoji is never split in half.
+  const name = Array.from(clean).slice(0, NAME_MAX).join('').trim();
   return name || `Player ${slot + 1}`;
 }
 

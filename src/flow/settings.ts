@@ -18,12 +18,19 @@ export interface Settings {
 const DEFAULTS: Settings = { music: 70, sfx: 90, controls: 'normal', cinematic: 'full' };
 export const CONTROL_SCALE: Record<ControlSize, number> = { small: 0.82, normal: 1, large: 1.22 };
 
+/** Saved settings, checked field by field (old or edited data falls back to defaults). */
 function load(): Settings {
+  let raw: Partial<Settings> = {};
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
-  } catch {
-    return { ...DEFAULTS };
-  }
+    raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {};
+  } catch { /* private mode or broken data */ }
+  const volume = (v: unknown, d: number) => (typeof v === 'number' && v >= 0 && v <= 100 ? v : d);
+  return {
+    music: volume(raw.music, DEFAULTS.music),
+    sfx: volume(raw.sfx, DEFAULTS.sfx),
+    controls: raw.controls === 'small' || raw.controls === 'large' ? raw.controls : DEFAULTS.controls,
+    cinematic: raw.cinematic === 'short' || raw.cinematic === 'off' ? raw.cinematic : 'full',
+  };
 }
 
 export class SettingsScreen {

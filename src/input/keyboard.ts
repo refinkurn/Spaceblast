@@ -14,6 +14,8 @@ export class KeyboardSource {
   private place = false;
   /** Set on key down, cleared when read, so a tap shorter than a tick still counts. */
   private placeTapped = false;
+  /** Ignore the charge key until it is released (it was pressed to skip a card). */
+  private placeBlocked = false;
 
   constructor(target: Window = window) {
     target.addEventListener('keydown', (e) => {
@@ -30,11 +32,15 @@ export class KeyboardSource {
     target.addEventListener('keyup', (e) => {
       const d = KEY_DIRS[e.code];
       if (d !== undefined) this.held = this.held.filter((h) => h !== d);
-      else if (PLACE_KEYS.has(e.code)) this.place = false;
+      else if (PLACE_KEYS.has(e.code)) {
+        this.place = false;
+        this.placeBlocked = false;
+      }
     });
     target.addEventListener('blur', () => {
       this.held = [];
       this.place = false;
+      this.placeBlocked = false;
     });
   }
 
@@ -42,7 +48,13 @@ export class KeyboardSource {
   readPlace(): boolean {
     const v = this.place || this.placeTapped;
     this.placeTapped = false;
-    return v;
+    return v && !this.placeBlocked;
+  }
+
+  /** Forgets charge presses so far; a key still held is ignored until released. */
+  clearPlace(): void {
+    this.placeTapped = false;
+    this.placeBlocked = this.place;
   }
 
   /** [primary, perpendicular fallback] or [] when nothing is held. */

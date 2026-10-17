@@ -9,6 +9,7 @@ export class TouchSource {
   private placeTapped = false;
 
   private pointer = -1;
+  private button!: HTMLElement;
   private cx = 0;
   private cy = 0;
   private radius = 56;
@@ -20,10 +21,14 @@ export class TouchSource {
     private knob: HTMLElement,
     button: HTMLElement,
   ) {
+    this.button = button;
     zone.addEventListener('pointerdown', (e) => this.start(e));
     zone.addEventListener('pointermove', (e) => this.move(e));
     zone.addEventListener('pointerup', (e) => this.end(e));
     zone.addEventListener('pointercancel', (e) => this.end(e));
+    // If the zone is hidden mid-touch (a scene starts), the browser may never send
+    // pointerup; losing capture ends the touch too, so the stick can't get stuck.
+    zone.addEventListener('lostpointercapture', (e) => this.end(e));
 
     const press = (down: boolean) => (e: PointerEvent) => {
       e.preventDefault();
@@ -35,6 +40,9 @@ export class TouchSource {
     button.addEventListener('pointerup', press(false));
     button.addEventListener('pointercancel', press(false));
     button.addEventListener('pointerleave', press(false));
+    button.addEventListener('lostpointercapture', press(false));
+    window.addEventListener('blur', () => this.release());
+    document.addEventListener('visibilitychange', () => this.release());
     this.reset();
   }
 
@@ -45,11 +53,23 @@ export class TouchSource {
     return v;
   }
 
+  /** Lets go of everything (a scene or menu took over the screen). */
+  release(): void {
+    this.pointer = -1;
+    this.place = false;
+    this.placeTapped = false;
+    this.button.classList.remove('pressed');
+    this.reset();
+  }
+
   private start(e: PointerEvent) {
-    if (this.pointer !== -1) return;
+    // A new finger always takes the stick: an old touch may never have ended
+    // cleanly (iOS can drop pointerup), and refusing would freeze the stick.
     e.preventDefault();
     this.pointer = e.pointerId;
-    this.zone.setPointerCapture(e.pointerId);
+    try {
+      this.zone.setPointerCapture(e.pointerId);
+    } catch { /* the finger already lifted: the touch still works without capture */ }
     // The stick appears where the thumb lands, clamped inside the zone.
     const r = this.zone.getBoundingClientRect();
     this.cx = Math.min(Math.max(e.clientX, r.left + this.radius), r.right - this.radius);

@@ -1,5 +1,5 @@
 import { NO_COMMAND, type PlayerCommand } from '../sim/command';
-import { packCommand, unpackCommand } from './protocol';
+import { isPacked, packCommand, unpackCommand } from './protocol';
 
 // Deterministic lockstep: every browser runs the same sim and only shares
 // inputs. A local input is used INPUT_DELAY ticks after it is read, which gives
@@ -33,6 +33,8 @@ export class Lockstep {
   /** Inputs from the network for `player`, starting at `tick`. */
   receive(player: number, tick: number, packed: readonly number[]): void {
     if (player === this.local || player < 0 || player >= this.players) return;
+    // The relay checks inputs, but never trust the network: only sane ticks and commands.
+    if (!Number.isInteger(tick) || tick < 0 || tick > this.tick + 600 || !packed.every(isPacked)) return;
     packed.forEach((c, i) => (this.inputs[player][tick + i] = c));
   }
 

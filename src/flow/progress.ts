@@ -23,6 +23,22 @@ interface Saved {
 
 const fresh = (): Saved => ({ unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false });
 
+/** Saved data checked field by field, so old or edited data can't break the game. */
+function sanitize(raw: Partial<Saved> | null): Saved {
+  const out = fresh();
+  if (!raw || typeof raw !== 'object') return out;
+  const int = (v: unknown, max: number) => (Number.isInteger(v) && (v as number) >= 0 ? Math.min(v as number, max) : 0);
+  out.unlocked = Math.max(1, int(raw.unlocked, LEVEL_COUNT));
+  for (let n = 1; n <= LEVEL_COUNT; n++) {
+    const s = int(raw.stars?.[n], 3);
+    if (s > 0) out.stars[n] = s;
+  }
+  const st = raw.stats;
+  out.stats = { martians: int(st?.martians, 1e9), bosses: int(st?.bosses, 1e9), livesLost: int(st?.livesLost, 1e9), ticks: int(st?.ticks, 1e12) };
+  out.finished = raw.finished === true;
+  return out;
+}
+
 /**
  * Stars for a cleared level: 1 for clearing it, +1 for losing no lives,
  * +1 for being quick (bosses can't be rushed, so there it's free).
@@ -39,7 +55,7 @@ export class StoryProgress {
   constructor() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) this.data = { ...fresh(), ...JSON.parse(raw) };
+      if (raw) this.data = sanitize(JSON.parse(raw));
     } catch { /* private mode: progress lasts for this visit only */ }
   }
 

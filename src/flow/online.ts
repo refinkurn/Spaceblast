@@ -63,6 +63,7 @@ export class OnlineRoom {
   private codeInput = $<HTMLInputElement>('online-code');
   private nameInput = $<HTMLInputElement>('online-name');
   private prefs = loadPrefs();
+  private lastStart = -Infinity;
 
   constructor() {
     this.net.onMessage = (m) => this.handle(m);
@@ -146,6 +147,10 @@ export class OnlineRoom {
   /** Host: start the next round (or a new match) with everyone in the room. */
   startRound(): void {
     if (!this.isHost || this.total < 2) return;
+    // One start per tap burst: repeated taps would start (and count) several rounds.
+    const now = performance.now();
+    if (now - this.lastStart < 1500) return;
+    this.lastStart = now;
     // Math.random only picks the seed; every browser gets the same one.
     this.net.send({ t: 'start', seed: (Math.random() * 0xffffffff) >>> 0 });
   }
@@ -174,23 +179,38 @@ export class OnlineRoom {
     return name;
   }
 
+  /** True while creating or joining: extra taps are ignored. */
+  private busy = false;
+
   private async create(): Promise<void> {
+    if (this.busy) return;
+    this.busy = true;
     this.setStatus('Creating room…');
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const ok = await this.connect(randomCode(), true);
-      if (ok !== 'taken') return;
+    try {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const ok = await this.connect(randomCode(), true);
+        if (ok !== 'taken') return;
+      }
+      this.setStatus('Could not create a room. Try again.', true);
+    } finally {
+      this.busy = false;
     }
-    this.setStatus('Could not create a room. Try again.', true);
   }
 
   private async join(raw: string): Promise<void> {
+    if (this.busy) return;
     const code = raw.trim().toUpperCase();
     if (!isRoomCode(code)) {
       this.setStatus(ERRORS.bad_code, true);
       return;
     }
+    this.busy = true;
     this.setStatus('Joining…');
-    await this.connect(code, false);
+    try {
+      await this.connect(code, false);
+    } finally {
+      this.busy = false;
+    }
   }
 
   /** Returns 'ok', an error reason, or 'offline'. */
