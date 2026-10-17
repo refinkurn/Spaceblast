@@ -1,5 +1,5 @@
 import {
-  BITE_REACH, BUILD_EVERY_TICKS, BUILDER_MAX_ROCKS, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS, Item, Kind,
+  BITE_REACH, BOSS_OWNER, BUILD_EVERY_TICKS, BUILDER_MAX_ROCKS, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS, Item, Kind,
   MARTIAN_SPAWN_DISTANCE, MARTIAN_SPEED, PHASER_HIDE_TICKS, PHASER_WANDER_TICKS, PORTAL_TICKS, SNIFF_DELAY_TICKS,
   SNIFF_MISS_ONE_IN, SPAWNS, TILE,
 } from './constants';
@@ -46,9 +46,28 @@ function martianCanEnter(state: GameState, tx: number, ty: number): boolean {
 function wanderDir(state: GameState, m: Martian, open: MoveDir[]): Dir {
   const forward = open.filter((d) => d !== REVERSE[m.dir]);
   if (forward.length === 0) return open[0];
+  // Sector 4: half the time, head for the nearest astronaut.
+  if (state.rules.aggressive && forward.length > 1 && nextInt(state, 2) === 0) {
+    const hunt = towardsNearest(state, m, forward);
+    if (hunt !== Dir.None) return hunt;
+  }
   const straight = forward.includes(m.dir as MoveDir);
   if (straight && (forward.length === 1 || nextInt(state, 2) === 0)) return m.dir;
   return forward[nextInt(state, forward.length)];
+}
+
+/** The direction (of those given) that brings the Martian closest to the nearest living astronaut. */
+function towardsNearest(state: GameState, m: Martian, dirs: MoveDir[]): Dir {
+  const targets = state.players.filter((p) => p.alive).map((p) => playerTile(p));
+  if (targets.length === 0) return Dir.None;
+  const tx = Math.round(m.x / TILE), ty = Math.round(m.y / TILE);
+  const dist = (x: number, y: number) => Math.min(...targets.map(([px, py]) => Math.abs(px - x) + Math.abs(py - y)));
+  let best: Dir = Dir.None, bestD = Infinity;
+  for (const d of dirs) {
+    const dd = dist(tx + DIR_DX[d], ty + DIR_DY[d]);
+    if (dd < bestD) { bestD = dd; best = d; }
+  }
+  return best;
 }
 
 /** Sniffer: avoid tiles a noticed charge is about to hit; otherwise wander. */
@@ -194,7 +213,10 @@ export function updateMartians(state: GameState): void {
     }
     if (m.hidden) continue; // safe in its burrow
     const [tx, ty] = playerTile(m);
-    if (state.beams[ty * state.grid.w + tx] > 0) {
+    const i = ty * state.grid.w + tx;
+    // Beams from a freshly blasted rock only clear the way, and the boss's own
+    // blasts never hit its Gooplings: it takes a beam from an astronaut's charge.
+    if (state.beams[i] > 0 && state.beamRock[i] === 0 && state.beamOwner[i] !== BOSS_OWNER) {
       m.alive = false;
       state.events.push({ type: 'martian_killed', id: m.id, tx, ty });
     }

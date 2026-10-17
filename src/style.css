@@ -39,9 +39,43 @@ html, body {
   pointer-events: none;
 }
 #hud .title { font-weight: 700; letter-spacing: 0.12em; color: var(--accent); }
-#hud-info { color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
+
+/* HUD: hearts and oxygen, stage chip, objective, power-up pips. */
+.hud-health { display: flex; gap: 2px; align-items: center; }
+.icon { width: 20px; height: 20px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 0; }
+.icon.heart { color: #ff4f6d; }
+.lost .icon.heart { color: #ffffff2a; }
+.icon.oxygen { color: #5ad1ff; }
+.icon.oxygen circle { fill: none; stroke-width: 2.4; }
+.icon.oxygen text { font: 700 8px system-ui, sans-serif; fill: #5ad1ff; stroke: none; }
+.hud-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffffff14;
+  border: 1px solid #ffffff2a;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.hud-chip.boss { background: #ff4f6d26; border-color: #ff4f6d; color: #ffd0d8; }
+.hud-goal { color: var(--ink-quiet); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
+.hud-powers { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.power { display: flex; gap: 4px; align-items: center; color: var(--accent); font-size: 12px; font-weight: 700; }
+.power .icon { width: 16px; height: 16px; }
+.power.freeze { color: #b9a4ff; }
+.pips { display: flex; gap: 2px; }
+.pips i { width: 6px; height: 10px; border-radius: 2px; background: #ffffff22; }
+.pips i.on { background: var(--accent); }
+@media (max-width: 900px) {
+  #hud .title { display: none; }
+  #hud { gap: 10px; }
+}
+@media (max-width: 700px) {
+  .hud-goal { display: none; }
+}
 #menu-btn {
-  margin-left: auto;
   pointer-events: auto;
   font: inherit;
   color: var(--ink);
@@ -130,6 +164,56 @@ html, body {
   white-space: nowrap;
 }
 #alert[hidden] { display: none; }
+
+/* Sector story card (levels 1, 6, 11, 16) and the 3 s level briefing. */
+#story {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px max(24px, env(safe-area-inset-right)) 24px max(24px, env(safe-area-inset-left));
+  background: radial-gradient(ellipse at 50% 100%, #5a2a1cdd, #0b0d12f5 65%);
+}
+#story[hidden] { display: none; }
+.story-card { max-width: 560px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.story-card h2 { margin: 0; font-size: clamp(26px, 5vw, 40px); letter-spacing: 0.06em; color: var(--ink); text-wrap: balance; }
+.story-card p { margin: 0; font-size: 16px; line-height: 1.55; color: #c9d0de; }
+.kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+#story-btn {
+  margin-top: 8px;
+  min-height: 48px;
+  padding: 0 28px;
+  font: 700 16px system-ui, sans-serif;
+  color: #0e1118;
+  background: var(--accent);
+  border: 0;
+  border-radius: 12px;
+}
+#level-card {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  width: min(460px, 78vw);
+  padding: 18px 22px 20px;
+  border-radius: 14px;
+  background: #0e1118eb;
+  border: 1px solid #5ad1ff66;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+  animation: card-in 0.25s ease-out;
+}
+#level-card[hidden] { display: none; }
+#level-card .context { font-size: 17px; color: var(--ink); font-style: italic; }
+#level-card .goal { font-size: 15px; font-weight: 700; color: #7dffd8; }
+#level-card .hazards { font-size: 13px; color: #ffb4a2; }
+@keyframes card-in { from { opacity: 0; transform: translate(-50%, -46%); } }
+@media (prefers-reduced-motion: reduce) { #level-card { animation: none; } }
 
 /* Level clear / game over. */
 #banner {

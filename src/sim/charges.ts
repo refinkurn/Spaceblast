@@ -62,6 +62,7 @@ function explode(state: GameState, c: Charge, queue: Charge[]): void {
     const i = y * grid.w + x;
     beams[i] = BEAM_TICKS;
     state.beamOwner[i] = c.owner + 1;
+    state.beamRock[i] = 0;
     // A beam destroys a power-up that is already lying in the open.
     if (grid.cells[i] === Cell.Empty && state.items[i] !== Item.None) {
       state.items[i] = Item.None;
@@ -82,6 +83,9 @@ function explode(state: GameState, c: Charge, queue: Charge[]): void {
         grid.cells[y * grid.w + x] = Cell.Empty;
         beams[y * grid.w + x] = BEAM_TICKS;
         state.beamOwner[y * grid.w + x] = c.owner + 1;
+        // Rock clearance: this beam opens the tile but does not hurt a Martian
+        // flushed into it; that takes a second blast.
+        state.beamRock[y * grid.w + x] = 1;
         state.events.push({ type: 'rock_broken', tx: x, ty: y });
         break;
       }

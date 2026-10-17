@@ -12,7 +12,7 @@ import { gateFlicker } from './level_view';
 export const ITEM_LOOK: Record<number, { name: string; color: number }> = {
   [Item.BeamRange]: { name: 'Beam Range+', color: 0xff9a3c },
   [Item.ExtraCharge]: { name: 'Extra Charge', color: 0x5ad1ff },
-  [Item.JetBoots]: { name: 'Jet Boots', color: 0x7dff8a },
+  [Item.JetBoots]: { name: 'Speed Boost', color: 0x7dff8a },
   [Item.FreezePulse]: { name: 'Freeze Pulse', color: 0xb9a4ff },
   [Item.OxygenVest]: { name: 'Oxygen Vest', color: 0xffffff },
 };

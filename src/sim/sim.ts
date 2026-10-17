@@ -1,3 +1,4 @@
+import { updateBoss } from './boss';
 import { canWalk, tickCharges, tryPlace, updatePassable } from './charges';
 import { NO_COMMAND, type PlayerCommand } from './command';
 import { gateOpen, pickUpItems, playerSpeed } from './items';
@@ -25,6 +26,7 @@ export function step(state: GameState, commands: readonly PlayerCommand[]): void
   tickCharges(state);
   updateMartians(state);
   updateLevelEvents(state);
+  updateBoss(state);
   updateLives(state);
   if (!gateWasOpen && gateOpen(state)) state.events.push({ type: 'gate_opened' });
   updateOutcome(state);
@@ -51,7 +53,10 @@ export function hashState(state: GameState): number {
   mix(state.gate);
   mix(state.freeze);
   for (const v of [state.event, state.eventWarning, state.eventActive, state.nextEvent, state.gateWait]) mix(v);
-  for (const v of [state.rules.mazeShift, state.rules.gateWander, state.rules.blackout]) mix(v ? 1 : 0);
+  const r = state.rules;
+  for (const v of [r.mazeShift, r.gateWander, r.blackout, r.frequentEvents, r.aggressive, state.rival]) mix(v ? 1 : 0);
+  if (state.boss) for (const v of [state.boss.kind, state.boss.tile, state.boss.wave, state.boss.timer, state.boss.alive ? 1 : 0]) mix(v);
+  for (const v of state.beamRock) mix(v);
   for (const i of state.shiftRemove) mix(i);
   for (const i of state.shiftAdd) mix(i);
   for (const c of state.grid.cells) mix(c);
@@ -59,7 +64,7 @@ export function hashState(state: GameState): number {
   for (const b of state.beams) mix(b);
   for (const o of state.beamOwner) mix(o);
   for (const p of state.players) {
-    for (const v of [p.x, p.y, p.facing, p.alive ? 1 : 0, p.lives, p.respawn, p.shield, p.range, p.maxCharges, p.boots, p.vest, p.placeHeld ? 1 : 0]) mix(v);
+    for (const v of [p.x, p.y, p.facing, p.alive ? 1 : 0, p.lives, p.respawn, p.shield, p.range, p.maxCharges, p.boots, p.armor, p.placeHeld ? 1 : 0]) mix(v);
     for (const id of p.passable) mix(id);
   }
   for (const m of state.martians) for (const v of [m.id, m.kind, m.x, m.y, m.dir, m.alive ? 1 : 0, m.timer, m.hidden ? 1 : 0, m.built]) mix(v);

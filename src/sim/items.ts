@@ -1,5 +1,5 @@
 import {
-  BOOTS_SPEED, Cell, FREEZE_TICKS, ITEM_ONE_IN, Item, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, PLAYER_SPEED, VEST_TICKS,
+  BOOTS_SPEED, Cell, FREEZE_TICKS, ITEM_ONE_IN, Item, MAX_ARMOR, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, PLAYER_SPEED,
 } from './constants';
 import { cellAt } from './grid';
 import { nextInt } from './rng';
@@ -7,7 +7,7 @@ import { playerTile, type GameState, type Player } from './state';
 
 // Power-ups hidden under rocks, and the Warp Gate.
 
-/** Out of 10: 3 Beam Range+, 3 Extra Charge, 2 Jet Boots, 1 Oxygen Vest, 1 Freeze Pulse. */
+/** Out of 10: 3 Beam Range+, 3 Extra Charge, 2 Speed Boost, 1 Oxygen Vest, 1 Freeze Pulse. No Remote Detonator. */
 const ITEM_TABLE: Item[] = [
   Item.BeamRange, Item.BeamRange, Item.BeamRange,
   Item.ExtraCharge, Item.ExtraCharge, Item.ExtraCharge,
@@ -57,7 +57,7 @@ export function pickUpItems(state: GameState, p: Player): void {
     case Item.BeamRange: p.range = Math.min(MAX_RANGE, p.range + 1); break;
     case Item.ExtraCharge: p.maxCharges = Math.min(MAX_CHARGES, p.maxCharges + 1); break;
     case Item.JetBoots: p.boots = Math.min(MAX_BOOTS, p.boots + 1); break;
-    case Item.OxygenVest: p.vest = VEST_TICKS; break;
+    case Item.OxygenVest: p.armor = Math.min(MAX_ARMOR, p.armor + 1); break;
     case Item.FreezePulse:
       // A skill, not a charge: it fires the moment it is picked up.
       state.freeze = FREEZE_TICKS;

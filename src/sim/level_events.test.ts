@@ -28,11 +28,22 @@ function run(g: GameState, ticks: number): SimEvent[] {
 }
 
 describe('level rules', () => {
-  it('switches events on at levels 5, 8 and 10', () => {
-    expect(levelRules(4)).toEqual({ mazeShift: false, gateWander: false, blackout: false });
-    expect(levelRules(5)).toEqual({ mazeShift: true, gateWander: false, blackout: false });
-    expect(levelRules(8)).toEqual({ mazeShift: true, gateWander: true, blackout: false });
-    expect(levelRules(10)).toEqual({ mazeShift: true, gateWander: true, blackout: true });
+  it('follows the sector plan', () => {
+    expect(levelRules(3)).toEqual(NO_EVENTS); // Sector 1: no hazards
+    expect(levelRules(6)).toEqual({ ...NO_EVENTS, mazeShift: true });
+    expect(levelRules(7)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true }); // Sector 2: Blackouts
+    expect(levelRules(12)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, gateWander: true, frequentEvents: true });
+    expect(levelRules(17)).toEqual({ mazeShift: true, blackout: true, gateWander: true, frequentEvents: true, aggressive: true });
+    for (const boss of [5, 10, 15]) expect(levelRules(boss)).toEqual(NO_EVENTS); // the boss drives its own hazards
+    expect(levelRules(20)).toEqual({ ...NO_EVENTS, mazeShift: true }); // the duel's grid keeps shifting
+  });
+
+  it('spaces events 12-18 s apart in sectors 3-4', () => {
+    const g = level(levelRules(12));
+    g.rules = { ...g.rules, blackout: false, gateWander: false };
+    run(g, FIRST_EVENT_TICKS + EVENT_WARNING_TICKS);
+    expect(g.nextEvent).toBeGreaterThanOrEqual(12 * 60);
+    expect(g.nextEvent).toBeLessThanOrEqual(18 * 60);
   });
 
   it('runs no events when they are off, and never in battle', () => {
@@ -44,7 +55,7 @@ describe('level rules', () => {
 });
 
 describe('Maze Shift', () => {
-  const shiftOnly: LevelRules = { mazeShift: true, gateWander: false, blackout: false };
+  const shiftOnly: LevelRules = { ...NO_EVENTS, mazeShift: true, gateWander: false, blackout: false };
 
   it('is announced 3 s ahead with the tiles that will change', () => {
     const g = level(shiftOnly);
@@ -88,7 +99,7 @@ describe('Maze Shift', () => {
 
 describe('Blackout', () => {
   it('is announced, lasts 10-15 s, and never overlaps another event', () => {
-    const g = level({ mazeShift: true, gateWander: false, blackout: true }, 9);
+    const g = level({ ...NO_EVENTS, mazeShift: true, gateWander: false, blackout: true }, 9);
     const all = run(g, 60 * 60 * 4); // four minutes
     let inBlackout = false, blackouts = 0;
     for (const e of all) {
@@ -98,7 +109,7 @@ describe('Blackout', () => {
     }
     expect(blackouts).toBeGreaterThan(0);
     // Duration: a Blackout-only level, checked right after it starts.
-    const g2 = level({ mazeShift: false, gateWander: false, blackout: true });
+    const g2 = level({ ...NO_EVENTS, mazeShift: false, gateWander: false, blackout: true });
     run(g2, FIRST_EVENT_TICKS + EVENT_WARNING_TICKS);
     expect(g2.event).toBe(LevelEvent.Blackout);
     expect(g2.eventActive).toBeGreaterThanOrEqual(BLACKOUT_MIN_TICKS - 1);
@@ -118,7 +129,7 @@ describe('wandering Warp Gate', () => {
   it('moves after 10 s if nobody steps on it: under a rock, or to an open tile far from astronauts', () => {
     let hidden = 0, open = 0;
     for (let seed = 1; seed <= 20; seed++) {
-      const g = revealedGate({ mazeShift: false, gateWander: true, blackout: false }, seed);
+      const g = revealedGate({ ...NO_EVENTS, mazeShift: false, gateWander: true, blackout: false }, seed);
       const first = g.gate;
       const evs = run(g, GATE_WAIT_TICKS);
       const moved = evs.find((e) => e.type === 'gate_moved');
@@ -146,7 +157,7 @@ describe('wandering Warp Gate', () => {
   });
 
   it('can be entered before it moves', () => {
-    const g = revealedGate({ mazeShift: false, gateWander: true, blackout: false });
+    const g = revealedGate({ ...NO_EVENTS, mazeShift: false, gateWander: true, blackout: false });
     g.players[0].x = (g.gate % GRID_W) * TILE;
     g.players[0].y = Math.floor(g.gate / GRID_W) * TILE;
     run(g, 2);

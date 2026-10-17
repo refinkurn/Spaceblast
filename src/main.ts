@@ -1,17 +1,20 @@
 import * as THREE from 'three';
+import { Hud } from './flow/hud';
 import { Screens, type MenuChoice } from './flow/screens';
+import { BOSS_NAMES, ENDING, SECTORS, briefing } from './flow/story';
 import { Bot } from './input/bot';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
-import { GATE_WAIT_TICKS, GRID_H, GRID_W, LevelEvent, TICK_MS } from './sim/constants';
+import { bossWarning } from './sim/boss';
+import { GRID_H, GRID_W, Kind, LevelEvent, TICK_MS } from './sim/constants';
 import type { PlayerCommand } from './sim/command';
-import { gateOpen } from './sim/items';
-import { LEVEL_COUNT, levelRoster, levelRules, sectorOf } from './sim/levels';
+import { LEVEL_COUNT, isSectorStart, levelRoster, levelSpec } from './sim/levels';
 import { step } from './sim/sim';
 import { createGame, type GameState, type SimEvent } from './sim/state';
 import { GateView, ItemsView, MartiansView, PortalsView } from './view/actors_view';
 import { BoardView } from './view/board_view';
+import { BossView, CrossPreviewView } from './view/boss_view';
 import { CameraRig } from './view/camera_rig';
 import { BeamsView, ChargesView, DebrisView } from './view/effects_view';
 import { HeroView } from './view/hero_view';
@@ -21,7 +24,10 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 /** Battle: first to this many round wins takes the match. */
 const ROUNDS_TO_WIN = 3;
+/** You (blue) and the rival: battle bot or the Renegade Pilot (orange). */
 const HERO_COLORS = [0x3a7bff, 0xff6a3d];
+/** How long the level briefing stays up (the game waits meanwhile). */
+const CARD_MS = 3000;
 
 // --- Rendering ---------------------------------------------------------------
 const canvas = $<HTMLCanvasElement>('game');
@@ -51,69 +57,87 @@ const items = new ItemsView();
 const gate = new GateView();
 const martians = new MartiansView();
 const portals = new PortalsView();
-scene.add(board.group, charges.group, beams.group, debris.group, items.group, gate.group, martians.group, portals.group);
-for (const h of heroes) scene.add(h.group);
+const boss = new BossView();
+const crossPreview = new CrossPreviewView(GRID_W * GRID_H);
 const shiftPreview = new ShiftPreviewView(GRID_W * GRID_H);
-scene.add(shiftPreview.group);
+scene.add(board.group, charges.group, beams.group, debris.group, items.group, gate.group, martians.group, portals.group);
+scene.add(boss.group, crossPreview.group, shiftPreview.group);
+for (const h of heroes) scene.add(h.group);
 const lighting = new LightingView([sky, sun], scene, scene.background as THREE.Color);
 
 // --- Input -------------------------------------------------------------------
 const keys = new KeyboardSource();
 const touch = new TouchSource($('stick-zone'), $('stick-base'), $('stick-knob'), $('place-btn'));
 
-// --- Session: mode, survival level, battle score ---------------------------------
+// --- Session: mode, story level, battle score ------------------------------------
 let mode: MenuChoice = 'survival';
 let state: GameState;
 let bot: Bot | null = null;
-/** Survival level, 1..20; each sector of 5 adds a new Martian kind. */
 let level = 1;
-/** Shown before the level where each event first appears. */
-const EVENT_INTRO: Record<number, string> = {
-  5: 'New: Maze Shift. The Martians move rocks around. Flashing tiles show where, 3 s ahead.',
-  8: 'New: the Warp Gate wanders. Leave it waiting 10 s and it moves somewhere else.',
-  10: 'New: Blackouts. The lights go out for a while; watch for the warning.',
-};
-/** What each sector's new Martian does, shown when it first appears. */
-const SECTOR_INTRO = [
-  'Gooplings wander the maze. Find the Warp Gate under a rock and step on it.',
-  'New: Sniffers. Faster, and they dodge your charges once they spot them.',
-  'New: Phasers. They hide in burrows (can\'t be hit) and jump through portals.',
-  'New: Builders. Toxic to touch, and they wall you in with new rocks.',
-];
 let round = 1;
 let score = [0, 0];
+/** Martian kinds the player has already met this run (for "New:" on the briefing). */
+const seenKinds = new Set<Kind>();
+/** The game waits while the briefing card is up. */
+let cardUntil = 0;
 let prevPlayers: { x: number; y: number }[] = [];
 const prevMartians = new Map<number, { x: number; y: number }>();
 
 const screens = new Screens(startMode, openMenu);
+const hud = new Hud();
 
 function startMode(m: MenuChoice) {
   mode = m;
   level = 1;
   round = 1;
   score = [0, 0];
+  seenKinds.clear();
   screens.hideMenu();
-  newGame();
+  if (mode === 'battle') newGame();
+  else beginLevel(true);
 }
 
 function openMenu() {
   screens.showMenu();
 }
 
+/** Story Mode: sector story card (levels 1, 6, 11, 16), then the level with its briefing. */
+function beginLevel(withStory: boolean) {
+  const spec = levelSpec(level);
+  if (withStory && isSectorStart(level)) {
+    const sector = SECTORS[spec.sector - 1];
+    newGame(); // the new map shows dimly behind the card
+    screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', () => briefLevel());
+    return;
+  }
+  newGame();
+  briefLevel();
+}
+
+function briefLevel() {
+  const spec = levelSpec(level);
+  const b = briefing(spec, (k) => !seenKinds.has(k));
+  for (const k of spec.roster) seenKinds.add(k);
+  screens.showLevelCard(b.title, b.context, b.goal, b.hazards);
+  cardUntil = performance.now() + CARD_MS;
+}
+
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
+  const spec = levelSpec(level);
   state = mode === 'battle'
     ? createGame(seed, { mode: 'battle' })
-    : createGame(seed, { roster: levelRoster(level), rules: levelRules(level) });
-  bot = mode === 'battle' ? new Bot(1, seed) : null;
+    : createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival });
+  bot = mode === 'battle' ? new Bot(1, seed) : spec.rival ? new Bot(1, seed, 'hard') : null;
   snapshot();
   board.build(state);
   charges.clear();
   items.clear();
   martians.clear();
   screens.hideBanner();
+  screens.hideLevelCard();
+  cardUntil = 0;
   heroes.forEach((h, i) => (h.group.visible = i < state.players.length));
-  updateHud();
 }
 
 /** Positions before a tick, so the view can interpolate between ticks. */
@@ -141,6 +165,9 @@ function onEvent(e: SimEvent) {
     case 'player_died':
       debris.burst(e.tx, e.ty, HERO_COLORS[e.id] ?? 0xffffff, 14);
       break;
+    case 'armor_hit':
+      flash('Oxygen Vest absorbed the hit!');
+      break;
     case 'martian_killed':
       debris.burst(e.tx, e.ty, 0x6fd14f, 12);
       break;
@@ -159,6 +186,12 @@ function onEvent(e: SimEvent) {
       }
       rig.shake(0.3);
       break;
+    case 'boss_cross':
+      rig.shake(0.5);
+      break;
+    case 'boss_defeated':
+      if (state.boss) debris.burst(state.boss.tile % GRID_W, Math.floor(state.boss.tile / GRID_W), 0xffe9a8, 30);
+      break;
     case 'gate_moved':
       flash(e.hidden ? 'The Warp Gate moved under a rock!' : 'The Warp Gate moved!');
       break;
@@ -171,7 +204,7 @@ function onEvent(e: SimEvent) {
       levelClear();
       break;
     case 'game_over':
-      screens.showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again', () => { level = 1; newGame(); });
+      screens.showBanner('Game over', `The Martians got you on level ${level}.`, 'Try again', () => { level = 1; beginLevel(false); });
       break;
     case 'round_over':
       roundOver(e.winner);
@@ -180,14 +213,15 @@ function onEvent(e: SimEvent) {
 }
 
 function levelClear() {
+  const spec = levelSpec(level);
   if (level >= LEVEL_COUNT) {
-    screens.showBanner('All 20 levels cleared!', 'The Hive is beaten. The Blaster boss and Endless Survival are coming next.', 'Play again', () => { level = 1; newGame(); });
+    screens.showStory('Story Mode complete', 'Mission accomplished', ENDING, 'Back to menu', openMenu);
     return;
   }
+  const title = spec.boss ? `${BOSS_NAMES[spec.boss]} destroyed!` : `Level ${level} clear!`;
   const next = level + 1;
-  const newSector = sectorOf(next) !== sectorOf(level);
-  const text = EVENT_INTRO[next] ?? (newSector ? SECTOR_INTRO[sectorOf(next) - 1] : `Level ${next} has ${levelRoster(next).length} Martians.`);
-  screens.showBanner(`Level ${level} clear!`, text, 'Next level', () => { level = next; newGame(); });
+  const text = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${levelRoster(next).length} Martians.`;
+  screens.showBanner(title, text, 'Next level', () => { level = next; beginLevel(true); });
 }
 
 function roundOver(winner: number) {
@@ -212,58 +246,34 @@ function flash(text: string) {
   flashUntil = performance.now() + 2000;
 }
 function updateAlert(now: number) {
-  let text = '';
   const secs = (ticks: number) => Math.ceil(ticks / 60);
+  const parts: string[] = [];
+  if (state.boss && bossWarning(state)) parts.push(`Boss wave ${state.boss.wave + 1} in ${secs(state.boss.timer)}`);
   if (state.event !== LevelEvent.None && state.eventWarning > 0) {
-    text = `${state.event === LevelEvent.MazeShift ? 'Maze Shift' : 'Blackout'} in ${secs(state.eventWarning)}`;
+    if (!state.boss) parts.push(`${state.event === LevelEvent.MazeShift ? 'Maze Shift' : 'Blackout'} in ${secs(state.eventWarning)}`);
   } else if (state.event === LevelEvent.Blackout && state.eventActive > 0) {
-    text = `Blackout · ${secs(state.eventActive)}s`;
-  } else if (now < flashUntil) {
-    text = flashText;
+    parts.push(`Blackout · ${secs(state.eventActive)}s`);
   }
-  alertEl.hidden = text === '' || state.status !== 'playing' || screens.menuOpen;
+  if (parts.length === 0 && now < flashUntil) parts.push(flashText);
+  const text = parts.join(' · ');
+  alertEl.hidden = text === '' || state.status !== 'playing' || screens.menuOpen || screens.storyOpen;
   if (alertEl.textContent !== text) alertEl.textContent = text;
-}
-
-// --- HUD ---------------------------------------------------------------------------
-const hudInfo = $('hud-info');
-let lastHud = '';
-function updateHud() {
-  const p = state.players[0];
-  const powers = [
-    `Charges ${p.maxCharges}`,
-    `Range ${p.range}`,
-    p.boots > 0 ? `Boots ${p.boots}` : '',
-    p.vest > 0 ? `Vest ${Math.ceil(p.vest / 60)}s` : '',
-  ];
-  let parts: string[];
-  if (mode === 'battle') {
-    const secs = Math.ceil(state.timeLeft / 60);
-    parts = [`Round ${round}`, `You ${score[0]} – ${score[1]} Bot`, `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`, ...powers];
-  } else {
-    const left = state.martians.filter((m) => m.alive).length;
-    parts = [
-      `Sector ${sectorOf(level)} · Level ${level}`,
-      `Lives ${p.lives}`,
-      ...powers,
-      state.freeze > 0 ? `Frozen ${Math.ceil(state.freeze / 60)}s` : '',
-      `Martians ${left}`,
-      gateOpen(state)
-        ? state.rules.gateWander ? `Gate open · moves in ${Math.ceil((GATE_WAIT_TICKS - state.gateWait) / 60)}s` : 'Gate open!'
-        : 'Find the Warp Gate',
-    ];
-  }
-  if (!p.alive && state.status === 'playing') parts.push('Knocked out!');
-  const text = parts.filter(Boolean).join(' · ');
-  if (text !== lastHud) hudInfo.textContent = lastHud = text;
 }
 
 window.addEventListener('keydown', (e) => {
   if (screens.menuOpen) return;
   if (e.code === 'Escape') openMenu();
+  else if ((e.code === 'Enter' || e.code === 'Space') && screens.storyOpen) screens.pressStory();
   else if ((e.code === 'Enter' || e.code === 'Space') && screens.bannerOpen) screens.pressPrimary();
-  else if (e.code === 'KeyR' && mode === 'survival') newGame();
+  else if ((e.code === 'Enter' || e.code === 'Space') && cardUntil > 0) skipCard();
 });
+$('level-card').addEventListener('click', skipCard);
+
+/** Tap or Enter dismisses the briefing early. */
+function skipCard() {
+  cardUntil = 0;
+  screens.hideLevelCard();
+}
 
 // --- Layout --------------------------------------------------------------------
 /** Gutter width for the touch controls: about 16% of the width, 110-170 px. */
@@ -271,17 +281,17 @@ function layout() {
   const w = window.innerWidth;
   const h = window.innerHeight;
   const gutter = Math.round(Math.min(170, Math.max(110, w * 0.16)));
-  const hud = 44;
+  const hudHeight = 44;
   document.documentElement.style.setProperty('--gutter', `${gutter}px`);
-  document.documentElement.style.setProperty('--hud', `${hud}px`);
+  document.documentElement.style.setProperty('--hud', `${hudHeight}px`);
   renderer.setSize(w, h, false);
-  rig.fit(w, h, gutter, gutter, hud + 2, 4);
+  rig.fit(w, h, gutter, gutter, hudHeight + 2, 4);
 }
 window.addEventListener('resize', layout);
 layout();
 
 // --- Fixed-timestep loop -----------------------------------------------------------
-// A survival map plays behind the start screen; the sim waits while the menu is open.
+// A map plays behind the start screen; the sim waits while any card or the menu is open.
 newGame();
 openMenu();
 let acc = 0;
@@ -290,9 +300,11 @@ renderer.setAnimationLoop((now: number) => {
   const dt = Math.min(now - last, 250);
   last = now;
   acc += dt;
+  if (cardUntil > 0 && now >= cardUntil) skipCard();
+  const paused = screens.menuOpen || screens.storyOpen || cardUntil > 0;
   let steps = 0;
   while (acc >= TICK_MS && steps < 5) {
-    if (!screens.menuOpen) {
+    if (!paused) {
       snapshot();
       step(state, commands());
       for (const e of state.events) onEvent(e);
@@ -303,7 +315,7 @@ renderer.setAnimationLoop((now: number) => {
   if (steps === 5) acc = 0; // too far behind (tab was hidden): drop the backlog
   const seconds = dt / 1000;
   const time = now / 1000;
-  const alpha = acc / TICK_MS;
+  const alpha = paused ? 1 : acc / TICK_MS;
   state.players.forEach((p, i) => heroes[i].update(prevPlayers[i] ?? p, p, alpha, seconds));
   charges.sync(state);
   beams.sync(state);
@@ -311,12 +323,14 @@ renderer.setAnimationLoop((now: number) => {
   gate.sync(state, time);
   martians.sync(state, prevMartians, alpha, time);
   portals.sync(state, time);
+  boss.sync(state, time);
+  crossPreview.sync(state, time);
   shiftPreview.sync(state, time);
   lighting.sync(state, heroes.map((h) => h.group), seconds);
   updateAlert(now);
   debris.update(seconds);
   rig.update(seconds);
-  updateHud();
+  hud.update(state, { mode, level, sector: levelSpec(level).sector, round, score });
   renderer.render(scene, rig.camera);
 });
 
@@ -326,8 +340,8 @@ if (import.meta.env.DEV) {
   Object.assign(window, {
     spaceblast: {
       get state() { return state; },
-      /** Jump straight to a survival level, e.g. spaceblast.startLevel(16). */
-      startLevel(n: number) { mode = 'survival'; level = n; screens.hideMenu(); newGame(); },
+      /** Jump straight to a story level, e.g. spaceblast.startLevel(15). */
+      startLevel(n: number, story = false) { mode = 'survival'; level = n; screens.hideMenu(); beginLevel(story); },
     },
   });
 }

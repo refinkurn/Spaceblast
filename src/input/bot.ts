@@ -19,13 +19,20 @@ interface Path {
   length: number;
 }
 
+/**
+ * How long the bot waits between charges, in ticks: a base plus a random part.
+ * Normal is today's battle bot (about 4/5); Hard is the level 20 Renegade Pilot.
+ */
+export type BotSkill = 'normal' | 'hard';
+const COOLDOWN: Record<BotSkill, [number, number]> = { normal: [20, 40], hard: [6, 14] };
+
 export class Bot {
   private rng: RngState;
   /** Ticks before the bot may consider placing again (keeps it beatable). */
   private cooldown = 30;
   private wasPlacing = false;
 
-  constructor(readonly id: number, seed: number) {
+  constructor(readonly id: number, seed: number, readonly skill: BotSkill = 'normal') {
     this.rng = { rng: seedRng(seed ^ (0x5bd1e995 * (id + 1))) };
   }
 
@@ -57,7 +64,8 @@ export class Bot {
       const after = dangerMap(state, { tx, ty, range: me.range });
       const out = search(state, me, after, perTile, (x, y) => after[y * w + x] === SAFE, true);
       if (out && out.length * perTile < FUSE_TICKS - 30) {
-        this.cooldown = 20 + nextInt(this.rng, 40);
+        const [base, spread] = COOLDOWN[this.skill];
+        this.cooldown = base + nextInt(this.rng, spread);
         this.wasPlacing = true;
         return { ...stay, place: true };
       }

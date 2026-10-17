@@ -3,7 +3,7 @@ import {
   BUILD_EVERY_TICKS, BUILDER_MAX_ROCKS, Cell, Dir, FUSE_TICKS, GRID_W, Kind, PHASER_HIDE_TICKS, PHASER_WANDER_TICKS, TILE,
 } from './constants';
 import type { PlayerCommand } from './command';
-import { LEVEL_COUNT, levelRoster, sectorOf } from './levels';
+import { LEVEL_COUNT, levelRoster, levelSpec, sectorOf } from './levels';
 import { seedRng } from './rng';
 import { hashState, step } from './sim';
 import { createGame, type GameState, type Martian } from './state';
@@ -29,16 +29,20 @@ function add(g: GameState, kind: Kind, tx: number, ty: number, extra: Partial<Ma
 }
 
 describe('level roster', () => {
-  it('adds one new Martian kind per sector of 5 levels', () => {
+  it('follows the sector plan: Gooplings and Sniffers, then Phasers and Builders', () => {
     expect(levelRoster(1)).toEqual([Kind.Goopling, Kind.Goopling, Kind.Goopling]);
-    expect(levelRoster(6)).toContain(Kind.Sniffer);
-    expect(levelRoster(11)).toContain(Kind.Phaser);
-    expect(levelRoster(16)).toContain(Kind.Builder);
-    for (let level = 1; level <= LEVEL_COUNT + 3; level++) {
+    expect(levelRoster(2)).not.toContain(Kind.Sniffer);
+    expect(levelRoster(3)).toContain(Kind.Sniffer); // Sector 1 introduces Sniffers
+    expect(levelRoster(4).some((k) => k === Kind.Phaser || k === Kind.Builder)).toBe(false);
+    expect(levelRoster(6)).toContain(Kind.Phaser); // Sector 2 introduces Phasers...
+    expect(levelRoster(8)).toContain(Kind.Builder); // ...and Builders
+    for (const boss of [5, 10, 15, 20]) expect(levelRoster(boss)).toEqual([]); // bosses bring their own
+    for (let level = 1; level <= LEVEL_COUNT; level++) {
+      if (level % 5 === 0) continue;
       const roster = levelRoster(level);
       expect(roster.length).toBeGreaterThanOrEqual(3);
       expect(roster.length).toBeLessThanOrEqual(8);
-      for (const k of roster) expect(k).toBeLessThanOrEqual(sectorOf(level));
+      expect(levelSpec(level).sector).toBe(sectorOf(level));
     }
   });
 

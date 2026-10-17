@@ -12,7 +12,10 @@
     <canvas id="game"></canvas>
     <div id="hud">
       <span class="title">SPACEBLAST</span>
-      <span id="hud-info"></span>
+      <div id="hud-health" class="hud-health" aria-label="Lives and armor"></div>
+      <div id="hud-stage" class="hud-chip"></div>
+      <div id="hud-goal" class="hud-goal"></div>
+      <div id="hud-powers" class="hud-powers"></div>
       <button id="menu-btn" type="button">Menu</button>
     </div>
     <div id="stick-zone" aria-label="Movement joystick">
@@ -30,13 +33,27 @@
         <button id="banner-menu" class="quiet" type="button">Menu</button>
       </div>
     </div>
+    <div id="story" hidden>
+      <div class="story-card">
+        <div id="story-kicker" class="kicker"></div>
+        <h2 id="story-title"></h2>
+        <p id="story-text"></p>
+        <button id="story-btn" type="button">Begin</button>
+      </div>
+    </div>
+    <div id="level-card" hidden>
+      <div id="card-title" class="kicker"></div>
+      <div id="card-context" class="context"></div>
+      <div id="card-goal" class="goal"></div>
+      <div id="card-hazards" class="hazards"></div>
+    </div>
     <div id="menu">
       <h1>SPACEBLAST</h1>
       <p class="tagline">Animal astronauts vs hungry Martians</p>
       <div class="modes">
         <button id="mode-survival" type="button">
-          <strong>Survival</strong>
-          <span>Clear the Martians, find the Warp Gate</span>
+          <strong>Story Mode</strong>
+          <span>4 sectors, 20 levels, 3 bosses and a final duel</span>
         </button>
         <button id="mode-battle" type="button">
           <strong>Battle vs bot</strong>

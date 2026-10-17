@@ -1,12 +1,12 @@
 import {
-  BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, Cell, EVENT_GAP_MAX_TICKS, EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS,
-  GATE_WAIT_TICKS, Item, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, TILE,
+  BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, Cell, EVENT_GAP_FAST_MAX_TICKS, EVENT_GAP_FAST_MIN_TICKS, EVENT_GAP_MAX_TICKS,
+  EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS, GATE_WAIT_TICKS, Item, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, TILE,
 } from './constants';
 import { nextInt } from './rng';
 import { playerTile, type GameState } from './state';
 
 // Survival level events: Maze Shift and Blackout (announced 3 s ahead, never
-// overlapping), and the wandering Warp Gate.
+// overlapping), and the wandering Warp Gate. Bosses start events through warn().
 
 export function updateLevelEvents(state: GameState): void {
   if (state.mode !== 'survival') return;
@@ -16,9 +16,9 @@ export function updateLevelEvents(state: GameState): void {
 
 function updateTimedEvent(state: GameState): void {
   const { rules } = state;
-  if (!rules.mazeShift && !rules.blackout) return;
   if (state.event === LevelEvent.None) {
-    if (--state.nextEvent <= 0) announce(state);
+    // Running events always finish; new ones only start on levels that have them.
+    if ((rules.mazeShift || rules.blackout) && --state.nextEvent <= 0) announce(state);
   } else if (state.eventWarning > 0) {
     if (--state.eventWarning === 0) begin(state);
   } else if (state.eventActive > 0) {
@@ -31,6 +31,11 @@ function announce(state: GameState): void {
   const { rules } = state;
   let kind: LevelEvent = rules.mazeShift ? LevelEvent.MazeShift : LevelEvent.Blackout;
   if (rules.mazeShift && rules.blackout) kind = nextInt(state, 2) === 0 ? LevelEvent.MazeShift : LevelEvent.Blackout;
+  warn(state, kind);
+}
+
+/** Announces an event now; it happens when the 3 s warning runs out. */
+export function warn(state: GameState, kind: LevelEvent): void {
   state.event = kind;
   state.eventWarning = EVENT_WARNING_TICKS;
   if (kind === LevelEvent.MazeShift) planShift(state);
@@ -51,7 +56,8 @@ function finish(state: GameState): void {
   if (state.event === LevelEvent.Blackout) state.events.push({ type: 'blackout_end' });
   state.event = LevelEvent.None;
   state.eventActive = 0;
-  state.nextEvent = EVENT_GAP_MIN_TICKS + nextInt(state, EVENT_GAP_MAX_TICKS - EVENT_GAP_MIN_TICKS + 1);
+  const [lo, hi] = state.rules.frequentEvents ? [EVENT_GAP_FAST_MIN_TICKS, EVENT_GAP_FAST_MAX_TICKS] : [EVENT_GAP_MIN_TICKS, EVENT_GAP_MAX_TICKS];
+  state.nextEvent = lo + nextInt(state, hi - lo + 1);
 }
 
 // --- Maze Shift ------------------------------------------------------------------

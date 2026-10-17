@@ -38,9 +38,9 @@ export class HeroView {
   /** Places the hero between the previous and current tick (alpha in [0, 1]). */
   update(prev: { x: number; y: number }, p: Player, alpha: number, dt: number): void {
     this.group.visible = p.alive;
-    // Spawn shield: blink. Oxygen Vest: a bubble that flickers in its last 2 s.
+    // Shield after a hit or a respawn: blink. Oxygen Vest armor: a bubble while any is left.
     this.body.visible = p.shield === 0 || Math.floor(p.shield / 6) % 2 === 0;
-    this.bubble.visible = p.vest > 0 && (p.vest > 120 || Math.floor(p.vest / 8) % 2 === 0);
+    this.bubble.visible = p.armor > 0;
     toWorld(prev.x, prev.y, 0, this.from);
     toWorld(p.x, p.y, 0, this.to);
     this.group.position.lerpVectors(this.from, this.to, alpha);

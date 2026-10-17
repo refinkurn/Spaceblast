@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BOOTS_SPEED, Cell, Dir, FREEZE_TICKS, GOOPLING_SPEED, GRID_W, Item, Kind, MARTIAN_SPAWN_DISTANCE, PLAYER_SPEED,
-  SPAWNS, START_LIVES, TILE, VEST_TICKS, type Dir as DirT,
+  SPAWNS, START_LIVES, TILE, type Dir as DirT,
 } from './constants';
 import type { PlayerCommand } from './command';
 import { cellAt, isWalkable } from './grid';
@@ -104,7 +104,7 @@ describe('power-ups', () => {
     const boots = pick(Item.JetBoots).players[0];
     expect(boots.boots).toBe(1);
     expect(playerSpeed(boots)).toBe(PLAYER_SPEED + BOOTS_SPEED);
-    expect(pick(Item.OxygenVest).players[0].vest).toBeGreaterThan(VEST_TICKS - 20);
+    expect(pick(Item.OxygenVest).players[0].armor).toBe(1);
     expect(pick(Item.FreezePulse).freeze).toBeGreaterThan(FREEZE_TICKS - 20);
   });
 });
@@ -148,7 +148,7 @@ describe('Martians', () => {
     expect(m.alive).toBe(false);
   });
 
-  it('bites an astronaut, unless the vest or the spawn shield protects it', () => {
+  it('bites an astronaut; an Oxygen Vest absorbs the first bite', () => {
     const g = arena();
     addGoopling(g, 1, 0);
     g.freeze = 999;
@@ -159,9 +159,11 @@ describe('Martians', () => {
     const v = arena();
     addGoopling(v, 1, 0);
     v.freeze = 999;
-    v.players[0].vest = VEST_TICKS;
+    v.players[0].armor = 1;
     run(v, cmd(Dir.Right), 10);
     expect(v.players[0].alive).toBe(true);
+    expect(v.players[0].armor).toBe(0);
+    expect(v.players[0].lives).toBe(START_LIVES);
   });
 });
 

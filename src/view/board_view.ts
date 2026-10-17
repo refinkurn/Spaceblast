@@ -29,7 +29,8 @@ export class BoardView {
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const c = cellAt(state.grid, x, y);
-        if (c === Cell.Pillar) pillars.push([x, y]);
+        // The boss tile is solid in the sim, but the boss model stands there instead of a pillar.
+        if (c === Cell.Pillar && y * w + x !== state.boss?.tile) pillars.push([x, y]);
         else if (c === Cell.Rock) rocks.push([x, y]);
       }
     }

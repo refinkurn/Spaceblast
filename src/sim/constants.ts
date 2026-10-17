@@ -49,13 +49,16 @@ export const Item = { None: 0, BeamRange: 1, ExtraCharge: 2, JetBoots: 3, Freeze
 export type Item = (typeof Item)[keyof typeof Item];
 /** 1 in N rocks hides a power-up. */
 export const ITEM_ONE_IN = 6;
-export const MAX_RANGE = 8;
-export const MAX_CHARGES = 8;
-export const MAX_BOOTS = 3;
-/** +0.75 tiles/s per Jet Boots level (13 * 60 = 780 units/s). */
-export const BOOTS_SPEED = 13;
-export const VEST_TICKS = 600;
-export const FREEZE_TICKS = 240;
+export const MAX_RANGE = 5;
+export const MAX_CHARGES = 5;
+/** Speed Boost steps (the item is still called JetBoots in code). */
+export const MAX_BOOTS = 5;
+/** +0.54 tiles/s per Speed Boost step (9 * 60 = 540 units/s); 5 steps is about 6.7 tiles/s. */
+export const BOOTS_SPEED = 9;
+/** Oxygen Vest: each one is an armor point that absorbs one hit, up to this many. */
+export const MAX_ARMOR = 3;
+/** Freeze Pulse stops every Martian for 3 s. */
+export const FREEZE_TICKS = 180;
 
 // --- Martians and lives ---------------------------------------------------
 export const Kind = { Goopling: 1, Sniffer: 2, Phaser: 3, Builder: 4 } as const;
@@ -88,15 +91,16 @@ export const SPAWN_SHIELD_TICKS = 90;
 export const ROUND_TICKS = 3 * 60 * 60;
 
 // --- Level events (survival) ------------------------------------------------------
-export const MAZE_SHIFT_FROM_LEVEL = 5;
-export const GATE_WANDER_FROM_LEVEL = 8;
-export const BLACKOUT_FROM_LEVEL = 10;
+// Which levels have which events lives in levels.ts.
 /** Every event is announced this long before it happens (3 s). */
 export const EVENT_WARNING_TICKS = 180;
 /** First event about 20 s into a level, then one every 25-35 s. */
 export const FIRST_EVENT_TICKS = 20 * 60;
 export const EVENT_GAP_MIN_TICKS = 25 * 60;
 export const EVENT_GAP_MAX_TICKS = 35 * 60;
+/** Sectors 3-4: high-frequency events, one every 12-18 s. */
+export const EVENT_GAP_FAST_MIN_TICKS = 12 * 60;
+export const EVENT_GAP_FAST_MAX_TICKS = 18 * 60;
 /** Blackout lasts 10-15 s. */
 export const BLACKOUT_MIN_TICKS = 600;
 export const BLACKOUT_MAX_TICKS = 900;
@@ -109,3 +113,19 @@ export const GATE_FLICKER_TICKS = 180;
 
 export const LevelEvent = { None: 0, MazeShift: 1, Blackout: 2 } as const;
 export type LevelEvent = (typeof LevelEvent)[keyof typeof LevelEvent];
+
+// --- Bosses ---------------------------------------------------------------------------
+export const BossKind = { None: 0, GooplingHive: 1, DarknessHive: 2, MazeMaster: 3 } as const;
+export type BossKind = (typeof BossKind)[keyof typeof BossKind];
+/** beamOwner value for the boss's own blasts (Gooplings are immune to them). */
+export const BOSS_OWNER = 255;
+/** Bosses sit on the centre tile; it becomes solid for the fight. */
+export const BOSS_TILE: readonly [number, number] = [6, 5];
+/** Gooplings spouted per boss wave. */
+export const BOSS_SPOUT = 3;
+/** Seconds between waves; the boss dies when the last interval runs out. */
+export const BOSS_WAVES_SECONDS: Record<number, readonly number[]> = {
+  [BossKind.GooplingHive]: [60, 60, 60, 60],
+  [BossKind.DarknessHive]: [60, 30, 15],
+  [BossKind.MazeMaster]: [50, 35, 20, 10],
+};

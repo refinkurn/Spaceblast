@@ -1,4 +1,5 @@
-import { Dir, FIRST_EVENT_TICKS, GRID_H, GRID_W, Kind, LevelEvent, ROUND_TICKS, SPAWNS, START_CHARGES, START_LIVES, START_RANGE, TILE } from './constants';
+import { BossKind, Dir, FIRST_EVENT_TICKS, GRID_H, GRID_W, Kind, LevelEvent, ROUND_TICKS, SPAWNS, START_CHARGES, START_LIVES, START_RANGE, TILE } from './constants';
+import { setupBoss } from './boss';
 import { NO_EVENTS, type LevelRules } from './levels';
 import { generateGrid, type Grid } from './grid';
 import { placeGate, placeItems } from './items';
@@ -21,10 +22,10 @@ export interface Player {
   range: number;
   /** Charges this player may have on the field at once. */
   maxCharges: number;
-  /** Jet Boots level, 0..MAX_BOOTS. */
+  /** Speed Boost steps, 0..MAX_BOOTS (the item is JetBoots in code). */
   boots: number;
-  /** Oxygen Vest ticks left. */
-  vest: number;
+  /** Oxygen Vest armor points: each absorbs one hit, 0..MAX_ARMOR. */
+  armor: number;
   /** Place button state last tick, so holding it places only one charge. */
   placeHeld: boolean;
   /** Charges this player is still standing on and may walk off. */
@@ -63,6 +64,18 @@ export interface Portal {
   ticks: number;
 }
 
+/** A stationary boss on the centre tile; it cannot be hurt, the level is won by outlasting its waves. */
+export interface Boss {
+  kind: BossKind;
+  /** Tile index of the boss (made solid for the fight). */
+  tile: number;
+  /** Waves fired so far. */
+  wave: number;
+  /** Ticks until the next wave fires, or until the boss dies after the last one. */
+  timer: number;
+  alive: boolean;
+}
+
 export type Status = 'playing' | 'cleared' | 'game_over' | 'round_over';
 
 /** Survival: clear levels against Martians. Battle: last astronaut standing. */
@@ -84,6 +97,11 @@ export type SimEvent =
   | { type: 'blackout_start' }
   | { type: 'blackout_end' }
   | { type: 'gate_moved'; hidden: boolean }
+  | { type: 'armor_hit'; id: number }
+  | { type: 'boss_warning'; wave: number }
+  | { type: 'boss_wave'; wave: number }
+  | { type: 'boss_cross'; tiles: number[] }
+  | { type: 'boss_defeated' }
   | { type: 'player_died'; id: number; tx: number; ty: number }
   | { type: 'player_respawned'; id: number }
   | { type: 'gate_opened' }
@@ -101,6 +119,10 @@ export interface GameOptions {
   roster?: Kind[];
   /** Survival level events (Maze Shift, wandering gate, Blackout). */
   rules?: LevelRules;
+  /** Survival boss on the centre tile (levels 5, 10, 15). */
+  boss?: BossKind;
+  /** Survival duel: player 1 is the Renegade Pilot (level 20). */
+  rival?: boolean;
 }
 
 export interface GameState {
@@ -125,8 +147,13 @@ export interface GameState {
   nextChargeId: number;
   /** Remaining beam ticks per tile (0 = no beam), indexed y * w + x. */
   beams: Uint8Array;
-  /** Player id + 1 whose charge made the beam on each tile. */
+  /** Player id + 1 whose charge made the beam on each tile (BOSS_OWNER for boss blasts). */
   beamOwner: Uint8Array;
+  /** 1 where the beam came from blasting a rock: it clears the tile but does not hurt Martians. */
+  beamRock: Uint8Array;
+  boss: Boss | null;
+  /** Level 20 duel: player 1 is the rival, and defeating it clears the level. */
+  rival: boolean;
   /** Ticks left on a Freeze Pulse (all Martians stop). */
   freeze: number;
   rules: LevelRules;
@@ -148,8 +175,10 @@ export interface GameState {
 export function createGame(seed: number, options: GameOptions = {}): GameState {
   const mode = options.mode ?? 'survival';
   const battle = mode === 'battle';
-  const players = options.players ?? (battle ? 2 : 1);
-  const roster: Kind[] = battle ? [] : (options.roster ?? Array<Kind>(options.martians ?? 3).fill(Kind.Goopling));
+  const rival = !battle && (options.rival ?? false);
+  const bossKind = battle || rival ? BossKind.None : (options.boss ?? BossKind.None);
+  const players = options.players ?? (battle || rival ? 2 : 1);
+  const roster: Kind[] = battle || rival || bossKind ? [] : (options.roster ?? Array<Kind>(options.martians ?? 3).fill(Kind.Goopling));
   const state: GameState = {
     tick: 0,
     seed,
@@ -168,6 +197,9 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     nextChargeId: 1,
     beams: new Uint8Array(GRID_W * GRID_H),
     beamOwner: new Uint8Array(GRID_W * GRID_H),
+    beamRock: new Uint8Array(GRID_W * GRID_H),
+    boss: null,
+    rival,
     freeze: 0,
     rules: battle ? NO_EVENTS : (options.rules ?? NO_EVENTS),
     event: LevelEvent.None,
@@ -181,9 +213,10 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
   };
   state.grid = generateGrid(state);
   placeItems(state);
-  if (!battle) placeGate(state);
-  // One life per round in battle; survival keeps START_LIVES.
-  for (let i = 0; i < players; i++) state.players.push(newPlayer(i, battle ? 1 : START_LIVES));
+  if (bossKind) setupBoss(state, bossKind);
+  else if (!battle && !rival) placeGate(state);
+  // One life per round in battle and for the duel's rival; survival keeps START_LIVES.
+  for (let i = 0; i < players; i++) state.players.push(newPlayer(i, battle || (rival && i > 0) ? 1 : START_LIVES));
   spawnMartians(state, roster);
   return state;
 }
@@ -202,7 +235,7 @@ function newPlayer(id: number, lives: number): Player {
     range: START_RANGE,
     maxCharges: START_CHARGES,
     boots: 0,
-    vest: 0,
+    armor: 0,
     placeHeld: false,
     passable: [],
   };
