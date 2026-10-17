@@ -23,6 +23,8 @@ export interface Shot {
   /** A huge caption across the screen (e.g. "TURNS OUT THE BOSS IS HUMAN!"). */
   reveal?: string;
   shake?: boolean;
+  /** Fade in from black (the first shot of a scene). */
+  fade?: boolean;
   /** Burst of debris at the focus (e.g. the boss exploding). */
   boom?: number;
 }
@@ -40,6 +42,7 @@ export class Cutscene {
   private speakerEl = $('cut-speaker');
   private textEl = $('cut-text');
   private revealEl = $('cut-reveal');
+  private fadeEl = $('cut-fade');
 
   constructor(private view: GameView) {
     $('cut-skip').addEventListener('click', (e) => {
@@ -100,6 +103,11 @@ export class Cutscene {
     const point = this.pointOf(shot.focus);
     this.view.rig.focus(point, shot.zoom ?? 0.55);
     if (shot.shake) this.view.rig.shake(0.5);
+    if (shot.fade) {
+      this.fadeEl.classList.remove('go');
+      void this.fadeEl.offsetWidth;
+      this.fadeEl.classList.add('go');
+    }
     if (shot.boom && point) {
       const tx = Math.round(point.x + (this.state.grid.w - 1) / 2), ty = Math.round(point.z + (this.state.grid.h - 1) / 2);
       this.view.debris.burst(tx, ty, shot.boom, 40);

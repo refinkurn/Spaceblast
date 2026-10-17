@@ -86,8 +86,11 @@ export class StoryMode {
       for (const k of spec.roster) this.seen.add(k);
       this.host.showBriefing(b.title, b.context, b.goal, b.hazards);
     };
-    const intro = () => this.cutscene.play(INTRO_SCENES[level] ?? [], state, brief);
-    if (withStory && isSectorStart(level)) {
+    // Retrying after a game over skips the scenes and goes straight to the briefing.
+    const scene = withStory ? INTRO_SCENES[level] : undefined;
+    const intro = () => this.cutscene.play(scene ?? [], state, brief);
+    // Sectors with an opening scene get it instead of the plain story card.
+    if (withStory && isSectorStart(level) && !scene) {
       const sector = SECTORS[spec.sector - 1];
       this.screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', intro);
     } else {

@@ -721,3 +721,8 @@ button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; 
   .ending-card { max-width: 100%; }
   #ending { background: #0b0d12e6; }
 }
+
+/* Scene openings fade in from black. */
+.cut-fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+.cut-fade.go { animation: fade-from-black 1.8s ease-out; }
+@keyframes fade-from-black { 0%, 25% { opacity: 1; } 100% { opacity: 0; } }
