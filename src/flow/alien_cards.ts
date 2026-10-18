@@ -2,7 +2,7 @@ import { Kind } from '../sim/constants';
 import { martianIcon, type IntroCard } from './intro_card';
 import { KIT } from './story_scenes';
 
-// Alien cards: shown the first time each kind of Martian appears in Story Mode
+// Enemy cards: shown the first time each kind of Martian comes close in Story Mode
 // (once per save). Plain data, so the story team can rewrite it.
 // Each card is one cutscene shot (focus, text, speaker...) plus its name and tip.
 

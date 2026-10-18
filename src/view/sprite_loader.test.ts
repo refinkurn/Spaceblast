@@ -8,7 +8,7 @@ const ATLASES = import.meta.glob<{ meta: { image: string; size?: { w: number; h:
 describe('character art', () => {
   it('finds every character manifest', () => {
     expect(allCharacters().map((c) => c.id).sort()).toEqual(
-      ['astropaw', 'captain-kit', 'darkness-hive', 'ducking', 'goopling-hive', 'maze-master'],
+      ['astropaw', 'captain-kit', 'capybara', 'darkness-hive', 'ducking', 'goopling-hive', 'maze-master'],
     );
     for (const c of allCharacters()) expect(Object.keys(c.poses).length, c.id).toBeGreaterThan(0);
   });

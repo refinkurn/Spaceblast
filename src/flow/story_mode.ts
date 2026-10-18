@@ -4,6 +4,7 @@ import type { GameState, SimEvent } from '../sim/state';
 import type { GameView } from '../view/game_view';
 import { ALIEN_CARDS } from './alien_cards';
 import type { Cutscene } from './cutscene';
+import { martiansNear } from './encounter';
 import { IntroCards } from './intro_card';
 import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress, starsFor } from './progress';
@@ -25,7 +26,7 @@ export interface StoryHost {
   newLevel(level: number): GameState;
   readonly state: GameState;
   /** Shows the level card (the game waits until it is dismissed). */
-  showLevelCard(level: string, sector: string): void;
+  showLevelCard(level: string, sector: string, briefing: string): void;
   openMenu(): void;
 }
 
@@ -75,16 +76,6 @@ export class StoryMode {
     this.cards.cancel();
   }
 
-  /** The level card was closed: introduce any Martian kind not met before on this save. */
-  levelStarted(): void {
-    const state = this.host.state;
-    for (const kind of new Set(levelSpec(this.level).roster)) {
-      const card = ALIEN_CARDS[kind];
-      if (this.progress.seen('seenAliens', card.id)) continue;
-      this.progress.markSeen('seenAliens', card.id);
-      this.cards.show(card, state, { kind });
-    }
-  }
 
   /** "Story Mode" on the menu: the level map, or straight into level 1 the first time. */
   open(): void {
@@ -115,7 +106,7 @@ export class StoryMode {
     const state = this.host.newLevel(level);
     const brief = () => {
       const card = levelCard(spec);
-      this.host.showLevelCard(card.level, card.sector);
+      this.host.showLevelCard(card.level, card.sector, card.briefing);
     };
     // Retrying after a game over skips the scenes and goes straight to the level card.
     const scene = withStory ? INTRO_SCENES[level] : undefined;
@@ -139,9 +130,15 @@ export class StoryMode {
     }
   }
 
-  /** Every Story tick: play time. */
-  tick(): void {
+  /** Every Story tick: play time, and an enemy card the first time each kind of Martian comes close. */
+  tick(state: GameState): void {
     this.progress.add({ ticks: 1 });
+    for (const kind of martiansNear(state)) {
+      const card = ALIEN_CARDS[kind];
+      if (this.progress.seen('seenEnemies', card.id)) continue;
+      this.progress.markSeen('seenEnemies', card.id);
+      this.cards.show(card, state, { kind });
+    }
   }
 
   /** Story results and run stats from sim events. */
@@ -149,8 +146,8 @@ export class StoryMode {
     switch (e.type) {
       case 'item_picked': {
         const card = e.id === 0 ? POWERUP_CARDS[e.item as keyof typeof POWERUP_CARDS] : undefined;
-        if (card && !this.progress.seen('seenPowerUps', card.id)) {
-          this.progress.markSeen('seenPowerUps', card.id);
+        if (card && !this.progress.seen('seenPowerups', card.id)) {
+          this.progress.markSeen('seenPowerups', card.id);
           this.cards.show(card, this.host.state);
         }
         break;

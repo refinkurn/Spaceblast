@@ -40,30 +40,30 @@ export const ENDING =
   'The Renegade Pilot is down and the last ship core is back on board. The Astro Paws lift off from Mars and head for home.';
 
 /**
- * One line of story context per level. Not shown at the moment: the level card
- * only shows the level and its sector.
+ * One line per level, shown on the level card under the sector. Empty on the
+ * boss and duel levels (5, 10, 15, 20): their intro scene says it instead.
  */
 export const CONTEXT: string[] = [
-  'Touching down outside the outpost. Scout the surface.',
-  'Following the crash trail across the dunes.',
-  'Something faster is sniffing around the outpost walls.',
-  'The outpost supply depot is crawling with Martians.',
-  'The Goopling Hive guards the outpost core.',
-  'Descending into the deep shafts.',
-  'The shaft lights flicker. Keep moving.',
-  'Builders are sealing off the lower tunnels.',
-  'The core signal is strong down here.',
-  'The Darkness Hive lurks at the bottom of the shafts.',
-  'The crust is unstable. Walls move on their own.',
-  'Warp Gates drift through the tectonic rifts.',
-  'The Hive reshapes the maze faster now.',
-  'Almost through the core.',
-  'The Maze Master rules the tectonic core.',
-  'Breaching the Rogue Facility\'s outer doors.',
-  'The Martians here hunt in packs.',
-  'Security corridors, every hazard switched on.',
-  'The facility control room is close.',
-  'The Renegade Pilot blocks the last gate.',
+  'Clear a path through the rocks. We need those power cores to get home.',
+  'Movement ahead. Small creatures. Keep your distance.',
+  'Watch for those creatures. They track movement.',
+  'The creatures are getting more aggressive. Stay alert.',
+  '', // level 5: the boss / duel scene instead
+  "Watch for Phasers. An empty corridor doesn't mean you're alone.",
+  'Blackout ahead. Keep your guard up until visibility returns.',
+  "Builders can block your path. Don't let them trap you.",
+  "We're getting closer to the core. Expect heavier resistance.",
+  '', // level 10: the boss / duel scene instead
+  'More Phasers ahead. Stay alert.',
+  'Builders are reinforcing the passages. Watch your route.',
+  "The maze is shifting. Don't count on the way back staying open.",
+  "We're close to the center. Stay focused.",
+  '', // level 15: the boss / duel scene instead
+  "These attacks aren't random anymore. Stay sharp.",
+  "Someone knows we're here. Keep moving.",
+  'The control room should be close. No detours.',
+  'Last stretch, Bosco. Bring those cores home.',
+  '', // level 20: the boss / duel scene instead
 ];
 
 export const BOSS_NAMES: Record<number, string> = {
@@ -72,10 +72,11 @@ export const BOSS_NAMES: Record<number, string> = {
   [BossKind.MazeMaster]: 'Maze Master',
 };
 
-/** The level card: "LEVEL 5" and "SECTOR 1: OUTPOST SURFACE". */
-export function levelCard(spec: LevelSpec): { level: string; sector: string } {
+/** The level card: "LEVEL 5", "SECTOR 1: OUTPOST SURFACE" and the level's one-line briefing. */
+export function levelCard(spec: LevelSpec): { level: string; sector: string; briefing: string } {
   return {
     level: `LEVEL ${spec.level}`,
     sector: `SECTOR ${spec.sector}: ${SECTORS[spec.sector - 1].name.toUpperCase()}`,
+    briefing: CONTEXT[spec.level - 1] ?? '',
   };
 }

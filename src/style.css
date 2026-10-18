@@ -215,6 +215,8 @@ html, body {
 #level-card[hidden] { display: none; }
 #level-card .card-level { font-size: clamp(40px, 9vh, 64px); line-height: 1; }
 #level-card .card-sector { font-size: clamp(16px, 3.2vh, 22px); }
+#level-card .card-briefing { font-size: 17px; font-weight: 600; letter-spacing: 0.01em; line-height: 1.35; }
+#level-card .card-briefing:empty { display: none; }
 #level-card .card-hint { margin-top: 8px; font-size: 15px; font-weight: 600; letter-spacing: 0.04em; opacity: 0.75; animation: tap-pulse 1.4s ease-in-out infinite; }
 @keyframes card-in { from { opacity: 0; transform: translate(-50%, -46%); } }
 @media (prefers-reduced-motion: reduce) { #level-card { animation: none; } }

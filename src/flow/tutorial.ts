@@ -1,14 +1,16 @@
 import { Cell, TILE } from '../sim/constants';
 import { playerTile, type GameState } from '../sim/state';
+import type { Kind } from '../sim/constants';
+import { martiansNear } from './encounter';
 import { BEATS, CONTROL_WORDS, TIPS, type Beat } from './tutorial_script';
 
 // The Story Mode tutorial: short coach messages in the first levels, one at a
 // time. Each step waits for its trigger (the level starting, the first charge,
 // the Warp Gate appearing...), stays until it's done or its time runs out, and
-// never shows again on this device. The text lives in tutorial_script.ts.
+// never shows again on this save (`seenBeats` in the Story progress). The text
+// lives in tutorial_script.ts.
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
-const KEY = 'spaceblast.tutorial';
 /** A "timer" step stays 4 s; any step leaves after 9 s at most (in game time). */
 const TIMER_TICKS = 240;
 const MAX_TICKS = 540;
@@ -24,8 +26,13 @@ export function withControls(text: string, touch: boolean): string {
   return text.replace(/\[(MOVE|CHARGE)\]/g, (_, k: 'MOVE' | 'CHARGE') => words[k]);
 }
 
+/** Where seen steps are remembered (the Story progress). */
+export interface SeenBeats {
+  has(id: string): boolean;
+  add(id: string): void;
+}
+
 export class Tutorial {
-  private seen = new Set<string>();
   private level = 0;
   private queue: Beat[] = [];
   private current: Beat | null = null;
@@ -37,17 +44,7 @@ export class Tutorial {
   private el = $('coach');
   private text = $('coach-text');
 
-  constructor() {
-    try {
-      for (const id of JSON.parse(localStorage.getItem(KEY) ?? '[]') as string[]) this.seen.add(id);
-    } catch { /* private mode or broken data: show the tutorial */ }
-  }
-
-  /** Settings: show the tutorial again from the start. */
-  reset(): void {
-    this.seen.clear();
-    this.save();
-  }
+  constructor(private seen: SeenBeats) {}
 
   /** A Story level begins (after its scenes and briefing). */
   start(level: number, state: GameState): void {
@@ -79,6 +76,7 @@ export class Tutorial {
         if (b && b.done === e.type) this.skip(b);
       }
     }
+    for (const kind of martiansNear(state)) this.trigger('martian_near', kind);
     const hero = state.players[0];
     if (this.current?.done === 'moved' && (hero.x !== this.spawn.x || hero.y !== this.spawn.y)) this.finished = true;
     if (this.waitingNear && nearTarget(state)) {
@@ -99,9 +97,10 @@ export class Tutorial {
     return BEATS.filter((b) => b.level === this.level && !this.seen.has(b.id));
   }
 
-  private trigger(kind: string): void {
+  private trigger(trigger: string, martian?: Kind): void {
     for (const b of this.beats()) {
-      if (b.trigger === kind && b !== this.current && !this.queue.includes(b)) this.queue.push(b);
+      if (b.trigger !== trigger || (b.kind !== undefined && b.kind !== martian)) continue;
+      if (b !== this.current && !this.queue.includes(b)) this.queue.push(b);
     }
   }
 
@@ -111,7 +110,6 @@ export class Tutorial {
     this.finished = false;
     // Seen as soon as it shows: a step never repeats, even if the level is lost.
     this.seen.add(beat.id);
-    this.save();
     this.text.textContent = withControls(beat.prompt, window.matchMedia('(pointer: coarse)').matches);
     this.el.classList.remove('pop');
     void this.el.offsetWidth;
@@ -131,11 +129,6 @@ export class Tutorial {
     if (this.waitingNear === beat) this.waitingNear = null;
     this.queue = this.queue.filter((b) => b !== beat);
     this.seen.add(beat.id);
-    this.save();
-  }
-
-  private save(): void {
-    try { localStorage.setItem(KEY, JSON.stringify([...this.seen])); } catch { /* private mode */ }
   }
 }
 

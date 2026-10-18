@@ -72,16 +72,15 @@ const cutscene = new Cutscene((cue) => audio.cue(cue));
 const story = new StoryMode({
   newLevel: () => { newGame(); return state; },
   get state() { return state; },
-  showLevelCard: (level, sector) => {
+  showLevelCard: (level, sector, briefing) => {
     cardUp = true;
-    screens.showLevelCard(level, sector);
+    screens.showLevelCard(level, sector, briefing);
   },
   openMenu,
 }, screens, cutscene, view);
 /** Story tutorial coach; starts when a level's card closes. */
-const tutorial = new Tutorial();
+const tutorial = new Tutorial(story.progress.beats);
 $('settings-tutorial').addEventListener('click', () => {
-  tutorial.reset();
   story.progress.resetTutorial();
   $('settings-tutorial').textContent = 'It will show again from level 1';
 });
@@ -196,7 +195,7 @@ function runTick(cmds: PlayerCommand[]) {
   if (!quiet) audio.events(state, localId);
   if (mode === 'survival') {
     tutorial.tick(state);
-    story.tick();
+    story.tick(state);
     for (const e of state.events) story.event(e);
   }
 }
@@ -427,10 +426,7 @@ function skipCard() {
   cardUp = false;
   screens.hideLevelCard();
   // The Story level really starts now: the tutorial may have something to say.
-  if (mode === 'survival') {
-    tutorial.start(story.level, state);
-    story.levelStarted();
-  }
+  if (mode === 'survival') tutorial.start(story.level, state);
 }
 
 /** Gutter width for the touch controls: about 16% of the width, 110-170 px. */

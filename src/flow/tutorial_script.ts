@@ -1,17 +1,18 @@
+import { Kind } from '../sim/constants';
+
 // Tutorial and tip text, from the Game Guide & Tutorial Script doc.
 // Plain data, so the story team can rewrite it without touching game code.
 // [MOVE] and [CHARGE] are replaced with the player's own controls.
-// Martians and power-ups are introduced by their cards instead
-// (alien_cards.ts, powerup_cards.ts).
 
 /** When a tutorial step appears (see tutorial.ts for what each one means). */
 export type BeatTrigger =
-  | 'level_start' // the level begins (after its briefing)
+  | 'level_start' // the level begins (after its level card)
   | 'after_previous' // the step before it has finished
   | 'near_target' // the step before has finished and a rock or Martian is next to you
   | 'charge_placed' // your first charge
   | 'rock_broken' // your first broken rock
   | 'item_picked' // your first power-up
+  | 'martian_near' // a Martian (of `kind`, if set) comes within 3 tiles
   | 'martian_killed' // your first defeated Martian
   | 'gate_opened'; // the Warp Gate appears
 
@@ -23,17 +24,24 @@ export interface Beat {
   /** The Story level it belongs to. */
   level: number;
   trigger: BeatTrigger;
+  /** For 'martian_near': only this kind of Martian. */
+  kind?: Kind;
   done: BeatDone;
   prompt: string;
 }
 
+/** The 9 beats of the narrative script: 8 on level 1, one on level 3. Each shows once per save. */
 export const BEATS: Beat[] = [
   { id: 'move', level: 1, trigger: 'level_start', done: 'moved', prompt: 'Move your astronaut with [MOVE].' },
   { id: 'pillars', level: 1, trigger: 'after_previous', done: 'timer', prompt: "Pillars can't break. Hide behind one." },
   { id: 'charge', level: 1, trigger: 'near_target', done: 'charge_placed', prompt: 'Press [CHARGE] to drop a charge.' },
   { id: 'escape', level: 1, trigger: 'charge_placed', done: 'charge_exploded', prompt: 'Step away before it explodes.' },
-  { id: 'rocks', level: 1, trigger: 'rock_broken', done: 'timer', prompt: 'Rocks break. Look for what is behind them.' },
+  { id: 'rocks', level: 1, trigger: 'rock_broken', done: 'timer', prompt: "Rocks break. Look for what's behind them." },
+  // The power-up and Martian beats come with their intro cards (powerup_cards.ts, alien_cards.ts).
+  { id: 'powerup', level: 1, trigger: 'item_picked', done: 'timer', prompt: 'Power-up! Check the pips at the top.' },
+  { id: 'martian', level: 1, trigger: 'martian_near', done: 'timer', prompt: 'Martians chase you. Keep moving.' },
   { id: 'gate', level: 1, trigger: 'gate_opened', done: 'level_clear', prompt: 'The Warp Gate is open. Step on it to clear the level.' },
+  { id: 'sniffer', level: 3, trigger: 'martian_near', kind: Kind.Sniffer, done: 'timer', prompt: "Sniffers track movement. Don't let them corner you." },
 ];
 
 /** What [MOVE] and [CHARGE] say, per kind of control. */

@@ -1,10 +1,11 @@
 import { LEVEL_COUNT, levelSpec } from '../sim/levels';
 
 // Story Mode progress, saved on this device: the furthest level reached, the
-// best stars per level, run totals for the ending screen, and which alien and
-// power-up cards have been shown.
+// best stars per level, run totals for the ending screen, and which tutorial
+// steps and enemy / power-up cards have been shown (once per save).
 
 const KEY = 'spaceblast.story';
+const OLD_BEATS_KEY = 'spaceblast.tutorial';
 
 export interface StoryStats {
   martians: number;
@@ -22,16 +23,18 @@ interface Saved {
   finished: boolean;
   /** Captain Kit's opening card (story_scenes.ts OPENING_TUTORIAL) was shown. */
   tutorialSeen: boolean;
-  /** Ids of the alien cards already shown (alien_cards.ts). */
-  seenAliens: string[];
+  /** Ids of the tutorial steps already shown (tutorial_script.ts). */
+  seenBeats: string[];
+  /** Ids of the enemy cards already shown (alien_cards.ts). */
+  seenEnemies: string[];
   /** Ids of the power-up cards already shown (powerup_cards.ts). */
-  seenPowerUps: string[];
+  seenPowerups: string[];
 }
 
-export type CardList = 'seenAliens' | 'seenPowerUps';
+export type CardList = 'seenBeats' | 'seenEnemies' | 'seenPowerups';
 
 const fresh = (): Saved => ({
-  unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, tutorialSeen: false, seenAliens: [], seenPowerUps: [],
+  unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, tutorialSeen: false, seenBeats: [], seenEnemies: [], seenPowerups: [],
 });
 
 /** A saved list of card ids: short lowercase words only, no repeats. */
@@ -52,8 +55,11 @@ function sanitize(raw: Partial<Saved> | null): Saved {
   out.stats = { martians: int(st?.martians, 1e9), bosses: int(st?.bosses, 1e9), livesLost: int(st?.livesLost, 1e9), ticks: int(st?.ticks, 1e12) };
   out.finished = raw.finished === true;
   out.tutorialSeen = raw.tutorialSeen === true;
-  out.seenAliens = ids(raw.seenAliens);
-  out.seenPowerUps = ids(raw.seenPowerUps);
+  // Older saves used seenAliens / seenPowerUps.
+  const old = raw as { seenAliens?: unknown; seenPowerUps?: unknown };
+  out.seenBeats = ids(raw.seenBeats);
+  out.seenEnemies = ids(raw.seenEnemies ?? old.seenAliens);
+  out.seenPowerups = ids(raw.seenPowerups ?? old.seenPowerUps);
   return out;
 }
 
@@ -74,6 +80,13 @@ export class StoryProgress {
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) this.data = sanitize(JSON.parse(raw));
+      // Tutorial steps used to be saved on their own.
+      const beats = localStorage.getItem(OLD_BEATS_KEY);
+      if (beats) {
+        this.data.seenBeats = ids([...this.data.seenBeats, ...(JSON.parse(beats) as unknown[])]);
+        localStorage.removeItem(OLD_BEATS_KEY);
+        this.save();
+      }
     } catch { /* private mode: progress lasts for this visit only */ }
   }
 
@@ -118,11 +131,12 @@ export class StoryProgress {
     this.save();
   }
 
-  /** Settings, "show the tutorial again": the opening card and every alien and power-up card. */
+  /** Settings, "show the tutorial again": the opening card, every tutorial step and every card. */
   resetTutorial(): void {
     this.data.tutorialSeen = false;
-    this.data.seenAliens = [];
-    this.data.seenPowerUps = [];
+    this.data.seenBeats = [];
+    this.data.seenEnemies = [];
+    this.data.seenPowerups = [];
     this.save();
   }
 
@@ -136,6 +150,11 @@ export class StoryProgress {
     if (this.seen(list, id)) return;
     this.data[list].push(id);
     this.save();
+  }
+
+  /** The tutorial's record of shown steps. */
+  get beats(): { has(id: string): boolean; add(id: string): void } {
+    return { has: (id) => this.seen('seenBeats', id), add: (id) => this.markSeen('seenBeats', id) };
   }
 
   /** Adds to the run totals (saved with the next clear or game over). */

@@ -37,6 +37,7 @@ describe('story progress', () => {
       vi.stubGlobal('localStorage', {
         getItem: (k: string) => data[k] ?? null,
         setItem: (k: string, v: string) => { data[k] = v; },
+        removeItem: (k: string) => { delete data[k]; },
       });
       return data;
     };
@@ -44,15 +45,15 @@ describe('story progress', () => {
     it('remembers which alien and power-up cards were shown, per save', () => {
       fakeStorage();
       const p = new StoryProgress();
-      expect(p.seen('seenAliens', 'goopling')).toBe(false);
-      p.markSeen('seenAliens', 'goopling');
-      p.markSeen('seenAliens', 'goopling');
-      p.markSeen('seenPowerUps', 'freeze_pulse');
+      expect(p.seen('seenEnemies', 'goopling')).toBe(false);
+      p.markSeen('seenEnemies', 'goopling');
+      p.markSeen('seenEnemies', 'goopling');
+      p.markSeen('seenPowerups', 'freeze_pulse');
       // A new visit (a fresh StoryProgress) still knows.
       const again = new StoryProgress();
-      expect(again.seen('seenAliens', 'goopling')).toBe(true);
-      expect(again.seen('seenPowerUps', 'goopling')).toBe(false);
-      expect(again.seen('seenPowerUps', 'freeze_pulse')).toBe(true);
+      expect(again.seen('seenEnemies', 'goopling')).toBe(true);
+      expect(again.seen('seenPowerups', 'goopling')).toBe(false);
+      expect(again.seen('seenPowerups', 'freeze_pulse')).toBe(true);
     });
 
     it('shows the opening card once per save, and again after a tutorial reset', () => {
@@ -60,23 +61,37 @@ describe('story progress', () => {
       const p = new StoryProgress();
       expect(p.tutorialSeen).toBe(false);
       p.markTutorialSeen();
-      p.markSeen('seenAliens', 'goopling');
+      p.markSeen('seenEnemies', 'goopling');
       expect(new StoryProgress().tutorialSeen).toBe(true);
       p.clear(1, 3);
       p.resetTutorial();
       const again = new StoryProgress();
       expect(again.tutorialSeen).toBe(false);
-      expect(again.seen('seenAliens', 'goopling')).toBe(false);
+      expect(again.seen('seenEnemies', 'goopling')).toBe(false);
       expect(again.stars(1)).toBe(3); // the story itself is kept
+    });
+
+    it('keeps tutorial steps in the save, and moves old saves over', () => {
+      const store = fakeStorage({
+        'spaceblast.story': JSON.stringify({ unlocked: 2, seenAliens: ['goopling'], seenPowerUps: ['speed_boost'] }),
+        'spaceblast.tutorial': JSON.stringify(['move', 'pillars']),
+      });
+      const p = new StoryProgress();
+      expect(p.beats.has('move') && p.beats.has('pillars')).toBe(true);
+      expect(p.seen('seenEnemies', 'goopling')).toBe(true);
+      expect(p.seen('seenPowerups', 'speed_boost')).toBe(true);
+      expect(store['spaceblast.tutorial']).toBeUndefined();
+      p.beats.add('gate');
+      expect(new StoryProgress().beats.has('gate')).toBe(true);
     });
 
     it('ignores broken or edited card lists', () => {
       fakeStorage({ 'spaceblast.story': JSON.stringify({ unlocked: 3, seenAliens: ['sniffer', 7, '<b>', 'sniffer'], seenPowerUps: 'x' }) });
       const p = new StoryProgress();
       expect(p.unlocked).toBe(3);
-      expect(p.seen('seenAliens', 'sniffer')).toBe(true);
-      expect(p.seen('seenAliens', '<b>')).toBe(false);
-      expect(p.seen('seenPowerUps', 'x')).toBe(false);
+      expect(p.seen('seenEnemies', 'sniffer')).toBe(true);
+      expect(p.seen('seenEnemies', '<b>')).toBe(false);
+      expect(p.seen('seenPowerups', 'x')).toBe(false);
     });
   });
 });

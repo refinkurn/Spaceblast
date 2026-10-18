@@ -1,0 +1,12 @@
+{
+  "id": "capybara",
+  "name": "Capybara",
+  "label": "CAPYBARA",
+  "color": "#c9a27a",
+  "poses": {
+    "neutral": "neutral",
+    "happy": "happy",
+    "worried": "worried",
+    "determined": "determined"
+  }
+}
