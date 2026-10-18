@@ -13,6 +13,8 @@ export class Crawl {
   private text = $('crawl-text');
   private done: () => void = () => {};
   private anim: Animation | null = null;
+  /** Bumped on every play / cancel, so a fade-out from an earlier crawl can't end a new one. */
+  private run = 0;
 
   constructor() {
     $('crawl-skip').addEventListener('click', () => this.finish());
@@ -31,6 +33,7 @@ export class Crawl {
 
   play(paragraphs: readonly string[], done: () => void): void {
     this.done = done;
+    this.run++;
     this.text.replaceChildren(...paragraphs.map((t) => {
       const p = document.createElement('p');
       p.textContent = t;
@@ -58,7 +61,9 @@ export class Crawl {
   finish(): void {
     if (!this.active || this.el.classList.contains('out')) return;
     this.el.classList.add('out');
+    const run = this.run;
     window.setTimeout(() => {
+      if (run !== this.run) return;
       this.anim?.cancel();
       this.anim = null;
       this.el.hidden = true;
@@ -71,6 +76,7 @@ export class Crawl {
 
   /** Leaving to the menu: no follow-up. */
   cancel(): void {
+    this.run++;
     this.done = () => {};
     this.anim?.cancel();
     this.anim = null;

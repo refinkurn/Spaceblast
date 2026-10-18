@@ -17,6 +17,8 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 export type MenuPage = 'main' | 'bot' | 'settings' | 'howto' | 'credits';
 export type BotLevel = 'easy' | 'normal' | 'hard';
 const BOT_KEY = 'spaceblast.botLevel';
+/** Taps ignored for this long after the menu changes page (keyboard presses still work). */
+const SWITCH_GUARD_MS = 300;
 
 interface MenuArt {
   background: { file: string; width: number }[];
@@ -42,6 +44,8 @@ export class Menu {
   botLevel: BotLevel = 'normal';
   private el = $('menu');
   private hero = new SpriteView($<HTMLCanvasElement>('menu-hero'));
+  /** When the page last changed: a double tap must not also press a button on the new page. */
+  private switchedAt = 0;
 
   /** `onBattle` starts a battle once a difficulty is picked. */
   constructor(onBattle: () => void) {
@@ -63,6 +67,12 @@ export class Menu {
     }
     $('howto-body').innerHTML = howToPlay();
     this.applyArt(MENU_ART as MenuArt);
+    this.el.addEventListener('click', (e) => {
+      if (performance.now() - this.switchedAt < SWITCH_GUARD_MS && e.detail > 0) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    }, true);
     window.addEventListener('keydown', (e) => this.key(e));
     window.addEventListener('resize', () => this.drawHero());
   }
@@ -73,6 +83,7 @@ export class Menu {
 
   /** Shows the menu on its main page. */
   show(): void {
+    this.switchedAt = performance.now();
     this.el.hidden = false;
     this.open('main');
   }
@@ -82,6 +93,7 @@ export class Menu {
   }
 
   open(page: MenuPage): void {
+    if (page !== this.page || this.el.hidden) this.switchedAt = performance.now();
     this.page = page;
     for (const [p, id] of Object.entries(PAGES)) $(id).hidden = p !== page;
     this.el.classList.toggle('sub', page !== 'main');
