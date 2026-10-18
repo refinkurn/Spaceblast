@@ -34,7 +34,7 @@ export const SECTORS: SectorStory[] = [
 
 /** The ending screen's text (the FINAL TEXT of the script). */
 export const ENDING =
-  'Mars is quiet again. The hives wander without direction. In the sky above, the Astropaws carried something back: hope that even the lost can find their way home.';
+  'Mars returned to silence. The hives scattered. And one hunter would face justice among the stars. But today, the Astropaws were safe. Today, they were going home.';
 
 /**
  * One line per level, shown on the level card under the sector. Empty on the

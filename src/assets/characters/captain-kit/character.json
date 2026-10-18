@@ -7,6 +7,10 @@
     "neutral": "neutral",
     "surprised": "surprised",
     "determined": "determined",
-    "worried": "worried"
+    "worried": "worried",
+    "angry": "angry",
+    "shocked": "shocked",
+    "relieved": "relieved",
+    "warm": "warm"
   }
 }

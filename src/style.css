@@ -849,3 +849,37 @@ body.scene #coach { visibility: hidden; }
 #menu.art { background-color: #14161d; }
 #menu.art h1 { text-shadow: 0 2px 0 #000, 0 0 18px #000a; }
 .menu-hero[hidden] { display: none; }
+/* Opening crawl: text scrolling away into space (flow/crawl.ts). */
+#crawl {
+  position: fixed;
+  inset: 0;
+  z-index: 13;
+  overflow: hidden;
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 72% 12%, #fff, transparent),
+    radial-gradient(1px 1px at 35% 62%, #fffc, transparent), radial-gradient(1px 1px at 88% 48%, #fff, transparent),
+    radial-gradient(1px 1px at 55% 85%, #fffa, transparent), radial-gradient(1px 1px at 22% 78%, #fff, transparent),
+    radial-gradient(1px 1px at 92% 82%, #fffc, transparent), radial-gradient(1px 1px at 5% 45%, #fff, transparent),
+    #000;
+  transition: opacity 0.6s ease;
+}
+#crawl[hidden] { display: none; }
+#crawl.out { opacity: 0; }
+.crawl-stage { position: absolute; inset: 0; perspective: 700px; perspective-origin: 50% 0%; }
+.crawl-text {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(540px, 58vw);
+  margin-left: calc(min(540px, 58vw) / -2);
+  transform-origin: 50% 0%;
+  color: #ffd23f;
+  font-size: clamp(16px, 2.9vw, 26px);
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+}
+.crawl-text p { margin: 0 0 1.1em; }
+#crawl.still .crawl-stage { perspective: none; display: flex; align-items: center; justify-content: center; }
+#crawl.still .crawl-text { position: static; margin: 0; font-size: 18px; }
+#crawl-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-width: 48px; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 999px; z-index: 2; }

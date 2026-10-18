@@ -4,13 +4,14 @@ import type { GameState, SimEvent } from '../sim/state';
 import type { GameView } from '../view/game_view';
 import { ALIEN_CARDS } from './alien_cards';
 import type { Cutscene } from './cutscene';
+import { Crawl } from './crawl';
 import { martiansNear } from './encounter';
 import { IntroCards } from './intro_card';
 import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress, starsFor } from './progress';
 import type { Screens } from './screens';
 import { BOSS_NAMES, ENDING, SECTORS, levelCard } from './story';
-import { ENDING_SCENE, INTRO_SCENES, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
+import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
 
 // Story Mode flow: the level map (continue / replay with stars), each level's
@@ -39,6 +40,7 @@ export class StoryMode {
   private hub = $('story-hub');
   private ending = $('ending');
   private cards: IntroCards;
+  private crawl = new Crawl();
 
   constructor(private host: StoryHost, private screens: Screens, private cutscene: Cutscene, private view: GameView) {
     this.cards = new IntroCards(view);
@@ -57,8 +59,9 @@ export class StoryMode {
     return !this.ending.hidden;
   }
 
+  /** The level map, the ending or the opening crawl (the crawl handles its own keys). */
   get overlayOpen(): boolean {
-    return !this.hub.hidden || !this.ending.hidden;
+    return !this.hub.hidden || !this.ending.hidden || this.crawl.active;
   }
 
   /** An alien or power-up card is up (the game waits). */
@@ -91,6 +94,7 @@ export class StoryMode {
   closeOverlays(): void {
     this.hub.hidden = true;
     this.cards.cancel();
+    this.crawl.cancel();
     this.closeEnding();
   }
 
@@ -100,6 +104,7 @@ export class StoryMode {
     this.screens.hideStory();
     this.cutscene.cancel();
     this.cards.cancel();
+    this.crawl.cancel();
     this.level = level;
     this.livesLost = 0;
     const spec = levelSpec(level);
@@ -123,6 +128,9 @@ export class StoryMode {
     if (withStory && isSectorStart(level) && !scene) {
       const sector = SECTORS[spec.sector - 1];
       this.screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', intro);
+    } else if (level === 1 && withStory) {
+      // The story begins: the opening crawl, then the prologue scene.
+      this.crawl.play(OPENING_CRAWL, intro);
     } else {
       intro();
     }

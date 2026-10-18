@@ -234,6 +234,10 @@
       <p class="tap">Tap to start</p>
       <p id="start-tip" class="start-tip" hidden>Tip: add Spaceblast to your Home Screen to play full screen</p>
     </div>
+    <div id="crawl" hidden>
+      <div class="crawl-stage"><div id="crawl-text" class="crawl-text"></div></div>
+      <button id="crawl-skip" type="button">Skip ›</button>
+    </div>
     <div id="cutscene" hidden>
       <div class="cut-bg"></div>
       <canvas id="cut-sprite" class="cut-sprite" aria-hidden="true"></canvas>
@@ -261,7 +265,7 @@
     <div id="ending" hidden>
       <div class="ending-card">
         <div class="kicker">Mission accomplished</div>
-        <h2>The Biscuit is going home!</h2>
+        <h2>The Biscuit is going home.</h2>
         <ul id="ending-stats"></ul>
         <p id="ending-text"></p>
         <button id="ending-btn" type="button" class="primary">Back to menu</button>
