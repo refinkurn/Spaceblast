@@ -1,7 +1,7 @@
 {
-  "character": "renegade-pilot",
-  "name": "Renegade Pilot",
-  "label": "PILOT",
+  "character": "ducking",
+  "name": "Ducking (the Renegade Pilot)",
+  "label": "DUCKING",
   "color": "#ff6a3d",
   "frameWidth": 128,
   "frameHeight": 128,

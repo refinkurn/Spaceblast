@@ -122,7 +122,7 @@ export class Cutscene {
     if (shot.character) return shot.character;
     if (shot.speaker) return null;
     if (shot.focus === 'boss') return this.state.boss ? BOSS_SPRITES[this.state.boss.kind] ?? null : null;
-    if (shot.focus === 'rival') return 'renegade-pilot';
+    if (shot.focus === 'rival') return 'ducking';
     return null;
   }
 

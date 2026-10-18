@@ -5,7 +5,7 @@ describe('character sprites', () => {
   it('loads every character sheet description, with sane poses and size', () => {
     const all = allCharacters();
     expect(all.map((c) => c.character).sort()).toEqual(
-      ['astropaw', 'captain-kit', 'darkness-hive', 'goopling-hive', 'maze-master', 'renegade-pilot'],
+      ['astropaw', 'captain-kit', 'darkness-hive', 'ducking', 'goopling-hive', 'maze-master'],
     );
     for (const c of all) {
       const poses = Object.values(c.poses);

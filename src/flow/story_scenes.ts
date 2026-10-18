@@ -5,7 +5,7 @@ import type { Shot } from './cutscene';
 // Plain data, so the story can be rewritten without touching game code.
 
 export const KIT = { speaker: 'Captain Kit (radio)', color: '#ffd23f', character: 'captain-kit' };
-const PILOT = { speaker: 'Renegade Pilot', color: '#ff6a3d', character: 'renegade-pilot' };
+const PILOT = { speaker: 'Renegade Pilot', color: '#ff6a3d', character: 'ducking' };
 const YOU = { speaker: 'You', color: '#5ad1ff', character: 'astropaw' };
 
 /**
