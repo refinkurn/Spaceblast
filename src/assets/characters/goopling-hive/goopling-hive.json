@@ -1,0 +1,25 @@
+{
+  "character": "goopling-hive",
+  "name": "Goopling Hive",
+  "label": "GOOPLING HIVE",
+  "color": "#6fd14f",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "poses": {
+    "idle": {
+      "row": 0,
+      "frames": 4,
+      "duration": 100
+    },
+    "attacking": {
+      "row": 1,
+      "frames": 4,
+      "duration": 100
+    },
+    "defeated": {
+      "row": 2,
+      "frames": 4,
+      "duration": 100
+    }
+  }
+}

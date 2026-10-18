@@ -91,35 +91,76 @@
     </div>
     <div id="menu">
       <div class="menu-corner">
-        <button id="menu-settings" class="sound-btn" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
         <button id="menu-full" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
         <button id="menu-sound" class="sound-btn" type="button" aria-label="Sound"></button>
       </div>
-      <h1>SPACEBLAST</h1>
-      <p class="tagline">Animal astronauts vs hungry Martians</p>
-      <div class="modes">
-        <button id="mode-survival" type="button">
-          <strong>Story Mode</strong>
-          <span>4 sectors, 20 levels, 3 bosses and a final duel</span>
-        </button>
-        <button id="mode-battle" type="button">
-          <strong>Battle vs bot</strong>
-          <span>Last astronaut standing, first to 3 rounds</span>
-        </button>
-        <button id="mode-online" type="button">
-          <strong>Play online</strong>
-          <span>Battle friends with a room code, 2–4 players</span>
-        </button>
-      </div>
-      <div class="menu-bot">
-        <span>Battle bot</span>
-        <div id="menu-bot-level" class="segmented">
+      <div class="menu-left">
+        <h1>SPACEBLAST</h1>
+        <p class="tagline">Animal astronauts vs hungry Martians</p>
+        <nav id="menu-main" class="menu-page menu-list" aria-label="Main menu">
+          <button id="mode-survival" type="button">Story Mode</button>
+          <button id="mode-battle" type="button">Battle vs Bot</button>
+          <button id="mode-online" type="button">Multiplayer</button>
+          <button id="menu-settings" type="button">Settings</button>
+          <button id="menu-howto" type="button">How to Play</button>
+          <button id="menu-credits" type="button">Credits</button>
+        </nav>
+        <nav id="menu-bot" class="menu-page menu-list" aria-label="Battle vs Bot" hidden>
+          <h2>Battle vs Bot</h2>
           <button type="button" data-level="easy">Easy</button>
           <button type="button" data-level="normal">Normal</button>
           <button type="button" data-level="hard">Hard</button>
+          <button type="button" class="menu-back">Back</button>
+        </nav>
+        <div id="settings" class="menu-page" hidden>
+          <h2>Settings</h2>
+          <div class="menu-scroll">
+            <label class="setting-line">Music
+              <input id="set-music" type="range" min="0" max="100" step="5" />
+              <output id="set-music-value"></output>
+            </label>
+            <label class="setting-line">Effects
+              <input id="set-sfx" type="range" min="0" max="100" step="5" />
+              <output id="set-sfx-value"></output>
+            </label>
+            <div class="setting-line">Touch controls
+              <div id="set-controls" class="segmented">
+                <button type="button" data-value="small">Small</button>
+                <button type="button" data-value="normal">Normal</button>
+                <button type="button" data-value="large">Large</button>
+              </div>
+            </div>
+            <div class="setting-line">Round replays
+              <div id="set-cinematic" class="segmented">
+                <button type="button" data-value="full">Full</button>
+                <button type="button" data-value="short">Short</button>
+                <button type="button" data-value="off">Off</button>
+              </div>
+            </div>
+            <div class="setting-line">Tutorial
+              <button id="settings-tutorial" type="button" class="quiet-btn">Show the tutorial again</button>
+            </div>
+          </div>
+          <button id="settings-done" type="button" class="menu-back">Back</button>
+        </div>
+        <div id="menu-howto-page" class="menu-page menu-text" hidden>
+          <h2>How to Play</h2>
+          <div id="howto-body" class="menu-scroll"></div>
+          <button type="button" class="menu-back">Back</button>
+        </div>
+        <div id="menu-credits-page" class="menu-page menu-text" hidden>
+          <h2>Credits</h2>
+          <div class="menu-scroll">
+            <p><strong>Spaceblast</strong> by Refindo</p>
+            <p>Built with Three.js and Vite. Sound effects and music are made in code.</p>
+            <p>Art credits go here when the final characters and models are in.</p>
+          </div>
+          <button type="button" class="menu-back">Back</button>
         </div>
       </div>
-      <p class="controls">Move: arrows / WASD or drag on the left · Charge: Space / X or the right button</p>
+      <div class="menu-right">
+        <canvas id="menu-hero" class="menu-hero" aria-label="Astropaw"></canvas>
+      </div>
     </div>
     <div id="online" hidden>
       <div class="online-card">
@@ -217,37 +258,6 @@
         <ul id="ending-stats"></ul>
         <p id="ending-text"></p>
         <button id="ending-btn" type="button" class="primary">Back to menu</button>
-      </div>
-    </div>
-    <div id="settings" hidden>
-      <div class="settings-card">
-        <div class="kicker">Settings</div>
-        <label class="setting-line">Music
-          <input id="set-music" type="range" min="0" max="100" step="5" />
-          <output id="set-music-value"></output>
-        </label>
-        <label class="setting-line">Effects
-          <input id="set-sfx" type="range" min="0" max="100" step="5" />
-          <output id="set-sfx-value"></output>
-        </label>
-        <div class="setting-line">Touch controls
-          <div id="set-controls" class="segmented">
-            <button type="button" data-value="small">Small</button>
-            <button type="button" data-value="normal">Normal</button>
-            <button type="button" data-value="large">Large</button>
-          </div>
-        </div>
-        <div class="setting-line">Round replays
-          <div id="set-cinematic" class="segmented">
-            <button type="button" data-value="full">Full</button>
-            <button type="button" data-value="short">Short</button>
-            <button type="button" data-value="off">Off</button>
-          </div>
-        </div>
-        <div class="setting-line">Tutorial
-          <button id="settings-tutorial" type="button" class="quiet-btn">Show the tutorial again</button>
-        </div>
-        <button id="settings-done" type="button" class="primary">Done</button>
       </div>
     </div>
     <div id="install" hidden>

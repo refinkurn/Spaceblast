@@ -1,4 +1,4 @@
-// Player settings, saved on this device, and the Settings screen.
+// Player settings, saved on this device, and the Settings page of the menu.
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 const KEY = 'spaceblast.settings';
@@ -35,7 +35,6 @@ function load(): Settings {
 
 export class SettingsScreen {
   readonly value: Settings = load();
-  private el = $('settings');
 
   /** `onChange` runs now and after every change. */
   constructor(private onChange: (s: Settings) => void) {
@@ -50,25 +49,8 @@ export class SettingsScreen {
         b.addEventListener('click', () => this.set({ [key]: b.dataset.value } as Partial<Settings>));
       }
     }
-    $('settings-done').addEventListener('click', () => this.close());
-    $('menu-settings').addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.open();
-    });
     this.render();
     onChange(this.value);
-  }
-
-  get isOpen(): boolean {
-    return !this.el.hidden;
-  }
-
-  open(): void {
-    this.el.hidden = false;
-  }
-
-  close(): void {
-    this.el.hidden = true;
   }
 
   private set(change: Partial<Settings>): void {

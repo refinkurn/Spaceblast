@@ -1,0 +1,30 @@
+{
+  "character": "astropaw",
+  "name": "Astropaw",
+  "label": "ASTROPAW",
+  "color": "#3a7bff",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "poses": {
+    "neutral": {
+      "row": 0,
+      "frames": 4,
+      "duration": 100
+    },
+    "happy": {
+      "row": 1,
+      "frames": 4,
+      "duration": 100
+    },
+    "determined": {
+      "row": 2,
+      "frames": 4,
+      "duration": 100
+    },
+    "surprised": {
+      "row": 3,
+      "frames": 4,
+      "duration": 100
+    }
+  }
+}

@@ -2,48 +2,33 @@
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
+import { Menu, type BotLevel } from './menu';
+
 export type MenuChoice = 'survival' | 'battle' | 'online';
-export type BotLevel = 'easy' | 'normal' | 'hard';
-const BOT_KEY = 'spaceblast.botLevel';
+export type { BotLevel };
 
 export class Screens {
-  private menu = $('menu');
+  private menu: Menu;
   private banner = $('banner');
   private primary = $<HTMLButtonElement>('banner-btn');
   private onPrimary = () => {};
-  /** Difficulty for Battle vs bot (remembered). */
-  botLevel: BotLevel = 'normal';
 
   constructor(onMode: (mode: MenuChoice) => void, onMenu: () => void) {
+    this.menu = new Menu(() => onMode('battle'));
     $('mode-survival').addEventListener('click', () => onMode('survival'));
-    $('mode-battle').addEventListener('click', () => onMode('battle'));
     $('mode-online').addEventListener('click', () => onMode('online'));
-    try {
-      const saved = localStorage.getItem(BOT_KEY);
-      if (saved === 'easy' || saved === 'normal' || saved === 'hard') this.botLevel = saved;
-    } catch { /* private mode */ }
-    for (const el of $('menu-bot-level').children) {
-      const b = el as HTMLButtonElement;
-      b.addEventListener('click', () => {
-        this.botLevel = b.dataset.level as BotLevel;
-        try { localStorage.setItem(BOT_KEY, this.botLevel); } catch { /* private mode */ }
-        this.renderBotLevel();
-      });
-    }
-    this.renderBotLevel();
     this.primary.addEventListener('click', () => this.firePrimary());
     $('banner-menu').addEventListener('click', onMenu);
     $('menu-btn').addEventListener('click', onMenu);
   }
 
-  private renderBotLevel(): void {
-    for (const el of $('menu-bot-level').children) {
-      el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.level === this.botLevel));
-    }
+  /** Difficulty for Battle vs Bot (remembered). */
+  get botLevel(): BotLevel {
+    return this.menu.botLevel;
   }
 
   get menuOpen(): boolean {
-    return !this.menu.hidden;
+    return this.menu.isOpen;
   }
 
   get bannerOpen(): boolean {
@@ -94,12 +79,11 @@ export class Screens {
     this.hideBanner();
     this.hideLevelCard();
     $('story').hidden = true;
-    this.menu.hidden = false;
-    $('mode-survival').focus();
+    this.menu.show();
   }
 
   hideMenu(): void {
-    this.menu.hidden = true;
+    this.menu.hide();
   }
 
   /** `menuLabel` renames the second button (it always goes to the menu). */

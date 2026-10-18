@@ -134,7 +134,6 @@ function openMenu() {
   cine.stop();
   cutscene.cancel();
   story.closeOverlays();
-  settings.close();
   congrats.hide();
   if (online.connected) online.exit(''); // leaving the room; onExit comes back here
   else screens.showMenu();
@@ -400,7 +399,7 @@ function desync(tick: number) {
 
 // --- Keys, taps, layout -------------------------------------------------------------
 window.addEventListener('keydown', (e) => {
-  if (screens.menuOpen || online.screenOpen || settings.isOpen || story.overlayOpen) return;
+  if (screens.menuOpen || online.screenOpen || story.overlayOpen) return;
   // Held keys repeat: a held Enter must not press "Next round" again and again.
   if (e.repeat) return;
   const confirm = e.code === 'Enter' || e.code === 'Space';
@@ -457,7 +456,7 @@ view.renderer.setAnimationLoop((now: number) => {
   const dt = Math.min(now - last, 250);
   last = now;
   acc += dt;
-  const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open || settings.isOpen || story.overlayOpen;
+  const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open || story.overlayOpen;
   // Offline games pause while the phone is upright (the "rotate" screen is up).
   const upright = portrait.matches && mode !== 'online';
   const paused = overlay || upright || cardUp || story.cardOpen || cine.active || cutscene.active || (mode === 'online' && !net);
