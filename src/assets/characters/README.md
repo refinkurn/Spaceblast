@@ -36,6 +36,8 @@ One folder per character, named by its id (`astropaw`, `captain-kit`, ...).
 frames). Looping animations cycle; the others hold their last frame. The pivot
 (feet, or the bottom of a bust) stands on the bottom centre of the space.
 Keep each atlas at 1024 px per side or less.
+Save atlases as indexed-colour PNGs (the pixel art uses 16 colours or fewer):
+they ship at less than half the size of full-colour PNGs, pixel for pixel the same.
 
 To replace art: drop in the new atlas JSON + PNG (same names, or update
 `body.atlas` / `portrait.atlas`), then check `poses` still names animations

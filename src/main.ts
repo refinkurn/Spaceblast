@@ -429,18 +429,41 @@ function skipCard() {
   if (mode === 'survival') tutorial.start(story.level, state);
 }
 
-/** Gutter width for the touch controls: about 16% of the width, 110-170 px. */
-function layout() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
+/** The notch / home-bar insets (env(safe-area-inset-*)), read off a hidden probe. */
+const safeProbe = document.createElement('div');
+safeProbe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+document.body.append(safeProbe);
+let laidOut = '';
+let insets = { left: 0, right: 0, top: 0 };
+
+/**
+ * Fits the camera to the canvas as it is really shown. The size is measured from
+ * the canvas itself, every frame: iOS can report a stale window size after a
+ * rotation or a toolbar change, and a renderer sized from that is drawn squashed.
+ * Gutter width for the touch controls: about 16% of the width, 110-170 px, plus the notch.
+ */
+function layout(remeasure = false) {
+  const canvas = view.renderer.domElement;
+  const w = canvas.clientWidth || window.innerWidth;
+  const h = canvas.clientHeight || window.innerHeight;
+  if (remeasure || !laidOut) {
+    const safe = getComputedStyle(safeProbe);
+    insets = { left: parseFloat(safe.paddingLeft) || 0, right: parseFloat(safe.paddingRight) || 0, top: parseFloat(safe.paddingTop) || 0 };
+  }
+  const key = `${w}x${h}|${insets.left}|${insets.right}|${insets.top}`;
+  if (key === laidOut) return;
+  laidOut = key;
   const gutter = Math.round(Math.min(170, Math.max(110, w * 0.16)));
   const hudHeight = 44;
   document.documentElement.style.setProperty('--gutter', `${gutter}px`);
   document.documentElement.style.setProperty('--hud', `${hudHeight}px`);
-  view.layout(w, h, gutter, hudHeight);
+  view.layout(w, h, gutter + insets.left, gutter + insets.right, hudHeight + insets.top);
 }
-window.addEventListener('resize', layout);
-layout();
+const relayout = () => layout(true);
+window.addEventListener('resize', relayout);
+window.addEventListener('orientationchange', () => setTimeout(relayout, 300));
+window.visualViewport?.addEventListener('resize', relayout);
+layout(true);
 
 // --- Fixed-timestep loop -----------------------------------------------------------
 // A map plays behind the start screen; the sim waits while any card or the menu is open.
@@ -451,6 +474,8 @@ let last = performance.now();
 let wasPaused = false;
 const portrait = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
 view.renderer.setAnimationLoop((now: number) => {
+  layout(); // reads the canvas size only; catches sizes iOS never announced
+  view.frameTime(now - last);
   const dt = Math.min(now - last, 250);
   last = now;
   acc += dt;

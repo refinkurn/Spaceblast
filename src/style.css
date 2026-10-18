@@ -885,3 +885,13 @@ body.scene #coach { visibility: hidden; }
 #crawl.still .crawl-stage { perspective: none; display: flex; align-items: center; justify-content: center; }
 #crawl.still .crawl-text { position: static; margin: 0; font-size: 18px; }
 #crawl-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-width: 48px; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 999px; z-index: 2; }
+/* The top-bar buttons look 32 px tall but take a 44 x 48 px tap (CLAUDE.md: >= 48 px targets). */
+#hud button { position: relative; }
+#hud button::after { content: ''; position: absolute; inset: -6px -5px; }
+/* Very short screens (iPhone SE 1st gen, 320 px): the menu column scrolls instead of cutting off. */
+@media (max-height: 360px) {
+  #menu { padding-top: 8px; padding-bottom: 8px; }
+  .menu-left { overflow-y: auto; justify-content: safe center; gap: 6px; }
+  #menu h1 { font-size: 22px; }
+  .menu-page { gap: 4px; }
+}

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { AdaptiveQuality } from './quality';
 import { GRID_H, GRID_W } from '../sim/constants';
 import type { GameState, SimEvent } from '../sim/state';
 import { GateView, ItemsView, MartiansView, PortalsView } from './actors_view';
@@ -36,9 +37,12 @@ export class GameView {
   private prevMartians = new Map<number, { x: number; y: number }>();
   private colors: number[] = [];
 
+  /** Render resolution, lowered automatically on slow phones. */
+  private quality = new AdaptiveQuality(window.devicePixelRatio || 1);
+
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(this.quality.pixelRatio);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -149,9 +153,19 @@ export class GameView {
   }
 
   /** Fits the camera between the touch gutters and below the HUD. */
-  layout(w: number, h: number, gutter: number, hud: number): void {
+  /** Call once per rendered frame: a slow phone gets a lower pixel ratio. */
+  frameTime(ms: number): void {
+    const ratio = this.quality.frame(ms);
+    if (ratio === null) return;
+    this.renderer.setPixelRatio(ratio);
+    const c = this.renderer.domElement;
+    this.renderer.setSize(c.clientWidth, c.clientHeight, false);
+  }
+
+  /** The canvas size in CSS px, and the space the arena must keep clear on each side. */
+  layout(w: number, h: number, left: number, right: number, top: number): void {
     this.renderer.setSize(w, h, false);
-    this.rig.fit(w, h, gutter, gutter, hud + 2, 4);
+    this.rig.fit(w, h, left, right, top + 2, 4);
   }
 
   /** World position of a sim position (for camera moves). */
