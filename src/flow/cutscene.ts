@@ -61,7 +61,8 @@ export class Cutscene {
   private textEl = $('cut-text');
   private revealEl = $('cut-reveal');
   private fadeEl = $('cut-fade');
-  private sprite = new SpriteView($('cut-sprite') as HTMLCanvasElement);
+  private boxEl = this.el.querySelector('.cut-box') as HTMLElement;
+  private sprite = new SpriteView($('cut-sprite') as HTMLCanvasElement, 'scene');
   private portrait = new SpriteView($('cut-portrait') as HTMLCanvasElement, 'portrait');
 
   constructor(private sound: (cue: SceneCue) => void = () => {}) {
@@ -113,6 +114,9 @@ export class Cutscene {
     if (this.textEl.textContent !== shown) this.textEl.textContent = shown;
     this.el.classList.toggle('ready', this.typed >= text.length);
     const now = performance.now();
+    // Busts sit just above the dialogue box, wherever it ends up (it grows with the text).
+    const canvas = this.sprite.canvasRect();
+    if (canvas.height > 0) this.sprite.setFloor((this.boxEl.offsetTop - canvas.top) / canvas.height);
     this.sprite.draw(now);
     this.portrait.draw(now);
   }

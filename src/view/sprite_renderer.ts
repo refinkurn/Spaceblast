@@ -6,13 +6,50 @@ import { bodyFrame, characterMeta, imageOf, portraitFrame, type SpriteFrame } fr
 // labelled "KIT - worried". Pixel art scales by whole multiples, unsmoothed.
 // Redraws only when the frame, pose or canvas size changes.
 
-export type SpriteMode = 'body' | 'portrait';
+/**
+ * 'body': fit the frame in the canvas. 'portrait': the dialogue portrait.
+ * 'scene': the cutscene slot, the full height of the screen: every character is
+ * scaled to the same drawn height and stands at the bottom, so the dialogue box
+ * covers the legs (or the bottom of a bust) and the head and upper body show.
+ */
+export type SpriteMode = 'body' | 'portrait' | 'scene';
+
+/** Scene characters: a full body is drawn this share of the screen height, standing at the bottom. */
+const SCENE_HEIGHT = 0.86;
+/** A bust (portrait-only character) is drawn this share of the space above the dialogue box... */
+const BUST_HEIGHT = 0.8;
+/** ...with this share of it tucked behind the box. */
+const BUST_TUCK = 0.1;
+
+/** Topmost non-transparent row of a frame (cached): how tall the drawing really is. */
+const tops = new Map<string, number>();
+function artTop(img: HTMLImageElement, f: SpriteFrame): number {
+  const key = `${img.src.slice(-48)}|${f.rect.x},${f.rect.y}`;
+  let top = tops.get(key);
+  if (top !== undefined) return top;
+  top = 0;
+  try {
+    const c = document.createElement('canvas');
+    c.width = f.rect.w;
+    c.height = f.rect.h;
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    g.drawImage(img, f.rect.x, f.rect.y, f.rect.w, f.rect.h, 0, 0, f.rect.w, f.rect.h);
+    const data = g.getImageData(0, 0, f.rect.w, f.rect.h).data;
+    find: for (let y = 0; y < f.rect.h; y++) {
+      for (let x = 0; x < f.rect.w; x++) if (data[(y * f.rect.w + x) * 4 + 3] > 0) { top = y; break find; }
+    }
+  } catch { /* unreadable image: treat the whole frame as art */ }
+  tops.set(key, top);
+  return top;
+}
 
 export class SpriteView {
   private id: string | null = null;
   private pose = 'neutral';
   private since = 0;
   private drawn = '';
+  /** Scene mode: where the dialogue box starts, as a share of the canvas height. */
+  private floor = 0.7;
   private ctx: CanvasRenderingContext2D | null;
 
   constructor(private canvas: HTMLCanvasElement, private mode: SpriteMode = 'body') {
@@ -32,6 +69,16 @@ export class SpriteView {
     this.canvas.hidden = !id;
   }
 
+  /** Where the canvas sits in its container (CSS px). */
+  canvasRect(): { top: number; height: number } {
+    return { top: this.canvas.offsetTop, height: this.canvas.clientHeight };
+  }
+
+  /** Scene mode: the top of the dialogue box, as a share of the canvas height. */
+  setFloor(share: number): void {
+    this.floor = Math.min(1, Math.max(0.3, share));
+  }
+
   draw(now = performance.now()): void {
     const ctx = this.ctx;
     const meta = this.id ? characterMeta(this.id) : undefined;
@@ -44,7 +91,7 @@ export class SpriteView {
     // A portrait-only character (Captain Kit, on the radio) shows the portrait in the big slot too.
     else frame = bodyFrame(this.id, this.pose, now - this.since) ?? portraitFrame(this.id, this.pose);
     const img = frame ? imageOf(frame.image) : null;
-    const key = `${this.id}|${this.pose}|${frame ? `${frame.rect.x},${frame.rect.y}` : '-'}|${w}x${h}|${!!img}`;
+    const key = `${this.id}|${this.pose}|${frame ? `${frame.rect.x},${frame.rect.y}` : '-'}|${w}x${h}|${!!img}|${this.floor.toFixed(3)}`;
     if (key === this.drawn) return;
     this.drawn = key;
     if (this.canvas.width !== w || this.canvas.height !== h) {
@@ -55,10 +102,28 @@ export class SpriteView {
     if (frame && img) {
       const { rect, pivot } = frame;
       let scale = Math.min(w / rect.w, h / rect.h);
-      if (frame.pixelArt && scale >= 1) scale = Math.floor(scale);
-      ctx.imageSmoothingEnabled = !frame.pixelArt;
       // The pivot (feet, or the bottom of a bust) stands on the bottom centre.
-      const dx = Math.round(w / 2 - pivot.x * scale), dy = Math.round(h - pivot.y * scale);
+      let base = h;
+      if (this.mode === 'scene') {
+        // One reference frame per character (its neutral pose), so the size never jumps between poses.
+        const body = bodyFrame(this.id, 'neutral', 0);
+        const ref = body ?? portraitFrame(this.id, 'neutral') ?? frame;
+        const drawn = Math.max(1, ref.pivot.y - artTop(imageOf(ref.image) ?? img, ref));
+        const floor = h * this.floor;
+        const target = body ? h * SCENE_HEIGHT : floor * BUST_HEIGHT;
+        scale = target / drawn;
+        // Whole multiples keep pixel art crisp. Round up only when that stays close to the target
+        // (small screens would otherwise drop a whole step); otherwise round down.
+        if (frame.pixelArt) {
+          const up = Math.round(scale);
+          scale = Math.max(1, up * drawn <= target * 1.08 ? up : Math.floor(scale));
+        }
+        if (!body) base = floor + drawn * scale * BUST_TUCK;
+      } else if (frame.pixelArt && scale >= 1) {
+        scale = Math.floor(scale);
+      }
+      ctx.imageSmoothingEnabled = !frame.pixelArt;
+      const dx = Math.round(w / 2 - pivot.x * scale), dy = Math.round(base - pivot.y * scale);
       ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, dx, dy, rect.w * scale, rect.h * scale);
       return;
     }
