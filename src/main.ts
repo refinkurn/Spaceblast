@@ -11,6 +11,7 @@ import { Screens, type MenuChoice } from './flow/screens';
 import { CONTROL_SCALE, SettingsScreen } from './flow/settings';
 import { GameAudio } from './flow/sound';
 import { StoryMode } from './flow/story_mode';
+import { installMultiTouchTaps } from './flow/taps';
 import { Tutorial, randomTip } from './flow/tutorial';
 import { BATTLE_TIPS } from './flow/tutorial_script';
 import { Bot } from './input/bot';
@@ -90,6 +91,7 @@ const settings = new SettingsScreen((s) => {
 });
 const dev = new DevPanel(startAtLevel);
 setupFullscreen();
+installMultiTouchTaps();
 
 /** Developer level select: jump straight to a Story level. */
 function startAtLevel(n: number) {

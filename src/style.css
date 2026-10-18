@@ -717,19 +717,27 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 #cutscene.ready .cut-hint { opacity: 1; animation: tap-pulse 1.4s ease-in-out infinite; }
 #cut-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-width: 48px; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 999px; z-index: 2; }
 .cut-reveal {
+  /* Nintendo-style pop-up: a plain box on the right, clear of the character. */
   position: absolute;
-  left: 0; right: 0; top: 30%;
-  text-align: center;
-  font-size: clamp(30px, 7vw, 66px);
+  top: 16%;
+  right: max(16px, env(safe-area-inset-right));
+  left: auto;
+  max-width: min(46vw, 520px);
+  padding: 10px 18px;
+  font-size: clamp(18px, 3.2vw, 28px);
   font-weight: 900;
-  letter-spacing: 0.04em;
-  color: #ff5a3c;
-  text-shadow: 0 0 24px #000, 0 4px 0 #3a0d06, 0 0 60px #ff5a3c88;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-align: center;
+  color: #ffd23f;
+  background: #0b0d12;
+  border: 3px solid #fff;
+  border-radius: 10px;
+  box-shadow: 0 5px 0 #000a;
   pointer-events: none;
-  padding: 0 16px;
 }
-.cut-reveal.slam { animation: reveal-slam 0.6s cubic-bezier(.2, 1.4, .4, 1); }
-@keyframes reveal-slam { 0% { transform: scale(3); opacity: 0; } 60% { transform: scale(0.95); opacity: 1; } 100% { transform: scale(1); } }
+.cut-reveal.slam { animation: reveal-pop 0.32s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes reveal-pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .cut-reveal.slam, #cutscene .cut-sprite, #cutscene .cut-box, #cutscene .cut-bg { animation: none !important; } .cut-box { transition: none; } }
 
 /* Story Mode map: continue, unlocked levels with stars. */
