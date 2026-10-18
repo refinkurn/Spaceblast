@@ -1,9 +1,9 @@
 # Hero Astronaut (Corgi) - Sprite Asset Specification
 
-**Project:** Spaceblast (Space A Boom)
-**Asset:** Hero Astronaut (Corgi), Captain Kit
+**Project:** Spaceblast
+**Asset:** Bosco, hero Astropaw (corgi)
 **Status:** Grid and palette locked from the first frame of each pose (9 frames converted). Remaining animation frames still to be supplied.
-**Version:** 0.3
+**Version:** 0.5
 
 ---
 
@@ -154,3 +154,5 @@ Before handoff, every frame must pass:
 | 0.1 | 2026-10-18 | Initial spec from mockup sprite sheet |
 | 0.2 | 2026-10-18 | Grid, pivot and 16-color palette locked from 9 converted frames |
 | 0.3 | 2026-10-18 | Idle, shocked, angry, hit animations completed procedurally; atlas is one row per animation (512x1024) |
+| 0.4 | 2026-10-18 | All 26 frames and 3 portraits present. Walk, attack, KO, victory frames 2-4 and shocked/happy portraits are code-built placeholders |
+| 0.5 | 2026-10-19 | Rebuilt from batch-2 art (scarf, ray blaster, light-blue glass). Art fitted to 120 px tall. Full frame counts; in-betweens procedural |

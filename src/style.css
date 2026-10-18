@@ -682,7 +682,8 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 #cutscene.flash .cut-bg { animation: boom-flash 0.7s ease-out; }
 @keyframes boom-flash { 0% { background-color: var(--boom, #fff); box-shadow: inset 0 0 0 100vmax var(--boom, #fff); } 100% { box-shadow: inset 0 0 0 100vmax transparent; } }
 /* The character: left side, standing on the dialogue box. */
-.cut-sprite { position: absolute; left: max(16px, env(safe-area-inset-left)); bottom: 22%; width: min(42vw, 72vh); height: 72%; }
+/* Stands on top of the dialogue box (26% tall + its 10px margin), so a portrait-only bust is never hidden. */
+.cut-sprite { position: absolute; left: max(16px, env(safe-area-inset-left)); bottom: calc(26% + 12px); width: min(42vw, 66vh); height: calc(74% - 24px); }
 .cut-sprite[hidden] { display: none; }
 #cutscene.enter .cut-sprite { animation: sprite-in 0.35s cubic-bezier(.2, 1.2, .4, 1); }
 #cutscene.bump .cut-sprite { animation: sprite-bump 0.25s ease-out; }
@@ -802,7 +803,8 @@ button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; 
   .story-card p { font-size: 14px; line-height: 1.45; }
   .story-card h2 { font-size: 24px; }
   .hub-levels button { min-height: 44px; }
-  .cut-box { min-height: 30%; padding: 8px 14px; }
+  .cut-box { min-height: 24%; padding: 8px 14px; }
+  .cut-sprite { bottom: calc(24% + 12px); height: calc(76% - 22px); width: min(42vw, 76vh); }
   .cut-portrait { width: 56px; height: 56px; }
   .cut-text { font-size: 15px; }
 }

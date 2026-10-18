@@ -12,5 +12,19 @@
     "shocked": "shocked",
     "relieved": "relieved",
     "warm": "warm"
+  },
+  "pixelArt": true,
+  "portrait": {
+    "atlas": "kit_portrait_atlas.json",
+    "frames": {
+      "neutral": "kit_portrait_neutral",
+      "warm": "kit_portrait_relieved",
+      "relieved": "kit_portrait_relieved",
+      "worried": "kit_portrait_worried",
+      "surprised": "kit_portrait_worried",
+      "shocked": "kit_portrait_worried",
+      "determined": "kit_portrait_stern",
+      "angry": "kit_portrait_stern"
+    }
   }
 }

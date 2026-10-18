@@ -4,10 +4,31 @@
   "label": "DUCKING",
   "color": "#ff6a3d",
   "poses": {
-    "neutral": "neutral",
-    "sneaky": "sneaky",
+    "neutral": "idle",
+    "sneaky": "idle",
+    "determined": "attack",
     "angry": "angry",
-    "hurt": "hurt",
-    "determined": "determined"
+    "hurt": "hit",
+    "defeated": "ko",
+    "shocked": "shocked",
+    "happy": "victory",
+    "walk": "walk"
+  },
+  "pixelArt": true,
+  "body": {
+    "atlas": "ducking_fullbody_atlas.json"
+  },
+  "portrait": {
+    "atlas": "ducking_portrait_atlas.json",
+    "frames": {
+      "neutral": "ducking_portrait_smug",
+      "sneaky": "ducking_portrait_smug",
+      "happy": "ducking_portrait_smug",
+      "determined": "ducking_portrait_angry",
+      "angry": "ducking_portrait_angry",
+      "shocked": "ducking_portrait_angry",
+      "hurt": "ducking_portrait_defeated",
+      "defeated": "ducking_portrait_defeated"
+    }
   }
 }

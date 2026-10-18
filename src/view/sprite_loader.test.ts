@@ -49,13 +49,28 @@ describe('character art', () => {
     // Shocked: 2 frames at 8 fps, then holds the second.
     const shocked = (ms: number) => bodyFrame('astropaw', 'surprised', ms)!.rect.x;
     expect([0, 130, 2000].map(shocked)).toEqual([0, 128, 128]);
-    // Placeholders have no frames.
+    // Portrait-only and placeholder characters have no body frames.
     expect(bodyFrame('captain-kit', 'worried', 0)).toBeNull();
+    expect(bodyFrame('capybara', 'worried', 0)).toBeNull();
   });
 
   it('uses the portrait for dialogue, falling back to the neutral portrait', () => {
     expect(portraitFrame('astropaw', 'neutral')?.rect).toEqual({ x: 0, y: 0, w: 128, h: 152 });
-    expect(portraitFrame('astropaw', 'surprised')?.rect).toEqual({ x: 0, y: 0, w: 128, h: 152 });
-    expect(portraitFrame('captain-kit', 'neutral')).toBeNull();
+    expect(portraitFrame('astropaw', 'surprised')?.rect).toEqual({ x: 128, y: 0, w: 128, h: 152 });
+    expect(portraitFrame('captain-kit', 'angry')?.rect.x).toBe(128); // stern
+    expect(portraitFrame('captain-kit', 'dancing')?.rect.x).toBe(0); // unknown pose: neutral
+    expect(portraitFrame('capybara', 'neutral')).toBeNull();
+  });
+
+  it('every portrait a manifest names exists in its atlas and image', () => {
+    for (const c of allCharacters()) {
+      if (!c.portrait) continue;
+      const atlas = Object.entries(ATLASES).find(([p]) => p.endsWith(`/${c.id}/${c.portrait!.atlas}`))?.[1];
+      expect(atlas, `${c.id}: ${c.portrait.atlas}`).toBeDefined();
+      for (const [pose, frame] of Object.entries(c.portrait.frames)) {
+        expect(atlas!.frames[frame], `${c.id} portrait ${pose} -> ${frame}`).toBeDefined();
+        expect(portraitFrame(c.id, pose), `${c.id} portrait ${pose}`).not.toBeNull();
+      }
+    }
   });
 });

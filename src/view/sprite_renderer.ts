@@ -1,7 +1,8 @@
 import { bodyFrame, characterMeta, imageOf, portraitFrame, type SpriteFrame } from './sprite_loader';
 
 // Draws one character at a pose onto a 2D canvas: a frame of its atlas
-// (full body, or the dialogue portrait), or until the art is in, a coloured card
+// (full body, or the dialogue portrait; a portrait-only character shows its
+// portrait in both), or until the art is in, a coloured card
 // labelled "KIT - worried". Pixel art scales by whole multiples, unsmoothed.
 // Redraws only when the frame, pose or canvas size changes.
 
@@ -40,7 +41,8 @@ export class SpriteView {
     if (w === 0 || h === 0) return;
     let frame: SpriteFrame | null = null;
     if (this.mode === 'portrait') frame = portraitFrame(this.id, this.pose) ?? bodyFrame(this.id, this.pose, 0);
-    else frame = bodyFrame(this.id, this.pose, now - this.since);
+    // A portrait-only character (Captain Kit, on the radio) shows the portrait in the big slot too.
+    else frame = bodyFrame(this.id, this.pose, now - this.since) ?? portraitFrame(this.id, this.pose);
     const img = frame ? imageOf(frame.image) : null;
     const key = `${this.id}|${this.pose}|${frame ? `${frame.rect.x},${frame.rect.y}` : '-'}|${w}x${h}|${!!img}`;
     if (key === this.drawn) return;

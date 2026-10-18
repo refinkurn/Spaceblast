@@ -26,6 +26,8 @@ One folder per character, named by its id (`astropaw`, `captain-kit`, ...).
 - `portrait.frames`: pose -> portrait frame for the dialogue box; missing poses
   use the neutral portrait. No portrait at all: the box shows the body frame.
 - `pixelArt`: true scales by whole multiples with no smoothing.
+- Portrait-only characters (Captain Kit: radio only, no `body`) show their
+  portrait in the scene's big slot as well as in the dialogue box.
 
 ## Atlases (the art team's export format)
 
@@ -39,4 +41,6 @@ To replace art: drop in the new atlas JSON + PNG (same names, or update
 `body.atlas` / `portrait.atlas`), then check `poses` still names animations
 that exist. `npm test` checks every manifest and atlas.
 
-The current hero art spec and palette notes are in astropaw/SPEC.md.
+The art team's specs live next to each atlas: astropaw/bosco-sprite-spec.md,
+ducking/ducking-sprite-spec.md, captain-kit/kit-portrait-spec.md. All art faces
+right; the scene shows characters on the left, facing the dialogue.

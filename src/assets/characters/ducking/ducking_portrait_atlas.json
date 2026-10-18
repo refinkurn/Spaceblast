@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "image": "ducking_portrait_atlas.png",
+    "size": {
+      "w": 384,
+      "h": 152
+    }
+  },
+  "frames": {
+    "ducking_portrait_smug": {
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    },
+    "ducking_portrait_angry": {
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    },
+    "ducking_portrait_defeated": {
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    }
+  }
+}

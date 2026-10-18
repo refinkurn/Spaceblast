@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "image": "kit_portrait_atlas.png",
+    "size": {
+      "w": 512,
+      "h": 152
+    }
+  },
+  "frames": {
+    "kit_portrait_neutral": {
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    },
+    "kit_portrait_stern": {
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    },
+    "kit_portrait_worried": {
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    },
+    "kit_portrait_relieved": {
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    }
+  }
+}

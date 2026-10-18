@@ -20,7 +20,13 @@
   "portrait": {
     "atlas": "hero_portrait_atlas.json",
     "frames": {
-      "neutral": "hero_portrait_neutral"
+      "neutral": "hero_portrait_neutral",
+      "determined": "hero_portrait_neutral",
+      "angry": "hero_portrait_neutral",
+      "surprised": "hero_portrait_shocked",
+      "hurt": "hero_portrait_shocked",
+      "defeated": "hero_portrait_shocked",
+      "happy": "hero_portrait_happy"
     }
   }
 }
