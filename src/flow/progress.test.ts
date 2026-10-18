@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StoryProgress, starsFor } from './progress';
 
 describe('story progress', () => {
@@ -27,5 +27,41 @@ describe('story progress', () => {
     p.clear(20, 1);
     expect(p.finished).toBe(true);
     expect(p.unlocked).toBe(20);
+  });
+
+  describe('intro cards', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    const fakeStorage = (start: Record<string, string> = {}) => {
+      const data = { ...start };
+      vi.stubGlobal('localStorage', {
+        getItem: (k: string) => data[k] ?? null,
+        setItem: (k: string, v: string) => { data[k] = v; },
+      });
+      return data;
+    };
+
+    it('remembers which alien and power-up cards were shown, per save', () => {
+      fakeStorage();
+      const p = new StoryProgress();
+      expect(p.seen('seenAliens', 'goopling')).toBe(false);
+      p.markSeen('seenAliens', 'goopling');
+      p.markSeen('seenAliens', 'goopling');
+      p.markSeen('seenPowerUps', 'freeze_pulse');
+      // A new visit (a fresh StoryProgress) still knows.
+      const again = new StoryProgress();
+      expect(again.seen('seenAliens', 'goopling')).toBe(true);
+      expect(again.seen('seenPowerUps', 'goopling')).toBe(false);
+      expect(again.seen('seenPowerUps', 'freeze_pulse')).toBe(true);
+    });
+
+    it('ignores broken or edited card lists', () => {
+      fakeStorage({ 'spaceblast.story': JSON.stringify({ unlocked: 3, seenAliens: ['sniffer', 7, '<b>', 'sniffer'], seenPowerUps: 'x' }) });
+      const p = new StoryProgress();
+      expect(p.unlocked).toBe(3);
+      expect(p.seen('seenAliens', 'sniffer')).toBe(true);
+      expect(p.seen('seenAliens', '<b>')).toBe(false);
+      expect(p.seen('seenPowerUps', 'x')).toBe(false);
+    });
   });
 });

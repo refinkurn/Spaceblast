@@ -74,11 +74,19 @@
       </div>
     </div>
     <div id="level-card" hidden>
-      <div id="card-title" class="kicker"></div>
-      <div id="card-context" class="context"></div>
-      <div id="card-goal" class="goal"></div>
-      <div id="card-hazards" class="hazards"></div>
-      <div id="card-tip" class="card-tip"></div>
+      <div id="card-level" class="card-level"></div>
+      <div id="card-sector" class="card-sector"></div>
+      <div id="card-hint" class="card-hint"></div>
+    </div>
+    <div id="intro-card" role="dialog" aria-labelledby="intro-name" hidden>
+      <div class="intro-box">
+        <div id="intro-icon" class="intro-icon"></div>
+        <h2 id="intro-name"></h2>
+        <p id="intro-text" class="intro-text"></p>
+        <p id="intro-speaker" class="intro-speaker"></p>
+        <p class="intro-tip"><strong id="intro-label"></strong> <span id="intro-hint"></span></p>
+        <p id="intro-tap" class="intro-tap"></p>
+      </div>
     </div>
     <div id="menu">
       <div class="menu-corner">

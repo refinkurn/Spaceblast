@@ -78,12 +78,11 @@ export class Screens {
     if (this.storyOpen) $<HTMLButtonElement>('story-btn').click();
   }
 
-  /** The level briefing card; main.ts hides it after 3 s. */
-  showLevelCard(title: string, context: string, goal: string, hazards: string): void {
-    $('card-title').textContent = title;
-    $('card-context').textContent = context;
-    $('card-goal').textContent = goal;
-    $('card-hazards').textContent = hazards;
+  /** The level card: level and sector, up until it is tapped. */
+  showLevelCard(level: string, sector: string): void {
+    $('card-level').textContent = level;
+    $('card-sector').textContent = sector;
+    $('card-hint').textContent = window.matchMedia('(pointer: coarse)').matches ? 'Tap to continue' : 'Click to continue';
     $('level-card').hidden = false;
   }
 

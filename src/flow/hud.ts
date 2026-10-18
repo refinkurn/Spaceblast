@@ -11,9 +11,9 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
 const HEART =
   '<svg viewBox="0 0 24 24" class="icon heart"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3.1 1.7-1.9 3.2-3.1 5.3-3.1 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>';
-const OXYGEN =
+export const OXYGEN =
   '<svg viewBox="0 0 24 24" class="icon oxygen"><circle cx="12" cy="12" r="9"/><text x="12" y="15.5" text-anchor="middle">O2</text></svg>';
-const POWER_ICONS: Record<string, string> = {
+export const POWER_ICONS: Record<string, string> = {
   charges: '<svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="13" r="7"/><path d="M14 6l3-3" stroke-width="2"/></svg>',
   range: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M2 12h20" stroke-width="4" stroke-linecap="round"/></svg>',
   speed: '<svg viewBox="0 0 24 24" class="icon"><path d="M4 6l7 6-7 6M12 6l7 6-7 6" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',

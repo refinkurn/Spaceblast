@@ -1,6 +1,8 @@
 // Tutorial and tip text, from the Game Guide & Tutorial Script doc.
 // Plain data, so the story team can rewrite it without touching game code.
 // [MOVE] and [CHARGE] are replaced with the player's own controls.
+// Martians and power-ups are introduced by their cards instead
+// (alien_cards.ts, powerup_cards.ts).
 
 /** When a tutorial step appears (see tutorial.ts for what each one means). */
 export type BeatTrigger =
@@ -31,10 +33,7 @@ export const BEATS: Beat[] = [
   { id: 'charge', level: 1, trigger: 'near_target', done: 'charge_placed', prompt: 'Press [CHARGE] to drop a charge.' },
   { id: 'escape', level: 1, trigger: 'charge_placed', done: 'charge_exploded', prompt: 'Step away before it explodes.' },
   { id: 'rocks', level: 1, trigger: 'rock_broken', done: 'timer', prompt: 'Rocks break. Look for what is behind them.' },
-  { id: 'powerup', level: 1, trigger: 'item_picked', done: 'timer', prompt: 'Power-up! Check the pips at the top of the screen.' },
-  { id: 'martian', level: 1, trigger: 'martian_killed', done: 'timer', prompt: 'Martians bite on touch. Keep your distance.' },
   { id: 'gate', level: 1, trigger: 'gate_opened', done: 'level_clear', prompt: 'The Warp Gate is open. Step on it to clear the level.' },
-  { id: 'sniffer', level: 3, trigger: 'level_start', done: 'timer', prompt: 'Sniffers dodge your blasts. Trap them in a corridor.' },
 ];
 
 /** What [MOVE] and [CHARGE] say, per kind of control. */

@@ -4,7 +4,7 @@ import type { Shot } from './cutscene';
 // after each boss, and the final duel.
 // Plain data, so the story can be rewritten without touching game code.
 
-const KIT = { speaker: 'Captain Kit (radio)', color: '#ffd23f' };
+export const KIT = { speaker: 'Captain Kit (radio)', color: '#ffd23f' };
 const PILOT = { speaker: 'Renegade Pilot', color: '#ff6a3d' };
 const YOU = { speaker: 'You', color: '#5ad1ff' };
 

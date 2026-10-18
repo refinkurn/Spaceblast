@@ -1,7 +1,8 @@
 import { LEVEL_COUNT, levelSpec } from '../sim/levels';
 
 // Story Mode progress, saved on this device: the furthest level reached, the
-// best stars per level, and run totals for the ending screen.
+// best stars per level, run totals for the ending screen, and which alien and
+// power-up cards have been shown.
 
 const KEY = 'spaceblast.story';
 
@@ -19,9 +20,21 @@ interface Saved {
   stars: Record<number, number>;
   stats: StoryStats;
   finished: boolean;
+  /** Ids of the alien cards already shown (alien_cards.ts). */
+  seenAliens: string[];
+  /** Ids of the power-up cards already shown (powerup_cards.ts). */
+  seenPowerUps: string[];
 }
 
-const fresh = (): Saved => ({ unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false });
+export type CardList = 'seenAliens' | 'seenPowerUps';
+
+const fresh = (): Saved => ({
+  unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, seenAliens: [], seenPowerUps: [],
+});
+
+/** A saved list of card ids: short lowercase words only, no repeats. */
+const ids = (v: unknown): string[] =>
+  Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && /^[a-z_]{1,24}$/.test(x)))].slice(0, 32) : [];
 
 /** Saved data checked field by field, so old or edited data can't break the game. */
 function sanitize(raw: Partial<Saved> | null): Saved {
@@ -36,6 +49,8 @@ function sanitize(raw: Partial<Saved> | null): Saved {
   const st = raw.stats;
   out.stats = { martians: int(st?.martians, 1e9), bosses: int(st?.bosses, 1e9), livesLost: int(st?.livesLost, 1e9), ticks: int(st?.ticks, 1e12) };
   out.finished = raw.finished === true;
+  out.seenAliens = ids(raw.seenAliens);
+  out.seenPowerUps = ids(raw.seenPowerUps);
   return out;
 }
 
@@ -88,6 +103,18 @@ export class StoryProgress {
     this.data.stars[level] = Math.max(this.stars(level), stars);
     this.data.unlocked = Math.max(this.data.unlocked, Math.min(LEVEL_COUNT, level + 1));
     if (level >= LEVEL_COUNT) this.data.finished = true;
+    this.save();
+  }
+
+  /** Has this alien or power-up card been shown on this save? */
+  seen(list: CardList, id: string): boolean {
+    return this.data[list].includes(id);
+  }
+
+  /** Marks a card as shown (saved straight away: it never shows again). */
+  markSeen(list: CardList, id: string): void {
+    if (this.seen(list, id)) return;
+    this.data[list].push(id);
     this.save();
   }
 

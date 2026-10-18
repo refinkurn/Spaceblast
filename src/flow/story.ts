@@ -1,7 +1,7 @@
-import { BossKind, Kind } from '../sim/constants';
+import { BossKind } from '../sim/constants';
 import type { LevelSpec } from '../sim/levels';
 
-// Story Mode text: sector cards, the 3-second level briefing, and the ending.
+// Story Mode text: sector cards, the level card, and the ending.
 // Plain data so the story can be rewritten without touching game code.
 
 export interface SectorStory {
@@ -39,8 +39,11 @@ export const SECTORS: SectorStory[] = [
 export const ENDING =
   'The Renegade Pilot is down and the last ship core is back on board. The Astro Paws lift off from Mars and head for home.';
 
-/** One line of story context per level, shown on the level briefing. */
-const CONTEXT: string[] = [
+/**
+ * One line of story context per level. Not shown at the moment: the level card
+ * only shows the level and its sector.
+ */
+export const CONTEXT: string[] = [
   'Touching down outside the outpost. Scout the surface.',
   'Following the crash trail across the dunes.',
   'Something faster is sniffing around the outpost walls.',
@@ -69,44 +72,10 @@ export const BOSS_NAMES: Record<number, string> = {
   [BossKind.MazeMaster]: 'Maze Master',
 };
 
-const KIND_NAMES: Record<number, string> = {
-  [Kind.Goopling]: 'Gooplings',
-  [Kind.Sniffer]: 'Sniffers',
-  [Kind.Phaser]: 'Phasers',
-  [Kind.Builder]: 'Builders',
-};
-
-export interface Briefing {
-  title: string;
-  context: string;
-  goal: string;
-  hazards: string;
-}
-
-/** The level-start card: story context, the goal and what is switched on. */
-export function briefing(spec: LevelSpec, firstSeen: (kind: Kind) => boolean): Briefing {
-  const sector = SECTORS[spec.sector - 1];
-  const hazards: string[] = [];
-  let goal = 'Reach the Warp Gate';
-  if (spec.boss) {
-    goal = `Survive the ${BOSS_NAMES[spec.boss]}`;
-    hazards.push('Goopling spouts');
-    if (spec.boss === BossKind.DarknessHive) hazards.push('Blackouts');
-    if (spec.boss === BossKind.MazeMaster) hazards.push('Cross blasts', 'Maze Shifts');
-  } else if (spec.rival) {
-    goal = 'Defeat the Renegade Pilot';
-    hazards.push('A rival who plays like you');
-  }
-  if (spec.rules.mazeShift) hazards.push(spec.rules.frequentEvents ? 'Frequent Maze Shifts' : 'Maze Shifts');
-  if (spec.rules.blackout) hazards.push('Blackouts');
-  if (spec.rules.gateWander) hazards.push('Wandering Gate');
-  if (spec.rules.aggressive) hazards.push('Aggressive Martians');
-  const fresh = [...new Set(spec.roster)].filter(firstSeen).map((k) => KIND_NAMES[k]);
-  if (fresh.length > 0) hazards.push(`New: ${fresh.join(', ')}`);
+/** The level card: "LEVEL 5" and "SECTOR 1: OUTPOST SURFACE". */
+export function levelCard(spec: LevelSpec): { level: string; sector: string } {
   return {
-    title: `Level ${spec.level} · ${sector.name}`,
-    context: CONTEXT[spec.level - 1],
-    goal: `Goal: ${goal}`,
-    hazards: `Hazards: ${hazards.length > 0 ? hazards.join(', ') : 'none yet'}`,
+    level: `LEVEL ${spec.level}`,
+    sector: `SECTOR ${spec.sector}: ${SECTORS[spec.sector - 1].name.toUpperCase()}`,
   };
 }

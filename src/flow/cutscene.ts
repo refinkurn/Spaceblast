@@ -10,7 +10,8 @@ import type { GameView } from '../view/game_view';
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
-export type Focus = 'hero' | 'boss' | 'rival' | 'arena';
+/** 'martian': the Martian an alien card is about (cards only; scenes show the arena). */
+export type Focus = 'hero' | 'boss' | 'rival' | 'arena' | 'martian';
 
 export interface Shot {
   focus: Focus;

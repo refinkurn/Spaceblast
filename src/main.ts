@@ -32,8 +32,6 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 /** You (blue), the rival (orange: battle bot or the Renegade Pilot), then players 3 and 4. */
 const HERO_COLORS = [0x3a7bff, 0xff6a3d, 0x4fd17a, 0xc77dff];
-/** How long the level briefing stays up (the game waits meanwhile). */
-const CARD_MS = 3000;
 /** Battle vs bot: round wins to take the match. */
 const BATTLE_WINS = 3;
 
@@ -45,8 +43,8 @@ const touch = new TouchSource($('stick-zone'), $('stick-base'), $('stick-knob'),
 let mode: MenuChoice = 'survival';
 let state: GameState;
 let bot: Bot | null = null;
-/** The game waits while the briefing card is up. */
-let cardUntil = 0;
+/** The game waits while the level card is up. */
+let cardUp = false;
 /** Battle round wins (offline and online). */
 const score = new MatchScore();
 /** The online round being played; null outside online play. */
@@ -73,17 +71,14 @@ const cutscene = new Cutscene(view);
 const story = new StoryMode({
   newLevel: () => { newGame(); return state; },
   get state() { return state; },
-  showBriefing: (title, context, goal, hazards) => {
-    $('card-tip').textContent = `Tip: ${randomTip()}`;
-    briefingUp = true;
-    screens.showLevelCard(title, context, goal, hazards);
-    cardUntil = performance.now() + CARD_MS;
+  showLevelCard: (level, sector) => {
+    cardUp = true;
+    screens.showLevelCard(level, sector);
   },
   openMenu,
 }, screens, cutscene, view);
-/** Story tutorial coach; starts when a level's briefing closes. */
+/** Story tutorial coach; starts when a level's card closes. */
 const tutorial = new Tutorial();
-let briefingUp = false;
 $('settings-tutorial').addEventListener('click', () => {
   tutorial.reset();
   $('settings-tutorial').textContent = 'It will show again from level 1';
@@ -147,6 +142,7 @@ function openMenu() {
 // --- A new map ----------------------------------------------------------------------------
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   tutorial.stop();
+  story.cancelCards();
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
   const spec = levelSpec(story.level);
   if (mode === 'online' && net) state = createGame(seed, net.gameOptions());
@@ -159,7 +155,7 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   view.rig.reset();
   screens.hideBanner();
   screens.hideLevelCard();
-  cardUntil = 0;
+  cardUp = false;
   leaveAsked = false;
   clearPresses();
 }
@@ -410,24 +406,29 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Escape') openMenu();
   else if (cutscene.active) {
     if (confirm) cutscene.advance();
+  } else if (story.cardOpen) {
+    if (confirm) story.pressCard();
   } else if (cine.active) {
     if (e.code === 'Enter') cine.skip(); // not Space: that's the charge key
   }
   else if (confirm && congrats.open) congrats.pressPrimary();
   else if (confirm && screens.storyOpen) screens.pressStory();
   else if (confirm && screens.bannerOpen) screens.pressPrimary();
-  else if (confirm && cardUntil > 0) skipCard();
+  else if (confirm && cardUp) skipCard();
 });
 $('level-card').addEventListener('click', skipCard);
 $('game').addEventListener('pointerdown', () => cine.skip());
 
-/** Tap or Enter dismisses the briefing early. */
+/** Tap or Enter closes the level card. */
 function skipCard() {
-  cardUntil = 0;
+  if (!cardUp) return;
+  cardUp = false;
   screens.hideLevelCard();
   // The Story level really starts now: the tutorial may have something to say.
-  if (briefingUp && mode === 'survival') tutorial.start(story.level, state);
-  briefingUp = false;
+  if (mode === 'survival') {
+    tutorial.start(story.level, state);
+    story.levelStarted();
+  }
 }
 
 /** Gutter width for the touch controls: about 16% of the width, 110-170 px. */
@@ -455,11 +456,10 @@ view.renderer.setAnimationLoop((now: number) => {
   const dt = Math.min(now - last, 250);
   last = now;
   acc += dt;
-  if (cardUntil > 0 && now >= cardUntil) skipCard();
   const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open || settings.isOpen || story.overlayOpen;
   // Offline games pause while the phone is upright (the "rotate" screen is up).
   const upright = portrait.matches && mode !== 'online';
-  const paused = overlay || upright || cardUntil > 0 || cine.active || cutscene.active || (mode === 'online' && !net);
+  const paused = overlay || upright || cardUp || story.cardOpen || cine.active || cutscene.active || (mode === 'online' && !net);
   // Something took over the screen: let go of the stick and the charge button.
   // Coming back: forget presses made meanwhile (Space on a card must not drop a charge).
   if (paused && !wasPaused) touch.release();
@@ -475,6 +475,7 @@ view.renderer.setAnimationLoop((now: number) => {
       }
     } else if (!paused) {
       runTick(localCommands());
+      if (story.cardOpen) break; // a power-up card just opened: stop right here
     }
     acc -= TICK_MS;
     steps++;
