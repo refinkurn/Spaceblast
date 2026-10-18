@@ -26,8 +26,6 @@ export interface IntroCard extends Shot, CardParts {
   id: string;
   name: string;
   icon: string;
-  label: string;
-  hint: string;
 }
 
 export interface CardOptions {

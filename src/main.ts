@@ -72,9 +72,9 @@ const cutscene = new Cutscene((cue) => audio.cue(cue));
 const story = new StoryMode({
   newLevel: () => { newGame(); return state; },
   get state() { return state; },
-  showLevelCard: (level, sector, briefing) => {
+  showLevelCard: (level, sector, briefing, reply) => {
     cardUp = true;
-    screens.showLevelCard(level, sector, briefing);
+    screens.showLevelCard(level, sector, briefing, reply);
   },
   openMenu,
 }, screens, cutscene, view);

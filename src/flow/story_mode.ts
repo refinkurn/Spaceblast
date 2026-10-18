@@ -10,7 +10,7 @@ import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress, starsFor } from './progress';
 import type { Screens } from './screens';
 import { BOSS_NAMES, ENDING, SECTORS, levelCard } from './story';
-import { INTRO_SCENES, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
+import { ENDING_SCENE, INTRO_SCENES, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
 
 // Story Mode flow: the level map (continue / replay with stars), each level's
@@ -26,7 +26,7 @@ export interface StoryHost {
   newLevel(level: number): GameState;
   readonly state: GameState;
   /** Shows the level card (the game waits until it is dismissed). */
-  showLevelCard(level: string, sector: string, briefing: string): void;
+  showLevelCard(level: string, sector: string, briefing: string, reply: string): void;
   openMenu(): void;
 }
 
@@ -104,29 +104,27 @@ export class StoryMode {
     this.livesLost = 0;
     const spec = levelSpec(level);
     const state = this.host.newLevel(level);
+    const card = () => {
+      const c = levelCard(spec);
+      this.host.showLevelCard(c.level, c.sector, c.briefing, c.reply);
+    };
+    // The very first Story start on this save: after the opening scene, Captain
+    // Kit's opening pop-up, then level 1's card.
+    const first = level === 1 && withStory && !this.progress.tutorialSeen;
     const brief = () => {
-      const card = levelCard(spec);
-      this.host.showLevelCard(card.level, card.sector, card.briefing);
+      if (!first) return card();
+      this.progress.markTutorialSeen();
+      this.cards.show(OPENING_TUTORIAL, state, { done: card });
     };
     // Retrying after a game over skips the scenes and goes straight to the level card.
     const scene = withStory ? INTRO_SCENES[level] : undefined;
     const intro = () => this.cutscene.play(scene ?? [], state, brief);
     // Sectors with an opening scene get it instead of the plain story card.
-    const lead = () => {
-      if (withStory && isSectorStart(level) && !scene) {
-        const sector = SECTORS[spec.sector - 1];
-        this.screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', intro);
-      } else {
-        intro();
-      }
-    };
-    // The very first Story start on this save: Captain Kit's opening card first.
-    // Skip goes straight to the level card.
-    if (level === 1 && withStory && !this.progress.tutorialSeen) {
-      this.progress.markTutorialSeen();
-      this.cards.show(OPENING_TUTORIAL, state, { done: lead, skip: brief });
+    if (withStory && isSectorStart(level) && !scene) {
+      const sector = SECTORS[spec.sector - 1];
+      this.screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', intro);
     } else {
-      lead();
+      intro();
     }
   }
 
@@ -181,7 +179,9 @@ export class StoryMode {
     if (spec.rival) this.progress.add({ bosses: 1 });
     const stars = starsFor(level, Math.min(this.livesLost, START_LIVES), state.tick);
     this.progress.clear(level, stars);
-    this.cutscene.play(OUTRO_SCENES[level] ?? [], state, () => {
+    // After the duel, the ending scene follows straight on.
+    const outro = [...(OUTRO_SCENES[level] ?? []), ...(level >= LEVEL_COUNT ? ENDING_SCENE : [])];
+    this.cutscene.play(outro, state, () => {
       if (level >= LEVEL_COUNT) {
         this.showEnding();
         return;

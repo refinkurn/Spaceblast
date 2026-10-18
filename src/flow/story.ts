@@ -9,35 +9,32 @@ export interface SectorStory {
   story: string;
 }
 
+/**
+ * Sector names, and the story card a sector shows if it has no opening scene
+ * (all four have one now: see story_scenes.ts).
+ */
 export const SECTORS: SectorStory[] = [
   {
     name: 'Outpost Surface',
-    story:
-      'The Astro Paws crash-land beside an abandoned mining outpost on Mars. The Martian Hive has woken up hungry, ' +
-      'and the ship\'s cores are scattered across the planet. Captain Kit\'s orders: reach the Warp Gates and get the crew out alive.',
+    story: "The Biscuit crash-lands on Mars and its power cores are stolen. Bosco heads out to get them back, with Captain Kit on the radio.",
   },
   {
     name: 'Deep Shafts',
-    story:
-      'The cores\' signal leads underground, into the old mining shafts. Down here Phasers burrow through the walls, ' +
-      'Builders seal the tunnels behind you, and the lights fail without warning.',
+    story: 'Shafts carved through solid rock, with markings no Martian made. Someone built these. The creatures here are more organized.',
   },
   {
     name: 'Tectonic Core',
-    story:
-      'Deep in the crust the ground itself is moving. The Hive reshapes the maze around you every few seconds, ' +
-      'and the Warp Gates drift away if you hesitate.',
+    story: 'The heart of Mars. The cavern reshapes itself, and the Martians march in unison toward its center.',
   },
   {
     name: 'Rogue Facility',
-    story:
-      'At the bottom of it all: a sealed research facility, and someone is running it. ' +
-      'The Martians here hunt in packs, and a rogue pilot is waiting at the last gate.',
+    story: 'A command center hidden inside Mars, running the whole hive network. Whoever is in charge knows Bosco is coming.',
   },
 ];
 
+/** The ending screen's text (the FINAL TEXT of the script). */
 export const ENDING =
-  'The Renegade Pilot is down and the last ship core is back on board. The Astro Paws lift off from Mars and head for home.';
+  'Mars is quiet again. The hives wander without direction. In the sky above, the Astropaws carried something back: hope that even the lost can find their way home.';
 
 /**
  * One line per level, shown on the level card under the sector. Empty on the
@@ -72,11 +69,18 @@ export const BOSS_NAMES: Record<number, string> = {
   [BossKind.MazeMaster]: 'Maze Master',
 };
 
+/** Bosco's answer to a briefing, under it on the level card. */
+export const REPLIES: Record<number, string> = {
+  3: 'Great. Even the wildlife has a better sense of direction than I do.',
+  8: 'The locals build walls now? Wonderful.',
+};
+
 /** The level card: "LEVEL 5", "SECTOR 1: OUTPOST SURFACE" and the level's one-line briefing. */
-export function levelCard(spec: LevelSpec): { level: string; sector: string; briefing: string } {
+export function levelCard(spec: LevelSpec): { level: string; sector: string; briefing: string; reply: string } {
   return {
     level: `LEVEL ${spec.level}`,
     sector: `SECTOR ${spec.sector}: ${SECTORS[spec.sector - 1].name.toUpperCase()}`,
     briefing: CONTEXT[spec.level - 1] ?? '',
+    reply: REPLIES[spec.level] ?? '',
   };
 }

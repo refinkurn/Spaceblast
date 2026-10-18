@@ -64,10 +64,11 @@ export class Screens {
   }
 
   /** The level card: level, sector and the briefing line, up until it is tapped. */
-  showLevelCard(level: string, sector: string, briefing: string): void {
+  showLevelCard(level: string, sector: string, briefing: string, reply = ''): void {
     $('card-level').textContent = level;
     $('card-sector').textContent = sector;
     $('card-briefing').textContent = briefing;
+    $('card-reply').textContent = reply ? `Bosco: “${reply}”` : '';
     $('card-hint').textContent = window.matchMedia('(pointer: coarse)').matches ? 'Tap to continue' : 'Click to continue';
     $('level-card').hidden = false;
   }
