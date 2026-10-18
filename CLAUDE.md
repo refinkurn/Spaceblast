@@ -19,7 +19,7 @@ src/
   input/   devices -> PlayerCommand (keyboard, touch, bots)
   net/     online rooms: protocol, server frames (frames.ts), connection + reconnect (link.ts)
   view/    Three.js rendering; reads sim state, never writes it (plus 2D character sprites: sprite_loader.ts, sprite_renderer.ts)
-  assets/characters/  sprite sheets + pose JSON per character (README.md there)
+  assets/   art as data: characters/<id>/character.json + atlases (README.md there); menu/menu.json + key art
   audio/   synthesised sound effects and music (Web Audio, no files); driven by sim events
   flow/    menus, HUD, story, online lobby
   main.ts  wiring + fixed 60 Hz loop

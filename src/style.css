@@ -834,3 +834,7 @@ body.scene #coach { visibility: hidden; }
 .banner-tip[hidden] { display: none; }
 .quiet-btn { min-height: 40px; padding: 0 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) { .coach.pop { animation: none; } }
+/* Menu key art (src/assets/menu/menu.json) replaces the plain backdrop. */
+#menu.art { background-color: #14161d; }
+#menu.art h1 { text-shadow: 0 2px 0 #000, 0 0 18px #000a; }
+.menu-hero[hidden] { display: none; }

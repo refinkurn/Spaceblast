@@ -1,0 +1,26 @@
+{
+  "id": "astropaw",
+  "name": "Astropaw",
+  "label": "ASTROPAW",
+  "color": "#3a7bff",
+  "poses": {
+    "neutral": "idle",
+    "happy": "victory",
+    "determined": "attack",
+    "surprised": "shocked",
+    "angry": "angry",
+    "hurt": "hit",
+    "defeated": "ko",
+    "walk": "walk"
+  },
+  "pixelArt": true,
+  "body": {
+    "atlas": "hero_fullbody_atlas.json"
+  },
+  "portrait": {
+    "atlas": "hero_portrait_atlas.json",
+    "frames": {
+      "neutral": "hero_portrait_neutral"
+    }
+  }
+}

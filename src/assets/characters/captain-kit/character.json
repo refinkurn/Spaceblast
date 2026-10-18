@@ -1,0 +1,12 @@
+{
+  "id": "captain-kit",
+  "name": "Captain Kit",
+  "label": "KIT",
+  "color": "#ffd23f",
+  "poses": {
+    "neutral": "neutral",
+    "surprised": "surprised",
+    "determined": "determined",
+    "worried": "worried"
+  }
+}

@@ -62,7 +62,7 @@ export class Cutscene {
   private revealEl = $('cut-reveal');
   private fadeEl = $('cut-fade');
   private sprite = new SpriteView($('cut-sprite') as HTMLCanvasElement);
-  private portrait = new SpriteView($('cut-portrait') as HTMLCanvasElement);
+  private portrait = new SpriteView($('cut-portrait') as HTMLCanvasElement, 'portrait');
 
   constructor(private sound: (cue: SceneCue) => void = () => {}) {
     $('cut-skip').addEventListener('click', (e) => {

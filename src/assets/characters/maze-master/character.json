@@ -1,0 +1,11 @@
+{
+  "id": "maze-master",
+  "name": "Maze Master",
+  "label": "MAZE MASTER",
+  "color": "#c77dff",
+  "poses": {
+    "idle": "idle",
+    "attacking": "attacking",
+    "defeated": "defeated"
+  }
+}

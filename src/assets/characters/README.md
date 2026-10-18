@@ -1,31 +1,42 @@
-# Character sprites
+# Character art
 
-One folder per character, named by its id (`captain-kit`, `astropaw`, ...):
+Everything here is data: new or changed art needs no code changes.
+One folder per character, named by its id (`astropaw`, `captain-kit`, ...).
 
-- `<id>.json`: pose metadata (this is what the game reads).
-- `<id>.png`: the sprite sheet. Optional: without it the game draws a coloured
-  placeholder card with the character's label and pose.
-
-Sheet layout (old Nintendo style): one pose per row, its frames left to right,
-every frame the same size (`frameWidth` x `frameHeight`, 128 x 128 for now).
-Keep a sheet at 512 x 512 or less and save it as an indexed-colour PNG
-(256 colours or fewer) to keep the download and phone memory small.
+## character.json (the manifest, required)
 
 ```json
 {
-  "character": "captain-kit",
-  "name": "Captain Kit",
-  "label": "KIT",
-  "color": "#ffd23f",
-  "frameWidth": 128,
-  "frameHeight": 128,
-  "poses": {
-    "neutral": { "row": 0, "frames": 4, "duration": 100 }
-  }
+  "id": "astropaw",
+  "name": "Astropaw",
+  "label": "ASTROPAW",
+  "color": "#3a7bff",
+  "pixelArt": true,
+  "body": { "atlas": "hero_fullbody_atlas.json" },
+  "portrait": { "atlas": "hero_portrait_atlas.json", "frames": { "neutral": "hero_portrait_neutral" } },
+  "poses": { "neutral": "idle", "surprised": "shocked", "happy": "victory" }
 }
 ```
 
-`duration` is milliseconds per frame. A scene shot picks a pose with
-`pose: 'worried'`; a pose the sheet doesn't have falls back to `neutral`, then
-to the first pose listed. New poses and characters need no code changes: add
-the row to the sheet and the line to the JSON.
+- `poses`: the pose names scenes use (`pose: 'surprised'` in story_scenes.ts),
+  each mapped to an animation in the body atlas. A pose that isn't listed
+  falls back to `neutral`, then to the first pose.
+- `body` / `portrait`: optional. Without them the game draws a placeholder card
+  in `color` with `label` and the pose name.
+- `portrait.frames`: pose -> portrait frame for the dialogue box; missing poses
+  use the neutral portrait. No portrait at all: the box shows the body frame.
+- `pixelArt`: true scales by whole multiples with no smoothing.
+
+## Atlases (the art team's export format)
+
+`<name>_atlas.json` + the PNG named in `meta.image`, in the same folder:
+`frames` (name -> x, y, w, h, pivot) and `animations` (name -> fps, loop,
+frames). Looping animations cycle; the others hold their last frame. The pivot
+(feet, or the bottom of a bust) stands on the bottom centre of the space.
+Keep each atlas at 1024 px per side or less.
+
+To replace art: drop in the new atlas JSON + PNG (same names, or update
+`body.atlas` / `portrait.atlas`), then check `poses` still names animations
+that exist. `npm test` checks every manifest and atlas.
+
+The current hero art spec and palette notes are in astropaw/SPEC.md.

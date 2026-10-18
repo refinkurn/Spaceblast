@@ -1,0 +1,238 @@
+{
+  "meta": {
+    "image": "hero_fullbody_atlas.png",
+    "size": {
+      "w": 512,
+      "h": 1024
+    },
+    "frame_size": {
+      "w": 128,
+      "h": 128
+    },
+    "layout": "one row per animation, frames left to right",
+    "pivot_note": "bottom-center of feet; x=64 canvas center, y=124 = row below lowest foot pixel (baseline row 123)",
+    "status": "v0.3 - idle, shocked, angry, hit complete; walk, attack, ko, victory still 1 frame"
+  },
+  "frames": {
+    "hero_idle_01": {
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_idle_02": {
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_idle_03": {
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_idle_04": {
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_walk_01": {
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_attack_01": {
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_shocked_01": {
+      "x": 0,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_shocked_02": {
+      "x": 128,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_angry_01": {
+      "x": 0,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_angry_02": {
+      "x": 128,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_hit_01": {
+      "x": 0,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_hit_02": {
+      "x": 128,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_ko_01": {
+      "x": 0,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    },
+    "hero_victory_01": {
+      "x": 0,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "pivot": {
+        "x": 64,
+        "y": 124
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "frames": [
+        "hero_idle_01",
+        "hero_idle_02",
+        "hero_idle_03",
+        "hero_idle_04"
+      ],
+      "frames_planned": 4,
+      "complete": true
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "frames": [
+        "hero_walk_01"
+      ],
+      "frames_planned": 4,
+      "complete": false
+    },
+    "attack": {
+      "fps": 12,
+      "loop": false,
+      "frames": [
+        "hero_attack_01"
+      ],
+      "frames_planned": 4,
+      "complete": false
+    },
+    "shocked": {
+      "fps": 8,
+      "loop": false,
+      "frames": [
+        "hero_shocked_01",
+        "hero_shocked_02"
+      ],
+      "frames_planned": 2,
+      "complete": true
+    },
+    "angry": {
+      "fps": 8,
+      "loop": false,
+      "frames": [
+        "hero_angry_01",
+        "hero_angry_02"
+      ],
+      "frames_planned": 2,
+      "complete": true
+    },
+    "hit": {
+      "fps": 12,
+      "loop": false,
+      "frames": [
+        "hero_hit_01",
+        "hero_hit_02"
+      ],
+      "frames_planned": 2,
+      "complete": true
+    },
+    "ko": {
+      "fps": 8,
+      "loop": false,
+      "frames": [
+        "hero_ko_01"
+      ],
+      "frames_planned": 4,
+      "complete": false
+    },
+    "victory": {
+      "fps": 8,
+      "loop": true,
+      "frames": [
+        "hero_victory_01"
+      ],
+      "frames_planned": 4,
+      "complete": false
+    }
+  }
+}

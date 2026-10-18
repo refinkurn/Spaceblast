@@ -1,0 +1,12 @@
+{
+  "id": "ducking",
+  "name": "Ducking (the Renegade Pilot)",
+  "label": "DUCKING",
+  "color": "#ff6a3d",
+  "poses": {
+    "neutral": "neutral",
+    "sneaky": "sneaky",
+    "angry": "angry",
+    "hurt": "hurt"
+  }
+}

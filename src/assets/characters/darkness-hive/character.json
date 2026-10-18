@@ -1,0 +1,11 @@
+{
+  "id": "darkness-hive",
+  "name": "Darkness Hive",
+  "label": "DARKNESS HIVE",
+  "color": "#8a6bd1",
+  "poses": {
+    "idle": "idle",
+    "attacking": "attacking",
+    "defeated": "defeated"
+  }
+}

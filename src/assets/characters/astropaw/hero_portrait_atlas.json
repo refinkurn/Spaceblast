@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "image": "hero_portrait_atlas.png",
+    "size": {
+      "w": 128,
+      "h": 152
+    }
+  },
+  "frames": {
+    "hero_portrait_neutral": {
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 152,
+      "pivot": {
+        "x": 64,
+        "y": 152
+      }
+    }
+  }
+}

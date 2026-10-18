@@ -1,0 +1,11 @@
+{
+  "id": "goopling-hive",
+  "name": "Goopling Hive",
+  "label": "GOOPLING HIVE",
+  "color": "#6fd14f",
+  "poses": {
+    "idle": "idle",
+    "attacking": "attacking",
+    "defeated": "defeated"
+  }
+}

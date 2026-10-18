@@ -1,0 +1,13 @@
+{
+  "background": [
+    { "file": "menu_bg_1280x720.webp", "width": 1280 },
+    { "file": "menu_bg_1920x1080.webp", "width": 1920 }
+  ],
+  "overlay": "menu_left_gradient_1920x1080.png",
+  "focal_point": { "x": 0.7, "y": 0.3, "note": "hero dog's head; kept on screen when the background is cropped" },
+  "character": null,
+  "character_note": "a character id to stand on the right of the menu (e.g. \"astropaw\"), or null when the background art already shows the characters",
+  "character_zone": { "x0": 0.44, "y0": 0.21, "x1": 0.97, "y1": 1.0 },
+  "title_area": { "x0": 0.05, "y0": 0.06, "x1": 0.42, "y1": 0.2 },
+  "menu_safe_area": { "x0": 0.05, "y0": 0.24, "x1": 0.4, "y1": 0.8 }
+}
