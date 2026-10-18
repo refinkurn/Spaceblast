@@ -81,6 +81,7 @@ const story = new StoryMode({
 const tutorial = new Tutorial();
 $('settings-tutorial').addEventListener('click', () => {
   tutorial.reset();
+  story.progress.resetTutorial();
   $('settings-tutorial').textContent = 'It will show again from level 1';
 });
 const settings = new SettingsScreen((s) => {

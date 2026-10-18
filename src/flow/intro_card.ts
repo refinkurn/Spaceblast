@@ -11,15 +11,32 @@ import type { Shot } from './cutscene';
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
-export interface IntroCard extends Shot {
+/** What a card can show besides its shot; each part is left out if missing. */
+export interface CardParts {
+  name?: string;
+  /** Inline SVG. */
+  icon?: string;
+  /** "Beware" or "How to use". */
+  label?: string;
+  hint?: string;
+}
+
+export interface IntroCard extends Shot, CardParts {
   /** Saved once seen, so the card never shows again on this save. */
   id: string;
   name: string;
-  /** Inline SVG. */
   icon: string;
-  /** "Beware" or "How to use". */
   label: string;
   hint: string;
+}
+
+export interface CardOptions {
+  /** For focus 'martian': which kind to look at. */
+  kind?: number;
+  /** Runs when the card is closed. */
+  done?: () => void;
+  /** Shows a Skip button, which runs this instead of `done`. */
+  skip?: () => void;
 }
 
 /** A simple Martian silhouette in the given colour (until the real art is in). */
@@ -28,10 +45,8 @@ export function martianIcon(color: string): string {
     '<circle cx="18" cy="24" r="5" fill="#fff"/><circle cx="30" cy="24" r="5" fill="#fff"/><circle cx="19" cy="25" r="2.4" fill="#111"/><circle cx="31" cy="25" r="2.4" fill="#111"/></svg>';
 }
 
-interface Queued {
-  card: IntroCard;
-  /** For focus 'martian': which kind to look at. */
-  kind?: number;
+interface Queued extends CardOptions {
+  card: Shot & CardParts;
 }
 
 export class IntroCards {
@@ -42,23 +57,29 @@ export class IntroCards {
 
   constructor(private view: GameView) {
     this.el.addEventListener('click', () => this.close());
+    $('intro-skip').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.close(true);
+    });
   }
 
   get active(): boolean {
     return this.current !== null;
   }
 
-  show(card: IntroCard, state: GameState, kind?: number): void {
+  show(card: Shot & CardParts, state: GameState, opts: CardOptions = {}): void {
     this.state = state;
-    this.queue.push({ card, kind });
+    this.queue.push({ card, ...opts });
     if (!this.current) this.next();
   }
 
-  /** Tap / Enter: the next card, or back to the game. */
-  close(): void {
-    if (!this.current) return;
+  /** Tap / Enter (or Skip): the next card, or back to the game. */
+  close(skipped = false): void {
+    const q = this.current;
+    if (!q) return;
     this.current = null;
     this.next();
+    (skipped && q.skip ? q.skip : q.done)?.();
   }
 
   /** Leaving the level: drop every card. */
@@ -77,14 +98,15 @@ export class IntroCards {
     }
     this.current = q;
     const { card } = q;
-    $('intro-icon').innerHTML = card.icon;
-    $('intro-name').textContent = card.name;
+    $('intro-icon').innerHTML = card.icon ?? '';
+    $('intro-name').textContent = card.name ?? '';
     $('intro-text').textContent = `“${card.text}”`;
     const speaker = $('intro-speaker');
     speaker.textContent = card.speaker ? `— ${card.speaker}` : '';
     speaker.style.color = card.color ?? '';
-    $('intro-label').textContent = `${card.label}:`;
-    $('intro-hint').textContent = card.hint;
+    $('intro-label').textContent = card.label ? `${card.label}:` : '';
+    $('intro-hint').textContent = card.hint ?? '';
+    $('intro-skip').hidden = !q.skip;
     $('intro-tap').textContent = window.matchMedia('(pointer: coarse)').matches ? 'Tap to continue' : 'Click to continue';
     this.el.hidden = false;
     this.el.classList.toggle('fade', !!card.fade);

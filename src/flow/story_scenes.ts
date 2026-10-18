@@ -9,18 +9,24 @@ const PILOT = { speaker: 'Renegade Pilot', color: '#ff6a3d' };
 const YOU = { speaker: 'You', color: '#5ad1ff' };
 
 /**
+ * The opening card: the first time Story Mode starts on this save, before the
+ * level 1 scene. One shot, shown as a pop-up card (Skip goes straight to level 1).
+ */
+export const OPENING_TUTORIAL: Shot = {
+  focus: 'arena', ...KIT,
+  text: 'We need to find the portal to escape each level. Break rocks, grab power-ups, and reach the Warp Gate.',
+};
+
+/**
  * Plays when the level starts, or none. Sector openings (1, 6, 11, 16) replace
  * the plain sector story card.
  */
 export const INTRO_SCENES: Record<number, Shot[]> = {
   1: [
-    { focus: 'arena', fade: true, text: 'Somewhere past Mars, the cargo ship ASTRO PAWS hums along with a hold full of ship cores...' },
-    { focus: 'hero', zoom: 0.6, shake: true, reveal: 'MAYDAY!', boom: 0xff6a3d, text: 'Something grabs the ship from below. Alarms. Fire. The ship spins down towards the red planet.' },
-    { focus: 'hero', zoom: 0.4, shake: true, boom: 0xd9773f, reveal: 'CRASH LANDING', text: 'Impact. Red dust everywhere. The cores are thrown all over an abandoned mining outpost.' },
-    { focus: 'hero', zoom: 0.45, ...KIT, text: 'Kit to crew, sound off! ...Good, you\'re alive. Our cores are scattered across this outpost, and we are NOT alone down here.' },
-    { focus: 'arena', text: 'Shapes stir under the sand. Green, wobbly, and very, very hungry.' },
-    { focus: 'arena', reveal: 'SECTOR 1 · OUTPOST SURFACE', text: 'The Martian Hive is awake.' },
-    { focus: 'hero', zoom: 0.5, ...KIT, text: 'Reach the Warp Gates, grab what you can, and stay out of their mouths. Go, go, go!' },
+    { focus: 'arena', fade: true, shake: true, text: 'Cargo ship Biscuit is going down! Hold on to your whiskers!' },
+    { focus: 'hero', zoom: 0.45, ...KIT, text: 'Everybody alive? Anyone? Quack, Mo, Pip?' },
+    { focus: 'hero', zoom: 0.5, ...KIT, text: 'Listen up. There\'s a portal somewhere on this rock—the Warp Gate. Find it and we\'re out of here.' },
+    { focus: 'hero', zoom: 0.5, ...KIT, text: 'Break rocks, find power-ups, and watch out for those Martians. Let\'s move!' },
   ],
   6: [
     { focus: 'arena', fade: true, reveal: 'SECTOR 2 · DEEP SHAFTS', text: 'The core signal leads underground, into the old mining shafts.' },

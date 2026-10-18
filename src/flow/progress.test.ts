@@ -55,6 +55,21 @@ describe('story progress', () => {
       expect(again.seen('seenPowerUps', 'freeze_pulse')).toBe(true);
     });
 
+    it('shows the opening card once per save, and again after a tutorial reset', () => {
+      fakeStorage();
+      const p = new StoryProgress();
+      expect(p.tutorialSeen).toBe(false);
+      p.markTutorialSeen();
+      p.markSeen('seenAliens', 'goopling');
+      expect(new StoryProgress().tutorialSeen).toBe(true);
+      p.clear(1, 3);
+      p.resetTutorial();
+      const again = new StoryProgress();
+      expect(again.tutorialSeen).toBe(false);
+      expect(again.seen('seenAliens', 'goopling')).toBe(false);
+      expect(again.stars(1)).toBe(3); // the story itself is kept
+    });
+
     it('ignores broken or edited card lists', () => {
       fakeStorage({ 'spaceblast.story': JSON.stringify({ unlocked: 3, seenAliens: ['sniffer', 7, '<b>', 'sniffer'], seenPowerUps: 'x' }) });
       const p = new StoryProgress();

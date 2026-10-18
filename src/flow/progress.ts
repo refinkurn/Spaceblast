@@ -20,6 +20,8 @@ interface Saved {
   stars: Record<number, number>;
   stats: StoryStats;
   finished: boolean;
+  /** Captain Kit's opening card (story_scenes.ts OPENING_TUTORIAL) was shown. */
+  tutorialSeen: boolean;
   /** Ids of the alien cards already shown (alien_cards.ts). */
   seenAliens: string[];
   /** Ids of the power-up cards already shown (powerup_cards.ts). */
@@ -29,7 +31,7 @@ interface Saved {
 export type CardList = 'seenAliens' | 'seenPowerUps';
 
 const fresh = (): Saved => ({
-  unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, seenAliens: [], seenPowerUps: [],
+  unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, tutorialSeen: false, seenAliens: [], seenPowerUps: [],
 });
 
 /** A saved list of card ids: short lowercase words only, no repeats. */
@@ -49,6 +51,7 @@ function sanitize(raw: Partial<Saved> | null): Saved {
   const st = raw.stats;
   out.stats = { martians: int(st?.martians, 1e9), bosses: int(st?.bosses, 1e9), livesLost: int(st?.livesLost, 1e9), ticks: int(st?.ticks, 1e12) };
   out.finished = raw.finished === true;
+  out.tutorialSeen = raw.tutorialSeen === true;
   out.seenAliens = ids(raw.seenAliens);
   out.seenPowerUps = ids(raw.seenPowerUps);
   return out;
@@ -103,6 +106,23 @@ export class StoryProgress {
     this.data.stars[level] = Math.max(this.stars(level), stars);
     this.data.unlocked = Math.max(this.data.unlocked, Math.min(LEVEL_COUNT, level + 1));
     if (level >= LEVEL_COUNT) this.data.finished = true;
+    this.save();
+  }
+
+  get tutorialSeen(): boolean {
+    return this.data.tutorialSeen;
+  }
+
+  markTutorialSeen(): void {
+    this.data.tutorialSeen = true;
+    this.save();
+  }
+
+  /** Settings, "show the tutorial again": the opening card and every alien and power-up card. */
+  resetTutorial(): void {
+    this.data.tutorialSeen = false;
+    this.data.seenAliens = [];
+    this.data.seenPowerUps = [];
     this.save();
   }
 

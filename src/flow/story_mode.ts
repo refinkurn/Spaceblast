@@ -9,7 +9,7 @@ import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress, starsFor } from './progress';
 import type { Screens } from './screens';
 import { BOSS_NAMES, ENDING, SECTORS, levelCard } from './story';
-import { INTRO_SCENES, OUTRO_SCENES } from './story_scenes';
+import { INTRO_SCENES, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
 
 // Story Mode flow: the level map (continue / replay with stars), each level's
@@ -82,7 +82,7 @@ export class StoryMode {
       const card = ALIEN_CARDS[kind];
       if (this.progress.seen('seenAliens', card.id)) continue;
       this.progress.markSeen('seenAliens', card.id);
-      this.cards.show(card, state, kind);
+      this.cards.show(card, state, { kind });
     }
   }
 
@@ -108,6 +108,7 @@ export class StoryMode {
     this.hub.hidden = true;
     this.screens.hideStory();
     this.cutscene.cancel();
+    this.cards.cancel();
     this.level = level;
     this.livesLost = 0;
     const spec = levelSpec(level);
@@ -120,11 +121,21 @@ export class StoryMode {
     const scene = withStory ? INTRO_SCENES[level] : undefined;
     const intro = () => this.cutscene.play(scene ?? [], state, brief);
     // Sectors with an opening scene get it instead of the plain story card.
-    if (withStory && isSectorStart(level) && !scene) {
-      const sector = SECTORS[spec.sector - 1];
-      this.screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', intro);
+    const lead = () => {
+      if (withStory && isSectorStart(level) && !scene) {
+        const sector = SECTORS[spec.sector - 1];
+        this.screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', intro);
+      } else {
+        intro();
+      }
+    };
+    // The very first Story start on this save: Captain Kit's opening card first.
+    // Skip goes straight to the level card.
+    if (level === 1 && withStory && !this.progress.tutorialSeen) {
+      this.progress.markTutorialSeen();
+      this.cards.show(OPENING_TUTORIAL, state, { done: lead, skip: brief });
     } else {
-      intro();
+      lead();
     }
   }
 
