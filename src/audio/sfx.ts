@@ -59,6 +59,16 @@ export class Sfx {
     this.jingle([0, 7, 12], 'triangle', 0.08);
   }
 
+  /** Story scenes: a chime as a scene opens, a bleep when the character or pose changes, a hit on a reveal, a bigger one on a boom. */
+  scene(cue: 'open' | 'pose' | 'reveal' | 'boom'): void {
+    switch (cue) {
+      case 'open': this.jingle([12, 19], 'sine', 0.07); break;
+      case 'pose': this.a.tone({ freq: note(19), to: note(24), type: 'square', dur: 0.05, vol: 0.06 }); break;
+      case 'reveal': this.thud(0); this.a.tone({ freq: note(3), type: 'sawtooth', dur: 0.35, vol: 0.12 }); break;
+      case 'boom': this.bigBoom(); break;
+    }
+  }
+
   /** Collapse / countdown beep (1 per second in the last 3 s). */
   beep(high = false): void {
     this.a.tone({ freq: note(high ? 15 : 10), type: 'square', dur: 0.12, vol: 0.12 });

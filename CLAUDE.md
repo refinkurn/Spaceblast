@@ -18,7 +18,8 @@ src/
   sim/     game rules: plain TypeScript, deterministic, no DOM, no Three.js
   input/   devices -> PlayerCommand (keyboard, touch, bots)
   net/     online rooms: protocol, server frames (frames.ts), connection + reconnect (link.ts)
-  view/    Three.js rendering; reads sim state, never writes it
+  view/    Three.js rendering; reads sim state, never writes it (plus 2D character sprites: sprite_loader.ts, sprite_renderer.ts)
+  assets/characters/  sprite sheets + pose JSON per character (README.md there)
   audio/   synthesised sound effects and music (Web Audio, no files); driven by sim events
   flow/    menus, HUD, story, online lobby
   main.ts  wiring + fixed 60 Hz loop
@@ -46,4 +47,4 @@ server/    the room server: room.ts (shared: seats, round clock, rejoin), dev_re
 ## Game rules reference
 
 The design doc (Spaceblast — Development Plan) is the source of truth for rule
-numbers: 13x11 arena, pillars on odd/odd tiles, 2.5 s fuse, 1-tile beams; Beam Range+, Extra Charge and Speed Boost stack to 5, Oxygen Vest armor to 3, etc. Level and boss data: src/sim/levels.ts and src/sim/boss.ts (3 waves, each wait half the one before); story text: src/flow/story.ts, cutscene scripts: src/flow/story_scenes.ts, tutorial steps and tips: src/flow/tutorial_script.ts. Developer level select: src/flow/dev.ts (open the page with #dev or tap the menu title 5 times).
+numbers: 13x11 arena, pillars on odd/odd tiles, 2.5 s fuse, 1-tile beams; Beam Range+, Extra Charge and Speed Boost stack to 5, Oxygen Vest armor to 3, etc. Level and boss data: src/sim/levels.ts and src/sim/boss.ts (3 waves, each wait half the one before); story text: src/flow/story.ts, cutscene scripts: src/flow/story_scenes.ts, tutorial steps and tips: src/flow/tutorial_script.ts. Menu: src/flow/menu.ts; 2D story scenes: src/flow/cutscene.ts (shots take a `pose`). Developer level select: src/flow/dev.ts (open the page with #dev or tap the menu title 5 times).

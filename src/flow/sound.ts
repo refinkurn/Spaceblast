@@ -69,6 +69,11 @@ export class GameAudio {
     return $('start-screen').hasAttribute('hidden');
   }
 
+  /** Story scene sounds (silent before the first tap unlocks audio). */
+  cue(c: 'open' | 'pose' | 'reveal' | 'boom'): void {
+    if (this.started) this.sfx.scene(c);
+  }
+
   /** Sounds for one tick's sim events. */
   events(state: GameState, local: number): void {
     for (const e of state.events) this.event(e, local);

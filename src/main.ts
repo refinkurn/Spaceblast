@@ -67,7 +67,7 @@ const cine = new Cinematic(view, recorder, (s) => {
   for (const e of s.events) view.effect(e, s);
   audio.events(s, localId);
 });
-const cutscene = new Cutscene(view);
+const cutscene = new Cutscene((cue) => audio.cue(cue));
 const story = new StoryMode({
   newLevel: () => { newGame(); return state; },
   get state() { return state; },

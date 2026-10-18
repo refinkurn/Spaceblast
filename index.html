@@ -233,14 +233,19 @@
       <p id="start-tip" class="start-tip" hidden>Tip: add Spaceblast to your Home Screen to play full screen</p>
     </div>
     <div id="cutscene" hidden>
-      <div id="cut-fade" class="cut-fade"></div>
-      <div class="cut-bar top"><button id="cut-skip" type="button">Skip ›</button></div>
+      <div class="cut-bg"></div>
+      <canvas id="cut-sprite" class="cut-sprite" aria-hidden="true"></canvas>
       <div id="cut-reveal" class="cut-reveal" hidden></div>
-      <div class="cut-bar bottom">
-        <div id="cut-speaker" class="cut-speaker"></div>
-        <div id="cut-text" class="cut-text"></div>
-        <div class="cut-hint">Tap to continue ▸</div>
+      <button id="cut-skip" type="button">Skip ›</button>
+      <div class="cut-box">
+        <canvas id="cut-portrait" class="cut-portrait" aria-hidden="true"></canvas>
+        <div class="cut-lines">
+          <div id="cut-speaker" class="cut-speaker"></div>
+          <div id="cut-text" class="cut-text" aria-live="polite"></div>
+          <div class="cut-hint">Tap to continue ▸</div>
+        </div>
       </div>
+      <div id="cut-fade" class="cut-fade"></div>
     </div>
     <div id="story-hub" hidden>
       <div class="hub-card">
