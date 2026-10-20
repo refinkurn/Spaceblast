@@ -21,7 +21,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Blocked
 
-- **Code agent:** add the remaining items from your old contradictions list (the ones not already fixed), one line each with the current text, so story chat can review them.
+- **Last open script mismatch** (proposed by story chat, waiting for Refindo). Level 1 tutorial step `martian` (tutorial_script.ts): "Martians chase you. Keep moving." → "Martians bite when they touch you. Keep your distance." Reason: sector 1 Gooplings wander; only sector 4 Martians hunt. All other old contradictions are fixed or no longer in the script.
 
 ## Done
 
