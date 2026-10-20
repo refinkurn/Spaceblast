@@ -37,7 +37,7 @@ export const OPENING_CRAWL: string[] = [
  */
 export const OPENING_TUTORIAL: Shot = {
   focus: 'arena', ...KIT,
-  text: 'Find the Warp Gate to leave each level. Break rocks, collect power-ups, and watch your step.',
+  text: 'Blast rocks to uncover power-ups. And watch your step: your own charges can hurt you.',
 };
 
 /**
