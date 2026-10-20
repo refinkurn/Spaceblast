@@ -1,7 +1,35 @@
-import { RESPAWN_TICKS, SPAWN_SHIELD_TICKS } from './constants';
+import { DIR_DX, DIR_DY, RESPAWN_TICKS, SPAWNS, SPAWN_SHIELD_TICKS, TILE } from './constants';
+import { beamHot, chargeAt } from './charges';
+import { isWalkable } from './grid';
 import { gateOpen } from './items';
 import { biteAt } from './martians';
 import { playerTile, warpToSpawn, type GameState, type Player } from './state';
+
+/**
+ * Where player p warps back in: its spawn corner, or, when a rock (Maze Shift,
+ * a Builder, the collapse) or a charge has taken it, the nearest free tile.
+ * Free = walkable, no charge, no live beam; tiles with an open neighbour come
+ * first so the astronaut is never boxed in. Ties go to the lowest tile index.
+ */
+export function respawnTile(state: GameState, p: Player): [number, number] {
+  const { grid } = state;
+  const [sx, sy] = SPAWNS[p.id];
+  const free = (x: number, y: number) => isWalkable(grid, x, y) && !chargeAt(state, x, y) && !beamHot(state, y * grid.w + x);
+  const open = (x: number, y: number) => [1, 2, 3, 4].some((d) => isWalkable(grid, x + DIR_DX[d], y + DIR_DY[d]));
+  let best: [number, number] | null = null;
+  let bestScore = Infinity;
+  for (let y = 0; y < grid.h; y++) {
+    for (let x = 0; x < grid.w; x++) {
+      if (!free(x, y)) continue;
+      const score = (Math.abs(x - sx) + Math.abs(y - sy)) * 2 + (open(x, y) ? 0 : 1);
+      if (score < bestScore) {
+        bestScore = score;
+        best = [x, y];
+      }
+    }
+  }
+  return best ?? [sx, sy];
+}
 
 // Knock-outs (beams and bites), armor, lives, and the level outcome.
 
@@ -35,14 +63,17 @@ function hit(state: GameState, p: Player): void {
 
 function inBeam(state: GameState, p: Player): boolean {
   const [tx, ty] = playerTile(p);
-  return state.beams[ty * state.grid.w + tx] > 0;
+  return beamHot(state, ty * state.grid.w + tx);
 }
 
 export function updateLives(state: GameState): void {
   for (const p of state.players) {
     if (!p.alive) {
       if (p.lives > 0 && --p.respawn <= 0) {
+        const [x, y] = respawnTile(state, p);
         warpToSpawn(p);
+        p.x = x * TILE;
+        p.y = y * TILE;
         p.alive = true;
         p.shield = SPAWN_SHIELD_TICKS;
         state.events.push({ type: 'player_respawned', id: p.id });

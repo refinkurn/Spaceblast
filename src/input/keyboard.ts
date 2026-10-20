@@ -12,6 +12,8 @@ const PLACE_KEYS = new Set(['Space', 'KeyX']);
 export class KeyboardSource {
   private held: Dir[] = [];
   private place = false;
+  /** Left mouse button held (pressed on the arena). */
+  private mouse = false;
   /** Set on key down, cleared when read, so a tap shorter than a tick still counts. */
   private placeTapped = false;
   /** Ignore the charge key until it is released (it was pressed to skip a card). */
@@ -37,7 +39,20 @@ export class KeyboardSource {
         this.placeBlocked = false;
       }
     });
+    // A left mouse click on the arena charges too (desktop browsers). Mouse only:
+    // touch has its own charge button, and clicks on menus or buttons don't count.
+    target.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0 || !(e.target instanceof HTMLCanvasElement)) return;
+      this.mouse = true;
+      this.placeTapped = true;
+    });
+    target.addEventListener('pointerup', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0 || !this.mouse) return;
+      this.mouse = false;
+      this.placeBlocked = false;
+    });
     target.addEventListener('blur', () => {
+      this.mouse = false;
       this.held = [];
       this.place = false;
       this.placeBlocked = false;
@@ -46,7 +61,7 @@ export class KeyboardSource {
 
   /** Place button for this tick: held now, or tapped since the last read. */
   readPlace(): boolean {
-    const v = this.place || this.placeTapped;
+    const v = this.place || this.mouse || this.placeTapped;
     this.placeTapped = false;
     return v && !this.placeBlocked;
   }
@@ -54,7 +69,7 @@ export class KeyboardSource {
   /** Forgets charge presses so far; a key still held is ignored until released. */
   clearPlace(): void {
     this.placeTapped = false;
-    this.placeBlocked = this.place;
+    this.placeBlocked = this.place || this.mouse;
   }
 
   /** [primary, perpendicular fallback] or [] when nothing is held. */

@@ -107,6 +107,11 @@ export class OnlineRoom {
     return this.net.rtt;
   }
 
+  /** How much that ping wobbles, in ms. */
+  get rttSpread(): number {
+    return this.net.rttSpread;
+  }
+
   get reconnecting(): boolean {
     return this.net.reconnecting;
   }

@@ -1,4 +1,4 @@
-import { COLLAPSE_EVERY, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS } from './constants';
+import { BEAM_FADE_TICKS, COLLAPSE_EVERY, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS } from './constants';
 import { nextCollapseTiles } from './collapse';
 import { cellAt, inBounds } from './grid';
 import type { Charge, GameState } from './state';
@@ -48,7 +48,8 @@ export function dangerMap(
 ): Int16Array {
   const { w, h } = state.grid;
   const danger = new Int16Array(w * h).fill(SAFE);
-  state.beams.forEach((b, i) => { if (b > 0) danger[i] = 0; });
+  // A fading beam is harmless (see BEAM_FADE_TICKS).
+  state.beams.forEach((b, i) => { if (b > BEAM_FADE_TICKS) danger[i] = 0; });
   markCollapse(state, danger);
   const charges = state.charges.filter((c) => !only || only(c)).map((c) => ({ tx: c.tx, ty: c.ty, range: c.range, fuse: c.fuse }));
   if (extra) charges.push({ ...extra, fuse: FUSE_TICKS });

@@ -15,7 +15,7 @@ npm run build    # production build in dist/
 ## Controls
 
 - Move: arrow keys / WASD, or drag in the left gutter (floating joystick)
-- Charge: Space / X, or the right button (does nothing until Phase 2)
+- Charge: Space / X, left mouse click on the arena, or the right button (does nothing until Phase 2)
 - New map: R or the New map button
 
 ## Deploy

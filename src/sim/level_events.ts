@@ -1,6 +1,6 @@
 import {
   BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, COLLAPSE_WARNING_TICKS, Cell, EVENT_GAP_FAST_MAX_TICKS, EVENT_GAP_FAST_MIN_TICKS, EVENT_GAP_MAX_TICKS,
-  EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS, GATE_WAIT_TICKS, Item, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, TILE,
+  EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS, GATE_WAIT_TICKS, Item, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, SPAWNS, TILE,
 } from './constants';
 import { nextInt } from './rng';
 import { playerTile, type GameState } from './state';
@@ -88,6 +88,8 @@ function busy(state: GameState, i: number): boolean {
   const x = i % grid.w, y = Math.floor(i / grid.w);
   if (state.items[i] !== Item.None || i === state.gate || state.beams[i] > 0) return true;
   if (state.charges.some((c) => c.tx === x && c.ty === y)) return true;
+  // Spawn corners stay open so knocked-out astronauts can warp back in there.
+  if (state.players.some((p) => SPAWNS[p.id][0] === x && SPAWNS[p.id][1] === y)) return true;
   // Astronauts get a one-tile margin so a rock never drops right onto their path.
   if (state.players.some((p) => p.alive && Math.abs(playerTile(p)[0] - x) + Math.abs(playerTile(p)[1] - y) <= 1)) return true;
   return state.martians.some((m) => m.alive && Math.abs(m.x - x * TILE) < TILE && Math.abs(m.y - y * TILE) < TILE);

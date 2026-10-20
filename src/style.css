@@ -517,12 +517,12 @@ html, body {
   z-index: 4;
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 10px 26px;
-  border-radius: 16px;
+  gap: 14px;
+  padding: 8px 21px;
+  border-radius: 13px;
   border: 2px solid var(--tone);
   background: color-mix(in srgb, var(--tone) 22%, #0b0d12e8);
-  box-shadow: 0 0 32px color-mix(in srgb, var(--tone) 55%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--tone) 45%, transparent);
   color: #fff;
   pointer-events: none;
   white-space: nowrap;
@@ -534,7 +534,7 @@ html, body {
 .announce.boss { --tone: #ff4f6d; }
 .announce.collapse { --tone: #ff5a3c; }
 .announce-title {
-  font-size: clamp(22px, 4.6vw, 40px);
+  font-size: clamp(18px, 3.7vw, 32px);
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -542,18 +542,18 @@ html, body {
 }
 .announce-count {
   min-width: 1.2em;
-  font-size: clamp(30px, 6.5vw, 58px);
+  font-size: clamp(24px, 5.2vw, 46px);
   font-weight: 900;
   line-height: 1;
   color: var(--tone);
   text-align: center;
 }
 .announce-count:empty { display: none; }
-.announce.pop { animation: announce-pop 0.35s cubic-bezier(.2, 1.6, .4, 1), announce-pulse 0.8s ease-in-out 0.35s infinite; }
-.announce-count.tick { animation: count-tick 0.3s ease-out; }
-@keyframes announce-pop { from { transform: translateX(-50%) scale(0.4); opacity: 0; } }
-@keyframes announce-pulse { 50% { box-shadow: 0 0 52px var(--tone); } }
-@keyframes count-tick { from { transform: scale(1.6); } }
+.announce.pop { animation: announce-pop 0.25s cubic-bezier(.2, 1.6, .4, 1), announce-pulse 0.7s ease-in-out 0.25s infinite; }
+.announce-count.tick { animation: count-tick 0.24s ease-out; }
+@keyframes announce-pop { from { transform: translateX(-50%) scale(0.5); opacity: 0; } }
+@keyframes announce-pulse { 50% { box-shadow: 0 0 36px var(--tone); } }
+@keyframes count-tick { from { transform: scale(1.4); } }
 @media (prefers-reduced-motion: reduce) { .announce.pop, .announce-count.tick { animation: none; } }
 
 .bots-row { display: flex; gap: 8px; align-items: center; }
@@ -630,8 +630,8 @@ html, body {
 /* Battle bot difficulty on the start screen. */
 
 /* After a moment the warning shrinks to a pill under the HUD. */
-.announce { transition: top 0.25s ease, padding 0.25s ease, gap 0.25s ease; }
-.announce .announce-title, .announce .announce-count { transition: font-size 0.25s ease; }
+.announce { transition: top 0.2s ease, padding 0.2s ease, gap 0.2s ease; }
+.announce .announce-title, .announce .announce-count { transition: font-size 0.2s ease; }
 .announce.mini { top: calc(var(--hud) + 4px); padding: 3px 14px; gap: 10px; border-width: 1px; animation: none; }
 .announce.mini .announce-title { font-size: 15px; }
 .announce.mini .announce-count { font-size: 20px; }

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BEAM_TICKS, FUSE_TICKS, TICK_RATE } from '../sim/constants';
+import { BEAM_FADE_TICKS, FUSE_TICKS, TICK_RATE } from '../sim/constants';
 import type { GameState } from '../sim/state';
 import { tileToWorld } from './coords';
 
@@ -77,15 +77,16 @@ export class BeamsView {
     const at = (x: number, y: number) => x >= 0 && y >= 0 && x < grid.w && y < grid.h && beams[y * grid.w + x] > 0;
     let n = 0;
     const bar = (cx: number, cy: number, x0: number, x1: number, z0: number, z1: number, k: number) => {
-      // Outer glow and a thinner bright core, both fading as the beam ends.
+      // Outer glow and a thinner bright core: full size while the beam is
+      // dangerous, then shrinking to nothing during the harmless fade-out.
       for (const [mesh, thick, h] of [[this.outer, 0.46, 0.22], [this.core, 0.2, 0.26]] as const) {
-        const w = thick * (0.5 + 0.5 * k);
+        const w = Math.max(0.001, thick * k);
         const sx = x1 - x0 === 0 ? w : x1 - x0;
         const sz = z1 - z0 === 0 ? w : z1 - z0;
         tileToWorld(cx, cy, 0.18, this.pos);
         this.pos.x += (x0 + x1) / 2;
         this.pos.z += (z0 + z1) / 2;
-        this.s.set(sx, h * (0.6 + 0.4 * k), sz);
+        this.s.set(sx, Math.max(0.001, h * k), sz);
         this.m.compose(this.pos, this.q, this.s);
         mesh.setMatrixAt(n, this.m);
       }
@@ -94,7 +95,7 @@ export class BeamsView {
     for (let i = 0; i < beams.length; i++) {
       if (beams[i] === 0) continue;
       const x = i % grid.w, y = Math.floor(i / grid.w);
-      const k = beams[i] / BEAM_TICKS;
+      const k = Math.min(1, beams[i] / BEAM_FADE_TICKS);
       const l = at(x - 1, y), r = at(x + 1, y), u = at(x, y - 1), d = at(x, y + 1);
       const tip = 0.32; // a beam end stops short of the tile edge
       if (l || r || !(u || d)) bar(x, y, l ? -0.5 : -tip, r ? 0.5 : tip, 0, 0, k);

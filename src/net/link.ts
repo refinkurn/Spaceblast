@@ -36,6 +36,8 @@ export class RoomLink {
   onLost: (reason: string) => void = () => {};
   /** Smoothed round-trip time in ms. */
   rtt = 100;
+  /** Smoothed deviation of the round-trip time (ms): how much the ping wobbles. */
+  rttSpread = 20;
   reconnecting = false;
   private net = new NetClient();
   private seat: Seat | null = null;
@@ -93,7 +95,11 @@ export class RoomLink {
     if (m.t === 'pong') {
       const sent = this.pingSent.get(m.id);
       this.pingSent.delete(m.id);
-      if (sent !== undefined) this.rtt = this.rtt * 0.7 + (performance.now() - sent) * 0.3;
+      if (sent !== undefined) {
+        const sample = performance.now() - sent;
+        this.rttSpread = this.rttSpread * 0.75 + Math.abs(sample - this.rtt) * 0.25;
+        this.rtt = this.rtt * 0.7 + sample * 0.3;
+      }
       return;
     }
     if (m.t === 'welcome') {

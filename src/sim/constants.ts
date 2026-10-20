@@ -37,8 +37,12 @@ export const SPAWNS: ReadonlyArray<readonly [number, number]> = [
 // --- Plasma Charges (see the design doc's gameplay section) -----------------
 /** 2.5 s fuse. */
 export const FUSE_TICKS = 150;
-/** Beams stay dangerous for 0.5 s. */
-export const BEAM_TICKS = 30;
+/**
+ * A beam lasts BEAM_TICKS; it is dangerous for its first 0.5 s, then fades out
+ * harmlessly for BEAM_FADE_TICKS, so a beam that looks finished is safe to walk into.
+ */
+export const BEAM_FADE_TICKS = 10;
+export const BEAM_TICKS = 30 + BEAM_FADE_TICKS;
 export const START_RANGE = 1;
 export const START_CHARGES = 1;
 /** Time before a knocked-out astronaut warps back in. */

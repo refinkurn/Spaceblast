@@ -1,5 +1,5 @@
 import {
-  BITE_REACH, BOSS_OWNER, BUILD_EVERY_TICKS, BUILDER_MAX_ROCKS, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS, Item, Kind,
+  BEAM_FADE_TICKS, BITE_REACH, BOSS_OWNER, BUILD_EVERY_TICKS, BUILDER_MAX_ROCKS, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS, Item, Kind,
   MARTIAN_SPAWN_DISTANCE, MARTIAN_SPEED, PHASER_HIDE_TICKS, PHASER_WANDER_TICKS, PORTAL_TICKS, SNIFF_DELAY_TICKS,
   SNIFF_MISS_ONE_IN, SPAWNS, TILE,
 } from './constants';
@@ -74,7 +74,7 @@ function towardsNearest(state: GameState, m: Martian, dirs: MoveDir[]): Dir {
 function sniffDir(state: GameState, m: Martian, open: MoveDir[], tx: number, ty: number): Dir {
   if (nextInt(state, SNIFF_MISS_ONE_IN) === 0) return wanderDir(state, m, open);
   const noticed = (c: { fuse: number }) => FUSE_TICKS - c.fuse >= SNIFF_DELAY_TICKS;
-  if (!state.charges.some(noticed) && !state.beams.some((b) => b > 0)) return wanderDir(state, m, open);
+  if (!state.charges.some(noticed) && !state.beams.some((b) => b > BEAM_FADE_TICKS)) return wanderDir(state, m, open);
   const danger = dangerMap(state, undefined, noticed);
   const w = state.grid.w;
   if (danger[ty * w + tx] !== SAFE) {
@@ -216,7 +216,7 @@ export function updateMartians(state: GameState): void {
     const i = ty * state.grid.w + tx;
     // Beams from a freshly blasted rock only clear the way, and the boss's own
     // blasts never hit its Gooplings: it takes a beam from an astronaut's charge.
-    if (state.beams[i] > 0 && state.beamRock[i] === 0 && state.beamOwner[i] !== BOSS_OWNER) {
+    if (state.beams[i] > BEAM_FADE_TICKS && state.beamRock[i] === 0 && state.beamOwner[i] !== BOSS_OWNER) {
       m.alive = false;
       state.events.push({ type: 'martian_killed', id: m.id, tx, ty });
     }

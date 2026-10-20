@@ -156,3 +156,37 @@ describe('server-clock online rounds', () => {
     expect(sameHashes(a.hashes, b.hashes)).toBeGreaterThan(100);
   });
 });
+
+describe('jitter reserve', () => {
+  const rows = (n: number) => Array.from({ length: n }, () => [0, 0]);
+
+  it('keeps a small reserve and plays at an even pace', () => {
+    const s = new FrameSync(2);
+    s.receive(0, rows(4), 0);
+    expect(s.reserve).toBe(1);
+    expect(s.pace(1)).toBe(1); // 4 buffered, 1 kept back
+    s.next();
+    expect(s.pace(5)).toBe(2); // never dips into the reserve
+  });
+
+  it('waits instead of lurching when frames run low', () => {
+    const s = new FrameSync(2);
+    s.receive(0, rows(1), 0);
+    expect(s.pace(1)).toBe(0);
+  });
+
+  it('grows the reserve after a late frame and catches up gently', () => {
+    const s = new FrameSync(2);
+    s.receive(0, rows(1), 1000);
+    s.receive(1, rows(1), 1070); // 70 ms gap for one tick: about 4 ticks late
+    expect(s.reserve).toBeGreaterThanOrEqual(4);
+    s.receive(2, rows(10), 1080);
+    expect(s.pace(1)).toBe(2); // well above the reserve: one extra tick, not a burst
+  });
+
+  it('catches up fast when far behind', () => {
+    const s = new FrameSync(2);
+    s.receive(0, rows(50), 0);
+    expect(s.pace(1)).toBe(13);
+  });
+});

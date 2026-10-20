@@ -370,7 +370,8 @@ function catchUp() {
 function onlineFrame(now: number) {
   if (!net) return;
   const sync = net.sync;
-  sync.setRtt(online.rtt);
+  // Aim for a ping spike, not the average: a press that misses its tick is replaced by the last one.
+  sync.setRtt(online.rtt + 2 * online.rttSpread);
   if (state.status === 'playing') {
     net.input(readLocalCommand(keys, touch));
     // Commands go out in pairs (30 messages a second) to keep server costs down.
@@ -473,7 +474,15 @@ let acc = 0;
 let last = performance.now();
 let wasPaused = false;
 const portrait = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
+/**
+ * 120 Hz+ screens would draw every frame twice as often as the 60 Hz sim needs:
+ * skipping frames closer than this draws every other frame (120 Hz -> 60 fps,
+ * 144 Hz -> 72) while 60 and 90 Hz screens keep every frame. That saves battery
+ * and keeps phones from heating up and throttling mid-match.
+ */
+const MIN_FRAME_MS = 10;
 view.renderer.setAnimationLoop((now: number) => {
+  if (now - last < MIN_FRAME_MS) return;
   layout(); // reads the canvas size only; catches sizes iOS never announced
   view.frameTime(now - last);
   const dt = Math.min(now - last, 250);
@@ -490,23 +499,22 @@ view.renderer.setAnimationLoop((now: number) => {
   wasPaused = paused;
   tutorial.update(!paused && mode === 'survival' && state.status === 'playing');
   let steps = 0;
-  while (acc >= TICK_MS && steps < 5) {
-    if (!paused && mode === 'online') {
-      if (!onlineStep()) {
-        acc = Math.min(acc, TICK_MS); // the server's next frame hasn't arrived yet
-        break;
+  if (!paused && mode === 'online' && net) {
+    // The server's frames, played at an even pace behind a small jitter reserve (net/frames.ts).
+    const n = net.sync.pace(Math.floor(acc / TICK_MS));
+    while (steps < n && onlineStep()) steps++;
+    // Waiting for frames must not bank time for a burst later.
+    acc = steps === 0 ? Math.min(acc, TICK_MS) : Math.max(0, acc - steps * TICK_MS);
+  } else {
+    while (acc >= TICK_MS && steps < 5) {
+      if (!paused) {
+        runTick(localCommands());
+        if (story.cardOpen) break; // a power-up card just opened: stop right here
       }
-    } else if (!paused) {
-      runTick(localCommands());
-      if (story.cardOpen) break; // a power-up card just opened: stop right here
+      acc -= TICK_MS;
+      steps++;
     }
-    acc -= TICK_MS;
-    steps++;
-  }
-  if (steps === 5 && mode !== 'online') acc = 0; // too far behind (tab was hidden): drop the backlog
-  // Online and behind the server (a lag spike): catch up a few extra ticks per frame.
-  for (let extra = 0; !paused && mode === 'online' && net && net.sync.buffered > 3 && extra < 12; extra++) {
-    if (!onlineStep()) break;
+    if (steps === 5) acc = 0; // too far behind (tab was hidden): drop the backlog
   }
   onlineFrame(now);
   const seconds = dt / 1000;

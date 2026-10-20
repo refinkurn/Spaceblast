@@ -20,7 +20,7 @@ interface Big {
 
 const secs = (ticks: number) => Math.ceil(ticks / 60);
 /** How long a warning stays big before it shrinks (ms). */
-const BIG_MS = 1100;
+const BIG_MS = 800;
 
 function bigFor(state: GameState): Big | null {
   if (state.status !== 'playing') return null;

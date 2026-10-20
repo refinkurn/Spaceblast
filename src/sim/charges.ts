@@ -1,9 +1,14 @@
-import { BEAM_TICKS, Cell, DIR_DX, DIR_DY, FUSE_TICKS, Item, TILE } from './constants';
+import { BEAM_FADE_TICKS, BEAM_TICKS, Cell, DIR_DX, DIR_DY, FUSE_TICKS, Item, TILE } from './constants';
 import { cellAt, inBounds, isWalkable } from './grid';
 import { playerTile, type Charge, type GameState, type Player } from './state';
 
 // Plasma Charges: placing, fuses, cross-shaped beams, chain reactions and
 // breaking rocks. Knock-outs live in lives.ts.
+
+/** Is the beam on tile index i still dangerous (not yet in its harmless fade-out)? */
+export function beamHot(state: GameState, i: number): boolean {
+  return state.beams[i] > BEAM_FADE_TICKS;
+}
 
 export function chargeAt(state: GameState, tx: number, ty: number): Charge | undefined {
   return state.charges.find((c) => c.tx === tx && c.ty === ty);
@@ -46,7 +51,7 @@ export function tickCharges(state: GameState): void {
   const queue: Charge[] = [];
   for (const c of state.charges) {
     c.fuse--;
-    if (c.fuse <= 0 || beams[c.ty * grid.w + c.tx] > 0) queue.push(c);
+    if (c.fuse <= 0 || beamHot(state, c.ty * grid.w + c.tx)) queue.push(c);
   }
   while (queue.length > 0) {
     const c = queue.shift()!;
