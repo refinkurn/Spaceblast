@@ -44,6 +44,13 @@ server/    the room server: room.ts (shared: seats, round clock, rejoin), dev_re
   camera keeps the arena between them. Buttons >= 48 px.
 - Keep the bundle small: no new runtime dependency without a reason.
 
+## Workflow
+
+- Start every session by reading `docs/HANDOFF.md`; take the top Ready item, update the file when done.
+- Specs from the story/design chat live in `docs/story/` and `docs/design/`. The code stays the source of truth for what plays.
+- Delegate: story text → `script-integrator`, checks before commit → `qa-runner`, `src/sim/` / `src/net/` / `server/` → `sim-specialist`.
+- Commit straight to `main` once `npm test` passes.
+
 ## Game rules reference
 
 The design doc (Spaceblast — Development Plan) is the source of truth for rule
