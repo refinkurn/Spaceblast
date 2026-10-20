@@ -20,7 +20,7 @@ export const SECTORS: SectorStory[] = [
   },
   {
     name: 'Deep Shafts',
-    story: 'Shafts carved through solid rock, with markings no Martian made. Someone built these. The creatures here are more organized.',
+    story: 'Shafts centuries old, yet swept and lit. Somebody is maintaining them. The creatures here are more organized.',
   },
   {
     name: 'Tectonic Core',
@@ -47,7 +47,7 @@ export const CONTEXT: string[] = [
   'Watch the creatures. Stay alert.',
   '', // level 5: the boss / duel scene instead
   "Watch for Phasers. An empty corridor doesn't mean you're alone.",
-  'Blackout ahead. Keep your guard up until visibility returns.',
+  'Those walls moved on purpose. Someone is rearranging this place. A blackout is next.',
   "Builders can block your path. Don't let them trap you.",
   "We're getting closer to the core. Expect heavier resistance.",
   '', // level 10: the boss / duel scene instead
@@ -72,7 +72,8 @@ export const BOSS_NAMES: Record<number, string> = {
 /** Bosco's answer to a briefing, under it on the level card. */
 export const REPLIES: Record<number, string> = {
   3: 'Great. Even the wildlife has a better sense of direction than I do.',
-  8: 'The locals build walls now? Wonderful.',
+  7: 'So the mine is haunted and has a landlord. Cool.',
+  8: 'Now the wildlife has a construction crew. Do they have permits?',
 };
 
 /** The level card: "LEVEL 5", "SECTOR 1: OUTPOST SURFACE" and the level's one-line briefing. */
