@@ -17,11 +17,16 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
+- **Fix the level 1 tutorial step `martian`** (approved by Refindo, 2026-10-20). Text only, in src/flow/tutorial_script.ts.
+  Now: "Martians chase you. Keep moving."
+  Want: "Martians bite when they touch you. Keep your distance."
+  Done when: `npm test` passes and only that prompt string changed.
+
 ## In progress
 
 ## Blocked
 
-- **Last open script mismatch** (proposed by story chat, waiting for Refindo). Level 1 tutorial step `martian` (tutorial_script.ts): "Martians chase you. Keep moving." → "Martians bite when they touch you. Keep your distance." Reason: sector 1 Gooplings wander; only sector 4 Martians hunt. All other old contradictions are fixed or no longer in the script.
+- (none)
 
 ## Done
 
