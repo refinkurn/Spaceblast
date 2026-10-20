@@ -30,6 +30,12 @@ match. Blackouts never overlap the arena collapse.
   doing. Each phone measures its own ping and sends its presses just early
   enough for its connection (a bad connection means slower controls for
   that player only, and a "Weak connection" note).
+- **Your own astronaut answers at once.** Your presses only reach the shared
+  game a round trip later, so your phone also draws your astronaut (and your
+  new charges) from a private look-ahead copy of the game played with your
+  latest presses. The shared game is never changed by it, so it can't cause
+  a desync; if the guess was wrong (someone's charge blocked you), your
+  astronaut snaps to the real spot. See `src/net/predict.ts`.
 - **Dropped connection:** the phone reconnects by itself and replays the
   round so far to catch up; the others just see "Bo lost connection,
   reconnecting…". After a page reload, Play online shows "Rejoin room".
@@ -65,6 +71,7 @@ Note: the claude.ai preview link can't open rooms; use the Cloudflare link.
 
 - `src/net/protocol.ts` — messages and room code rules
 - `src/net/frames.ts` — plays the server's frames, aims your presses ahead by your ping
+- `src/net/predict.ts` — draws your own astronaut from your latest presses
 - `src/net/link.ts` — the connection: ping, automatic reconnect, rejoin after reload
 - `src/net/client.ts` — the WebSocket connection
 - `src/flow/online.ts` — create / join / lobby screens

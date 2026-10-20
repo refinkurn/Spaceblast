@@ -40,6 +40,8 @@ export class FrameSync {
   /** Recent worst lateness of a frame message (ms), decaying over a few seconds. */
   jitter = TICK_MS;
   private frames: number[][] = [];
+  /** This browser's own packed commands by tick, until the server's frame for that tick arrives (for prediction). */
+  private mine = new Map<number, number>();
   private lastTarget = -1;
   private queuedPlace = false;
   private outbox: number[] = [];
@@ -59,6 +61,7 @@ export class FrameSync {
     c.forEach((row, i) => {
       if (Array.isArray(row) && row.length === this.players && row.every((v) => v === FRAME_LEFT || isPacked(v))) {
         this.frames[tick + i] = row as number[];
+        this.mine.delete(tick + i);
         this.latest = Math.max(this.latest, tick + i);
       }
     });
@@ -95,8 +98,32 @@ export class FrameSync {
 
   /** Every player's command for the next tick. Only call when ready(). */
   next(): PlayerCommand[] {
+    this.mine.delete(this.tick);
     const row = this.frames[this.tick++];
     return row.map((v) => (v === FRAME_LEFT ? LEAVE : unpackCommand(v)));
+  }
+
+  /** The last tick this browser has a command for (its newest press). */
+  get aim(): number {
+    return this.lastTarget;
+  }
+
+  /**
+   * A best guess at everyone's command for tick t, for prediction only: the
+   * server's frame if it has arrived; otherwise this browser's own command for
+   * that tick, and for the others what they did last (without placing again,
+   * as the server would).
+   */
+  guess(t: number, local: number): PlayerCommand[] {
+    const row = this.frames[t];
+    if (row) return row.map((v) => (v === FRAME_LEFT ? LEAVE : unpackCommand(v)));
+    const base = this.frames[this.latest];
+    return Array.from({ length: this.players }, (_, i) => {
+      const last = base?.[i] ?? 0;
+      if (last === FRAME_LEFT) return LEAVE;
+      if (i === local) return unpackCommand(this.mine.get(t) ?? last & ~64);
+      return unpackCommand(last & ~64);
+    });
   }
 
   /** Round-trip time to the server: commands are aimed just far enough ahead to arrive in time. */
@@ -120,7 +147,9 @@ export class FrameSync {
       this.outStart = from;
     }
     for (let t = from; t <= target; t++) {
-      this.outbox.push(packCommand({ ...cmd, place: this.queuedPlace }));
+      const packed = packCommand({ ...cmd, place: this.queuedPlace });
+      this.outbox.push(packed);
+      this.mine.set(t, packed);
       this.queuedPlace = false;
     }
     this.lastTarget = target;

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BEAM_FADE_TICKS, FUSE_TICKS, TICK_RATE } from '../sim/constants';
-import type { GameState } from '../sim/state';
+import type { Charge, GameState } from '../sim/state';
 import { tileToWorld } from './coords';
 
 // Plasma Charges, beams and debris. Reads sim state each frame; never writes it.
@@ -13,9 +13,11 @@ export class ChargesView {
   private meshes = new Map<number, THREE.Mesh>();
   private geo = new THREE.SphereGeometry(0.3, 24, 16);
 
-  sync(state: GameState): void {
+  /** `extra`: charges not in the state yet (your own, predicted online); drawn under negative ids. */
+  sync(state: GameState, extra: readonly Charge[] = []): void {
     const seen = new Set<number>();
-    for (const c of state.charges) {
+    const ghosts = extra.map((c) => ({ ...c, id: -1 - (c.ty * state.grid.w + c.tx) }));
+    for (const c of ghosts.length ? [...state.charges, ...ghosts] : state.charges) {
       seen.add(c.id);
       let m = this.meshes.get(c.id);
       if (!m) {

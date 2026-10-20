@@ -7,6 +7,7 @@ import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound } from './flow/online_match';
+import { Predictor } from './net/predict';
 import { Screens, type MenuChoice } from './flow/screens';
 import { CONTROL_SCALE, SettingsScreen } from './flow/settings';
 import { GameAudio } from './flow/sound';
@@ -50,6 +51,7 @@ let cardUp = false;
 const score = new MatchScore();
 /** The online round being played; null outside online play. */
 let net: OnlineRound | null = null;
+const predictor = new Predictor();
 /** Sim player id of this browser's astronaut (always 0 offline). */
 let localId = 0;
 let lastWinner = -1;
@@ -310,6 +312,7 @@ online.onRoundStart = (s: RoundStart) => {
   if (!sameRound) score.nextRound(mode !== 'online');
   mode = 'online';
   net = new OnlineRound(s);
+  predictor.reset();
   localId = s.local;
   screens.hideMenu();
   newGame(s.seed);
@@ -523,7 +526,9 @@ view.renderer.setAnimationLoop((now: number) => {
   // Scenes hide the HUD and touch controls.
   document.body.classList.toggle('scene', cutscene.active || cine.active || story.endingOpen);
   const alpha = cine.active ? cine.update(seconds) : paused ? 1 : acc / TICK_MS;
-  view.render(cine.state ?? state, alpha, seconds, now / 1000);
+  // Online: your own astronaut is drawn from your latest presses (net/predict.ts).
+  const predicted = !paused && !cine.active && mode === 'online' && net ? predictor.run(state, net.sync, localId) : null;
+  view.render(cine.state ?? state, alpha, seconds, now / 1000, predicted && { id: localId, p: predicted });
   announcer.update(state, now, connectionNote(now), overlay || cine.active || cutscene.active);
   audio.update(state, screens.menuOpen || online.screenOpen || screens.storyOpen);
   const keyList = playerKeys();
@@ -541,6 +546,7 @@ if (import.meta.env.DEV) {
   Object.assign(window, {
     spaceblast: {
       get state() { return state; },
+      view,
       hash: () => hashState(state),
       /** Jump straight to a story level, e.g. spaceblast.startLevel(15). */
       startLevel(n: number, withStory = false) { mode = 'survival'; screens.hideMenu(); story.play(n, withStory); },

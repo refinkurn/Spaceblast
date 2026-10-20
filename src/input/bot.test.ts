@@ -131,3 +131,31 @@ describe('bot difficulty', () => {
     expect(selfKills).toBeLessThanOrEqual(3);
   });
 });
+
+describe('smooth movement', () => {
+  // A wobble is moving one way, then back, then forward again on three ticks in a row.
+  // Bots used to wobble on about 1 tick in 4 (steering back to a tile centre they overshot).
+  it('bots almost never wobble back and forth', () => {
+    for (const skill of ['easy', 'normal', 'hard'] as BotSkill[]) {
+      let wobbles = 0, ticks = 0;
+      for (let seed = 1; seed <= 4; seed++) {
+        const g = createGame(seed, { mode: 'battle' });
+        const bots = [new Bot(0, seed, skill), new Bot(1, seed, skill)];
+        const moves: [number, number][][] = [[], []];
+        for (let t = 0; t < 2400 && g.status === 'playing'; t++) {
+          const before = g.players.map((p) => [p.x, p.y]);
+          step(g, bots.map((b) => b.think(g)));
+          g.players.forEach((p, i) => {
+            if (!p.alive) return;
+            ticks++;
+            const m = moves[i];
+            m.push([Math.sign(p.x - before[i][0]), Math.sign(p.y - before[i][1])]);
+            const back = (a: [number, number], b: [number, number]) => (a[0] !== 0 || a[1] !== 0) && a[0] === -b[0] && a[1] === -b[1];
+            if (m.length >= 3 && back(m[m.length - 3], m[m.length - 2]) && back(m[m.length - 2], m[m.length - 1])) wobbles++;
+          });
+        }
+      }
+      expect(wobbles / ticks, skill).toBeLessThan(0.005);
+    }
+  }, 30000);
+});

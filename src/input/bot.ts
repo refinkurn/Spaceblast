@@ -31,17 +31,23 @@ interface SkillProfile {
   cooldown: [number, number];
   /** Starts escaping only once a blast is this close (ticks); slower to react. */
   reactAt: number;
-  /** Chance (in %) per tick to dawdle instead of moving on when safe. */
+  /** Chance (in %) at each tile centre to stop and dawdle for DAWDLE_TICKS when safe. */
   dawdle: number;
   /** Places charges to hit astronauts and walks after them. */
   hunts: boolean;
 }
 
+/**
+ * A dawdle is one clean pause at a tile centre. (It used to be a coin flip every
+ * tick, which made the bot stop-start and step backwards mid-tile.)
+ */
+const DAWDLE_TICKS = 20;
+
 const SKILLS: Record<BotSkill, SkillProfile> = {
   // Slow to react, rarely bombs, never hunts you: blasts rocks and wanders.
-  easy: { cooldown: [80, 80], reactAt: 75, dawdle: 30, hunts: false },
+  easy: { cooldown: [80, 80], reactAt: 75, dawdle: 32, hunts: false },
   // A fair fight: slower to bomb and a little hesitant.
-  normal: { cooldown: [45, 45], reactAt: 9999, dawdle: 12, hunts: true },
+  normal: { cooldown: [45, 45], reactAt: 9999, dawdle: 10, hunts: true },
   // The original battle bot's play with quick charges (also the Renegade Pilot).
   hard: { cooldown: [6, 14], reactAt: 9999, dawdle: 0, hunts: true },
 };
@@ -51,6 +57,8 @@ export class Bot {
   /** Ticks before the bot may consider placing again (keeps it beatable). */
   private cooldown = 30;
   private wasPlacing = false;
+  /** Ticks left in the current dawdle. */
+  private pause = 0;
 
   constructor(readonly id: number, seed: number, readonly skill: BotSkill = 'normal') {
     this.rng = { rng: seedRng(seed ^ (0x5bd1e995 * (id + 1))) };
@@ -66,11 +74,8 @@ export class Bot {
     const [tx, ty] = playerTile(me);
     const w = state.grid.w;
     const perTile = Math.ceil(TILE / playerSpeed(me));
-    // Standing still means steering back to the tile centre: with no input the
-    // movement rules would glide on to the next tile, maybe into a blast.
-    const stay = { ...none, dir: toCentre(me) };
-
     const skill = SKILLS[this.skill];
+    const stay = { ...none, dir: holdDir(me, danger, w, skill.reactAt) };
     // 1) Escape if any tile the body overlaps is threatened (an easy bot only notices late).
     if (overlapped(me).some(([x, y]) => danger[y * w + x] !== SAFE && danger[y * w + x] <= skill.reactAt)) {
       const out = search(state, me, danger, perTile, (x, y) => danger[y * w + x] === SAFE, true);
@@ -94,7 +99,14 @@ export class Bot {
     }
 
     // 3) Go somewhere useful without walking into danger (an easy bot dawdles now and then).
-    if (skill.dawdle > 0 && nextInt(this.rng, 100) < skill.dawdle) return stay;
+    if (this.pause > 0) {
+      this.pause--;
+      return stay;
+    }
+    if (skill.dawdle > 0 && me.x % TILE === 0 && me.y % TILE === 0 && nextInt(this.rng, 100) < skill.dawdle) {
+      this.pause = DAWDLE_TICKS - 1;
+      return stay;
+    }
     // The nearest opponent (battles can have up to 4 astronauts).
     const foe = state.players
       .filter((p) => p.id !== this.id && p.alive)
@@ -140,6 +152,21 @@ function overlapped(p: Player): [number, number][] {
   const out: [number, number][] = [];
   for (const x of new Set(xs)) for (const y of new Set(ys)) out.push([x, y]);
   return out;
+}
+
+/**
+ * How to stand still. Steering back to the tile centre every tick overshoots
+ * it (a step is 67 units, the centre is rarely an exact step away) and the bot
+ * wobbles around it forever. With no input the movement rules glide on to the
+ * centre ahead and stop exactly there, so do that, unless that tile is
+ * threatened soon enough for this bot to care (`reactAt`, as when escaping):
+ * then turn back towards the current centre.
+ */
+function holdDir(p: Player, danger: Int16Array, w: number, reactAt: number): Dir {
+  if (p.x % TILE === 0 && p.y % TILE === 0) return Dir.None;
+  const ahead = (v: number, f: number) => (f > 0 ? Math.ceil(v / TILE) : f < 0 ? Math.floor(v / TILE) : Math.round(v / TILE));
+  const t = danger[ahead(p.y, DIR_DY[p.facing]) * w + ahead(p.x, DIR_DX[p.facing])];
+  return t === SAFE || t > reactAt ? Dir.None : toCentre(p);
 }
 
 /** Direction back to the centre of the current tile, or None when centred. */

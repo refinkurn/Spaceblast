@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { AdaptiveQuality } from './quality';
 import { GRID_H, GRID_W } from '../sim/constants';
 import type { GameState, SimEvent } from '../sim/state';
+import type { Prediction } from '../net/predict';
 import { GateView, ItemsView, MartiansView, PortalsView } from './actors_view';
 import { BoardView } from './board_view';
 import { BossView, CrossPreviewView } from './boss_view';
@@ -133,10 +134,16 @@ export class GameView {
     }
   }
 
-  /** Draws `state`; alpha in [0, 1] is how far we are towards the next tick. */
-  render(state: GameState, alpha: number, dt: number, time: number): void {
-    state.players.forEach((p, i) => this.heroes[i].update(this.prevPlayers[i] ?? p, p, alpha, dt));
-    this.charges.sync(state);
+  /**
+   * Draws `state`; alpha in [0, 1] is how far we are towards the next tick.
+   * `predicted` (online): your astronaut and fresh charges from net/predict.ts.
+   */
+  render(state: GameState, alpha: number, dt: number, time: number, predicted: { id: number; p: Prediction } | null = null): void {
+    state.players.forEach((p, i) => {
+      if (predicted?.id === i) this.heroes[i].update(predicted.p.prev, predicted.p.cur, alpha, dt);
+      else this.heroes[i].update(this.prevPlayers[i] ?? p, p, alpha, dt);
+    });
+    this.charges.sync(state, predicted?.p.charges);
     this.beams.sync(state);
     this.items.sync(state, time);
     this.gate.sync(state, time);
