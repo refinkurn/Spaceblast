@@ -10,11 +10,11 @@ import { KIT } from './story_scenes';
 export const ALIEN_CARDS: Record<Kind, IntroCard> = {
   [Kind.Goopling]: {
     id: 'goopling', name: 'Goopling', icon: martianIcon('#6fd14f'), focus: 'martian', zoom: 0.5, ...KIT,
-    text: "Gooplings are aggressive and persistent. Keep moving.",
+    text: "Gooplings wander slowly. Touching one bites you.",
   },
   [Kind.Sniffer]: {
     id: 'sniffer', name: 'Sniffer', icon: martianIcon('#a66bff'), focus: 'martian', zoom: 0.5, ...KIT,
-    text: "Sniffers track movement. Don't let them corner you.",
+    text: "Sniffers dodge your blasts. Trap them in a corridor.",
   },
   [Kind.Phaser]: {
     id: 'phaser', name: 'Phaser', icon: martianIcon('#7f8cff'), focus: 'martian', zoom: 0.5, ...KIT,

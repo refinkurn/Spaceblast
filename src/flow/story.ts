@@ -43,8 +43,8 @@ export const ENDING =
 export const CONTEXT: string[] = [
   'Clear a path through the rocks. We need those power cores to get home.',
   'Movement ahead. Small creatures. Keep your distance.',
-  'Watch for those creatures. They track movement.',
-  'The creatures are getting more aggressive. Stay alert.',
+  'Sniffers dodge your blasts. Trap them in a corridor.',
+  'Watch the creatures. Stay alert.',
   '', // level 5: the boss / duel scene instead
   "Watch for Phasers. An empty corridor doesn't mean you're alone.",
   'Blackout ahead. Keep your guard up until visibility returns.',

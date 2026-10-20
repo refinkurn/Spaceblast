@@ -23,10 +23,10 @@ export const POWERUP_CARDS: Partial<Record<Item, IntroCard>> = {
   },
   [Item.OxygenVest]: {
     id: 'oxygen_vest', name: 'Oxygen Vest', icon: OXYGEN, focus: 'hero', zoom: 0.6, ...KIT,
-    text: "Extra protection for hazardous environments. Keep it on.",
+    text: "Absorbs one hit and gives you a short shield.",
   },
   [Item.FreezePulse]: {
     id: 'freeze_pulse', name: 'Freeze Pulse', icon: POWER_ICONS.freeze, focus: 'hero', zoom: 0.6, ...KIT,
-    text: "Freezes nearby threats temporarily. A little breathing room.",
+    text: "Freezes every Martian for 3 seconds, as soon as you pick it up.",
   },
 };

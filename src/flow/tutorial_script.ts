@@ -41,7 +41,7 @@ export const BEATS: Beat[] = [
   { id: 'powerup', level: 1, trigger: 'item_picked', done: 'timer', prompt: 'Power-up! Check the pips at the top.' },
   { id: 'martian', level: 1, trigger: 'martian_near', done: 'timer', prompt: 'Martians chase you. Keep moving.' },
   { id: 'gate', level: 1, trigger: 'gate_opened', done: 'level_clear', prompt: 'The Warp Gate is open. Step on it to clear the level.' },
-  { id: 'sniffer', level: 3, trigger: 'martian_near', kind: Kind.Sniffer, done: 'timer', prompt: "Sniffers track movement. Don't let them corner you." },
+  { id: 'sniffer', level: 3, trigger: 'martian_near', kind: Kind.Sniffer, done: 'timer', prompt: "Sniffers dodge blasts. Corner them." },
 ];
 
 /** What [MOVE] and [CHARGE] say, per kind of control. */
