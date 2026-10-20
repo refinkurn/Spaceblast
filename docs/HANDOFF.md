@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Fix the level 1 tutorial step `martian`** (approved by Refindo, 2026-10-20). Text only, in src/flow/tutorial_script.ts.
-  Now: "Martians chase you. Keep moving."
-  Want: "Martians bite when they touch you. Keep your distance."
-  Done when: `npm test` passes and only that prompt string changed.
-
 ## In progress
 
 ## Blocked
@@ -30,5 +25,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-20: level 1 tutorial step `martian` now reads "Martians bite when they touch you. Keep your distance." 132 tests pass.
 - 2026-10-20: 7 script lines fixed to match the game (boss waves, Goopling, Sniffer x3, Freeze, Oxygen Vest, "break it"). 132 tests pass.
 - 2026-10-20: story continuity A-D applied: cores taken by the creature, distress call revealed as a lure, Ducking is a wanted criminal hiding on Mars (the Division is gone from the script), level 10 voice "Not Martian. Not machine."

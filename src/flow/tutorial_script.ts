@@ -39,7 +39,7 @@ export const BEATS: Beat[] = [
   { id: 'rocks', level: 1, trigger: 'rock_broken', done: 'timer', prompt: "Rocks break. Look for what's behind them." },
   // The power-up and Martian beats come with their intro cards (powerup_cards.ts, alien_cards.ts).
   { id: 'powerup', level: 1, trigger: 'item_picked', done: 'timer', prompt: 'Power-up! Check the pips at the top.' },
-  { id: 'martian', level: 1, trigger: 'martian_near', done: 'timer', prompt: 'Martians chase you. Keep moving.' },
+  { id: 'martian', level: 1, trigger: 'martian_near', done: 'timer', prompt: 'Martians bite when they touch you. Keep your distance.' },
   { id: 'gate', level: 1, trigger: 'gate_opened', done: 'level_clear', prompt: 'The Warp Gate is open. Step on it to clear the level.' },
   { id: 'sniffer', level: 3, trigger: 'martian_near', kind: Kind.Sniffer, done: 'timer', prompt: "Sniffers dodge blasts. Corner them." },
 ];
