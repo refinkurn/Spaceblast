@@ -9,6 +9,8 @@ Both sides read this first and update it last. Keep it short: finished items mov
 - **Claude Code** takes the top Ready item, moves it to In progress, builds it, runs the qa-runner agent, commits to `main`, and moves it to Done.
 - Anything that needs Refindo's decision goes under Blocked, with the question.
 
+Day-to-day guide: docs/PLAYBOOK.md. A nightly run (01:52 Jakarta) takes the top Ready item (text, UI, assets, tests only).
+
 Designated build session (main code agent): https://claude.ai/code/session_01XC77HfFWyx7am3DE4jJY5f
 
 Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runner` (Haiku, tests and checks), `sim-specialist` (Opus, game rules and online). The main session runs on Sonnet.
