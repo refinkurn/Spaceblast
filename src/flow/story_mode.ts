@@ -10,7 +10,7 @@ import { IntroCards } from './intro_card';
 import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress, starsFor } from './progress';
 import type { Screens } from './screens';
-import { BOSS_NAMES, ENDING, SECTORS, levelCard } from './story';
+import { BOSS_NAMES, ENDING, SECTORS, levelCard, type LevelCardText } from './story';
 import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
 
@@ -27,7 +27,7 @@ export interface StoryHost {
   newLevel(level: number): GameState;
   readonly state: GameState;
   /** Shows the level card (the game waits until it is dismissed). */
-  showLevelCard(level: string, sector: string, briefing: string, reply: string): void;
+  showLevelCard(card: LevelCardText): void;
   openMenu(): void;
 }
 
@@ -110,8 +110,7 @@ export class StoryMode {
     const spec = levelSpec(level);
     const state = this.host.newLevel(level);
     const card = () => {
-      const c = levelCard(spec);
-      this.host.showLevelCard(c.level, c.sector, c.briefing, c.reply);
+      this.host.showLevelCard(levelCard(spec));
     };
     // The very first Story start on this save: after the opening scene, Captain
     // Kit's opening pop-up, then level 1's card.

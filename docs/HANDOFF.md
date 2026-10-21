@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Compact level card** (`#level-card`, src/flow/story.ts `levelCard`, screens.ts, style.css)
-  Now: wide card with LEVEL n, sector, Kit briefing and Bosco reply.
-  Want: ~320x180 card: big `1-3` title, sector name, goal icon + text, Kit line only; dim backdrop; same pause/tap logic.
-  Done when: levels 1, 5, 8 show it; tests cover title and goal per level type.
-  Spec: docs/design/hud-intro.md (part 1)
 - **HUD layout + life-lost flash** (src/flow/hud.ts, index.html `#hud`, style.css)
   Now: one top bar row; goal hidden on phones; no feedback on losing a life.
   Want: top-left avatar + hearts, power-ups and goal under them; top-centre stage chip + clock (boss/battle only); buttons stay top-right; hearts flash on life or armor loss.
@@ -86,6 +81,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: compact level card: `1-3` / `1-5 BOSS` title, sector name, goal icon + text, Kit line only, dim backdrop; Bosco reply no longer shown; 5 new tests, 153 pass.
 - 2026-10-21: 4-player lag, step 1 (Refindo): measured the live room server from the dev PC: steady 60 Hz frames (worst gap 36 ms) but ~90 ms ping, so rooms are now placed in Asia-Pacific (`ROOM_REGION`) and report their data centre; on-screen stats line during online rounds (ping, wobble, buffer, late presses, fps, frame work; ONLINE.md explains it, `?nostats` hides it); lighter rendering on phones (no antialiasing on sharp screens, plain 512 px shadows, 1.5x resolution cap). Next: a 4-player test with screenshots of the stats line. 148 tests pass.
 - 2026-10-21: bot retune (Refindo): Normal ~20% softer (notices blasts at 2 s, 20% slower bombing, more pauses, hunts 80% of the time); Easy busier but beginner-friendly (strolls instead of parking, hunts 25%, still slow to dodge). Bot-vs-bot: Normal-Easy 23-5 -> 17-10, Hard-Normal 16-6 -> 17-9. Fixed a collapse bug: an astronaut grazed by a falling block could walk back inside it and survive, so the round never ended. 147 tests pass.
 - 2026-10-21: opening pop-up no longer repeats Kit's Warp Gate line; now covers rocks, power-ups and your own charges. 146 tests pass.

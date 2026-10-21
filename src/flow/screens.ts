@@ -3,6 +3,8 @@
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 import { Menu, type BotLevel } from './menu';
+import { GOAL_ICONS } from './goal_icons';
+import type { LevelCardText } from './story';
 
 export type MenuChoice = 'survival' | 'battle' | 'online';
 export type { BotLevel };
@@ -63,13 +65,14 @@ export class Screens {
     if (this.storyOpen) $<HTMLButtonElement>('story-btn').click();
   }
 
-  /** The level card: level, sector and the briefing line, up until it is tapped. */
-  showLevelCard(level: string, sector: string, briefing: string, reply = ''): void {
-    $('card-level').textContent = level;
-    $('card-sector').textContent = sector;
-    $('card-briefing').textContent = briefing;
-    $('card-reply').textContent = reply ? `Bosco: “${reply}”` : '';
-    $('card-hint').textContent = window.matchMedia('(pointer: coarse)').matches ? 'Tap to continue' : 'Click to continue';
+  /** The compact level card: title, sector, goal row and Kit's line, up until it is tapped. */
+  showLevelCard(card: LevelCardText): void {
+    $('card-level').textContent = card.title;
+    $('card-sector').textContent = card.sector;
+    $('card-goal-icon').innerHTML = GOAL_ICONS[card.goal.icon];
+    $('card-goal-text').textContent = card.goal.text;
+    $('card-briefing').textContent = card.briefing;
+    $('card-hint').textContent = window.matchMedia('(pointer: coarse)').matches ? 'Tap to start' : 'Click to start';
     $('level-card').hidden = false;
   }
 

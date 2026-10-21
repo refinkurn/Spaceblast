@@ -69,19 +69,36 @@ export const BOSS_NAMES: Record<number, string> = {
   [BossKind.MazeMaster]: 'Maze Master',
 };
 
-/** Bosco's answer to a briefing, under it on the level card. */
+/** Bosco's answer to a briefing (kept as data; the level card no longer shows it). */
 export const REPLIES: Record<number, string> = {
   3: 'Great. Even the wildlife has a better sense of direction than I do.',
   7: 'So the mine is haunted and has a landlord. Cool.',
   8: 'Now the wildlife has a construction crew. Do they have permits?',
 };
 
-/** The level card: "LEVEL 5", "SECTOR 1: OUTPOST SURFACE" and the level's one-line briefing. */
-export function levelCard(spec: LevelSpec): { level: string; sector: string; briefing: string; reply: string } {
+export type GoalIcon = 'gate' | 'shield' | 'duel';
+
+export interface LevelCardText {
+  /** "1-3" (sector-level within the sector); boss levels add " BOSS". */
+  title: string;
+  sector: string;
+  goal: { icon: GoalIcon; text: string };
+  /** Kit's briefing, one line, no speaker name. */
+  briefing: string;
+}
+
+/** The compact level card: `1-3` title, sector name, goal row and Kit's line. Bosco's reply (REPLIES) is no longer shown. */
+export function levelCard(spec: LevelSpec): LevelCardText {
+  const inSector = ((spec.level - 1) % 5) + 1;
+  const goal: LevelCardText['goal'] = spec.rival
+    ? { icon: 'duel', text: 'Stun Ducking' }
+    : spec.boss !== BossKind.None
+      ? { icon: 'shield', text: 'Survive 3 waves' }
+      : { icon: 'gate', text: 'Find the Warp Gate' };
   return {
-    level: `LEVEL ${spec.level}`,
-    sector: `SECTOR ${spec.sector}: ${SECTORS[spec.sector - 1].name.toUpperCase()}`,
+    title: `${spec.sector}-${inSector}${spec.boss !== BossKind.None ? ' BOSS' : ''}`,
+    sector: SECTORS[spec.sector - 1].name.toUpperCase(),
+    goal,
     briefing: CONTEXT[spec.level - 1] ?? '',
-    reply: REPLIES[spec.level] ?? '',
   };
 }
