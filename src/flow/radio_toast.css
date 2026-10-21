@@ -1,0 +1,31 @@
+/* Kit radio toast (flow/radio_toast.ts): the alert lane under the HUD. Never takes input. */
+.radio-toast {
+  position: fixed;
+  top: calc(var(--hud) + 6px + env(safe-area-inset-top));
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 2 * var(--gutter, 110px));
+  padding: 4px 14px 4px 4px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: #0b0d12d9;
+  border: 1px solid #5ad1ffaa;
+  box-shadow: 0 0 12px #5ad1ff44;
+  color: #eef4ff;
+  font: 600 15px/1.25 system-ui, sans-serif;
+  pointer-events: none;
+  transform: translate(-50%, -140%);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.radio-toast[hidden] { display: none; }
+.radio-toast.in { transform: translate(-50%, 0); opacity: 1; }
+.radio-toast canvas { flex: none; width: 32px; height: 32px; border-radius: 50%; background: #ffffff12; }
+.radio-toast span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.scene .radio-toast { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .radio-toast, .radio-toast.in { transform: translate(-50%, 0); }
+}

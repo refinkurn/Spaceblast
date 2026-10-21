@@ -84,6 +84,12 @@ export class StoryMode {
     return this.cards.active;
   }
 
+  /** This power-up's intro card has been shown on this save (Kit's toasts only follow it). */
+  powerupSeen(item: number): boolean {
+    const card = POWERUP_CARDS[item as keyof typeof POWERUP_CARDS];
+    return !!card && this.progress.seen('seenPowerups', card.id);
+  }
+
   /** Tap / Enter on a card. */
   pressCard(): void {
     this.cards.close();

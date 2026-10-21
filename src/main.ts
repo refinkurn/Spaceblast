@@ -8,6 +8,7 @@ import { Hud } from './flow/hud';
 import { haptics } from './flow/haptics';
 import { parseRoomParam } from './flow/invite';
 import { Countdown } from './flow/countdown';
+import { RadioToasts } from './flow/radio_toast';
 import { PauseMenu } from './flow/pause';
 import { battleSummary, type BannerExtra } from './flow/summary';
 import { OnlineRoom, type RoundStart } from './flow/online';
@@ -69,6 +70,8 @@ let devRun = false;
 const screens = new Screens(startMode, openMenu, pauseButton);
 const hud = new Hud();
 const countdown = new Countdown();
+/** Captain Kit's one-line radio toasts (Story only). */
+const radio = new RadioToasts();
 const online = new OnlineRoom();
 const announcer = new Announcer();
 const congrats = new Congrats();
@@ -190,6 +193,7 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   if (devRun && mode === 'survival') applyCheats();
   bot = mode === 'battle' ? new Bot(1, seed, screens.botLevel) : spec.rival ? new Bot(1, seed, 'hard') : null;
   recorder.reset();
+  radio.reset();
   view.build(state, colors(), mode === 'online' ? localId : -1);
   view.rig.reset();
   screens.hideBanner();
@@ -238,6 +242,8 @@ function runTick(cmds: PlayerCommand[]) {
   if (mode === 'survival') {
     tutorial.tick(state);
     story.tick(state);
+    // Toasts first: a power-up's first pick-up gets its card from story.event, not a toast.
+    for (const e of state.events) radio.event(e, state, (item) => story.powerupSeen(item));
     for (const e of state.events) story.event(e);
   }
 }
@@ -615,6 +621,9 @@ view.renderer.setAnimationLoop((now: number) => {
     buffered: net.sync.buffered, late: net.sync.lateInputs, ahead: predictor.ahead,
   } : null);
   announcer.update(state, now, connectionNote(now), overlay || cine.active || cutscene.active);
+  // Kit waits while anything else owns the moment or the lane under the HUD.
+  radio.update(now, mode !== 'survival' || paused || pause.open || countdown.active || state.status !== 'playing'
+    || !$('alert').hidden || !$('announce').hidden || !$('coach').hidden);
   audio.update(state, screens.menuOpen || online.screenOpen || screens.storyOpen);
   const keyList = playerKeys();
   const mine = score.of(keyList[localId] ?? '');
