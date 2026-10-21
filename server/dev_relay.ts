@@ -1,17 +1,51 @@
-import type { IncomingMessage } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
-import type { Plugin } from 'vite';
+import type { Connect, Plugin } from 'vite';
 import { WebSocketServer } from 'ws';
 import { isRoomCode } from '../src/net/protocol';
+import { CORS_HEADERS, JSON_HEADERS, Leaderboard, MAX_BODY, MemoryStore, scoresApi } from './leaderboard';
 import { Room, requestFromUrl, type Peer } from './room';
 
 // The room server for `npm run dev` and `npm run preview`: rooms run inside the Vite
 // server at ws://<host>/room/CODE, so phones on the same Wi-Fi can play too.
 // Production uses server/worker.ts on Cloudflare instead; both share Room.
+// Also serves the leaderboard at /api/scores (in memory, gone on restart).
+
+/** The /api/scores route over a Leaderboard, as Connect middleware. */
+function scoresMiddleware(lb: Leaderboard): Connect.NextHandleFunction {
+  return (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    const url = new URL(req.url ?? '/', 'http://localhost');
+    if (url.pathname !== '/api/scores') return next();
+    const method = req.method ?? 'GET';
+    if (method === 'OPTIONS') {
+      res.writeHead(204, CORS_HEADERS).end();
+      return;
+    }
+    const send = (status: number, body: unknown) => res.writeHead(status, JSON_HEADERS).end(JSON.stringify(body));
+    if (method !== 'POST') {
+      const r = scoresApi(lb, method, url, '', Date.now());
+      send(r.status, r.body);
+      return;
+    }
+    let text = '';
+    let tooBig = false;
+    req.setEncoding('utf8');
+    req.on('data', (chunk: string) => {
+      if (tooBig) return;
+      text += chunk;
+      if (text.length > MAX_BODY) tooBig = true;
+    });
+    req.on('end', () => {
+      const r = scoresApi(lb, method, url, tooBig ? 'x'.repeat(MAX_BODY + 1) : text, Date.now());
+      send(r.status, r.body);
+    });
+  };
+}
 
 export function devRelay(): Plugin {
   const rooms = new Map<string, Room>();
   const wss = new WebSocketServer({ noServer: true });
+  const scores = scoresMiddleware(new Leaderboard(new MemoryStore()));
 
   function upgrade(req: IncomingMessage, socket: Duplex, head: Buffer): void {
     const url = new URL(req.url ?? '/', 'http://localhost');
@@ -52,9 +86,11 @@ export function devRelay(): Plugin {
     name: 'spaceblast-dev-relay',
     configureServer(server) {
       server.httpServer?.on('upgrade', upgrade);
+      server.middlewares.use(scores);
     },
     configurePreviewServer(server) {
       server.httpServer?.on('upgrade', upgrade);
+      server.middlewares.use(scores);
     },
   };
 }

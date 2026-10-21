@@ -7,8 +7,11 @@ import type { Cutscene } from './cutscene';
 import { Crawl } from './crawl';
 import { martiansNear } from './encounter';
 import { IntroCards } from './intro_card';
+import { LeaderboardScreen } from './leaderboard_screen';
 import { POWERUP_CARDS } from './powerup_cards';
-import { StoryProgress, starsFor } from './progress';
+import { StoryProgress } from './progress';
+import { scoreFor } from '../services/score';
+import { scoreRows, sendScore } from './story_score';
 import type { Screens } from './screens';
 import { ENDING, SECTORS, levelCard, type LevelCardText } from './story';
 import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
@@ -41,6 +44,11 @@ export class StoryMode {
   private ending = $('ending');
   private cards: IntroCards;
   private crawl = new Crawl();
+  private board = new LeaderboardScreen(() => {
+    this.renderHub();
+    this.hub.hidden = false;
+    $('hub-board').focus();
+  });
 
   constructor(private host: StoryHost, private screens: Screens, private cutscene: Cutscene, private view: GameView) {
     this.cards = new IntroCards(view);
@@ -49,6 +57,10 @@ export class StoryMode {
       host.openMenu();
     });
     $('hub-continue').addEventListener('click', () => this.play(this.progress.unlocked, true));
+    $('hub-board').addEventListener('click', () => {
+      this.hub.hidden = true;
+      this.board.show(Math.min(this.progress.unlocked, LEVEL_COUNT));
+    });
     $('ending-btn').addEventListener('click', () => {
       this.closeEnding();
       host.openMenu();
@@ -61,7 +73,7 @@ export class StoryMode {
 
   /** The level map, the ending or the opening crawl (the crawl handles its own keys). */
   get overlayOpen(): boolean {
-    return !this.hub.hidden || !this.ending.hidden || this.crawl.active;
+    return !this.hub.hidden || !this.ending.hidden || this.crawl.active || this.board.open;
   }
 
   /** An alien or power-up card is up (the game waits). */
@@ -93,6 +105,7 @@ export class StoryMode {
 
   closeOverlays(): void {
     this.hub.hidden = true;
+    this.board.hide();
     this.cards.cancel();
     this.crawl.cancel();
     this.closeEnding();
@@ -184,8 +197,14 @@ export class StoryMode {
     const spec = levelSpec(level);
     // The Renegade Pilot counts as a boss too.
     if (spec.rival) this.progress.add({ bosses: 1 });
-    const stars = starsFor(level, Math.min(this.livesLost, START_LIVES), state.tick);
-    this.progress.clear(level, stars);
+    const lost = Math.min(this.livesLost, START_LIVES);
+    const martians = state.martians.filter((m) => !m.alive).length;
+    const heartsLeft = START_LIVES - lost;
+    const score = scoreFor({ level, martians, ticks: state.tick, heartsLeft });
+    const stars = score.stars;
+    const prevBest = this.progress.bestScore(level);
+    this.progress.clear(level, stars, score.total);
+    sendScore(level, score, heartsLeft, () => this.screens.bannerOpen);
     // After the duel, the ending scene follows straight on.
     const outro = [...(OUTRO_SCENES[level] ?? []), ...(level >= LEVEL_COUNT ? ENDING_SCENE : [])];
     this.cutscene.play(outro, state, () => {
@@ -197,7 +216,7 @@ export class StoryMode {
       const line = spec.boss ? bossClearLine(spec.boss) : `Level ${level} clear!`;
       const upNext = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${levelRoster(next).length} Martians.`;
       this.screens.showBanner(spec.boss ? 'SURVIVED!' : 'LEVEL CLEAR', `${line}\n${upNext}`, 'Next level', () => this.play(next, true), 'Main menu', '',
-        { pose: 'happy', summary: storySummary(state, Math.min(this.livesLost, START_LIVES), stars) });
+        { pose: 'happy', summary: [...storySummary(state, lost, stars), ...scoreRows(score, prevBest)] });
     });
   }
 

@@ -22,8 +22,9 @@ src/
   assets/   art as data: characters/<id>/character.json + atlases (README.md there); menu/menu.json + key art
   audio/   synthesised sound effects and music (Web Audio, no files); driven by sim events
   flow/    menus, HUD, story, online lobby
+  services/ score rules, leaderboard client + offline queue, device profile, name filter (docs/design/leaderboard.md)
   main.ts  wiring + fixed 60 Hz loop
-server/    the room server: room.ts (shared: seats, round clock, rejoin), dev_relay.ts (npm run dev), worker.ts (Cloudflare)
+server/    the room server: room.ts (shared: seats, round clock, rejoin), leaderboard.ts (scores API), dev_relay.ts (npm run dev), worker.ts (Cloudflare)
 ```
 
 - Online play runs on the room server's clock: it sends every player's packed

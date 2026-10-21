@@ -1,16 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { StoryProgress, starsFor } from './progress';
+import { StoryProgress } from './progress';
 
 describe('story progress', () => {
-  it('gives 1 star for a clear, +1 for no lives lost, +1 for a quick clear', () => {
-    expect(starsFor(1, 0, 60 * 60)).toBe(3);
-    expect(starsFor(1, 1, 60 * 60)).toBe(2);
-    expect(starsFor(1, 0, 120 * 60)).toBe(2);
-    expect(starsFor(1, 2, 120 * 60)).toBe(1);
-    // Boss levels can't be rushed: time doesn't count there.
-    expect(starsFor(5, 0, 200 * 60)).toBe(3);
-  });
-
   it('unlocks the next level, keeps the best stars, and finishes after level 20', () => {
     const p = new StoryProgress();
     expect(p.unlocked).toBe(1);

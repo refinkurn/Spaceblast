@@ -1,4 +1,4 @@
-import { LEVEL_COUNT, levelSpec } from '../sim/levels';
+import { LEVEL_COUNT } from '../sim/levels';
 
 // Story Mode progress, saved on this device: the furthest level reached, the
 // best stars per level, run totals for the ending screen, and which tutorial
@@ -19,6 +19,8 @@ interface Saved {
   /** Highest level you can play (the one after your furthest clear). */
   unlocked: number;
   stars: Record<number, number>;
+  /** Best score per level (services/score.ts). */
+  scores: Record<number, number>;
   stats: StoryStats;
   finished: boolean;
   /** Captain Kit's opening card (story_scenes.ts OPENING_TUTORIAL) was shown. */
@@ -34,7 +36,7 @@ interface Saved {
 export type CardList = 'seenBeats' | 'seenEnemies' | 'seenPowerups';
 
 const fresh = (): Saved => ({
-  unlocked: 1, stars: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, tutorialSeen: false, seenBeats: [], seenEnemies: [], seenPowerups: [],
+  unlocked: 1, stars: {}, scores: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, tutorialSeen: false, seenBeats: [], seenEnemies: [], seenPowerups: [],
 });
 
 /** A saved list of card ids: short lowercase words only, no repeats. */
@@ -50,6 +52,8 @@ function sanitize(raw: Partial<Saved> | null): Saved {
   for (let n = 1; n <= LEVEL_COUNT; n++) {
     const s = int(raw.stars?.[n], 3);
     if (s > 0) out.stars[n] = s;
+    const best = int(raw.scores?.[n], 1e7);
+    if (best > 0) out.scores[n] = best;
   }
   const st = raw.stats;
   out.stats = { martians: int(st?.martians, 1e9), bosses: int(st?.bosses, 1e9), livesLost: int(st?.livesLost, 1e9), ticks: int(st?.ticks, 1e12) };
@@ -61,16 +65,6 @@ function sanitize(raw: Partial<Saved> | null): Saved {
   out.seenEnemies = ids(raw.seenEnemies ?? old.seenAliens);
   out.seenPowerups = ids(raw.seenPowerups ?? old.seenPowerUps);
   return out;
-}
-
-/**
- * Stars for a cleared level: 1 for clearing it, +1 for losing no lives,
- * +1 for being quick (bosses can't be rushed, so there it's free).
- */
-export function starsFor(level: number, livesLost: number, ticks: number): number {
-  const spec = levelSpec(level);
-  const par = spec.boss ? Infinity : spec.rival ? 60 * 60 : 75 * 60;
-  return 1 + (livesLost === 0 ? 1 : 0) + (ticks <= par ? 1 : 0);
 }
 
 export class StoryProgress {
@@ -110,13 +104,18 @@ export class StoryProgress {
     return this.data.stars[level] ?? 0;
   }
 
+  bestScore(level: number): number {
+    return this.data.scores[level] ?? 0;
+  }
+
   get totalStars(): number {
     return Object.values(this.data.stars).reduce((a, b) => a + b, 0);
   }
 
-  /** Records a clear; keeps the best stars and unlocks the next level. */
-  clear(level: number, stars: number): void {
+  /** Records a clear; keeps the best stars and score, and unlocks the next level. */
+  clear(level: number, stars: number, score = 0): void {
     this.data.stars[level] = Math.max(this.stars(level), stars);
+    if (score > this.bestScore(level)) this.data.scores[level] = score;
     this.data.unlocked = Math.max(this.data.unlocked, Math.min(LEVEL_COUNT, level + 1));
     if (level >= LEVEL_COUNT) this.data.finished = true;
     this.save();

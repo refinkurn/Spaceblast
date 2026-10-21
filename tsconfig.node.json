@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "lib": ["ES2022"], "types": ["node"] },
-  "include": ["vite.config.ts", "server/dev_relay.ts", "server/room.ts", "server/room.test.ts"]
+  "include": ["vite.config.ts", "server/dev_relay.ts", "server/room.ts", "server/room.test.ts", "server/leaderboard.ts", "server/leaderboard_store.ts", "server/leaderboard.test.ts"]
 }

@@ -300,7 +300,28 @@
         <button id="hub-continue" type="button" class="primary"></button>
         <div id="hub-stars" class="hub-stars"></div>
         <div id="hub-levels" class="hub-levels"></div>
+        <button id="hub-board" type="button">Leaderboard</button>
         <button id="hub-back" type="button" class="quiet">Back</button>
+      </div>
+    </div>
+    <div id="leaderboard" role="dialog" aria-labelledby="lb-level" hidden>
+      <div class="lb-card">
+        <div class="kicker">Leaderboard</div>
+        <div class="lb-pick">
+          <button id="lb-prev" type="button" aria-label="Previous level">‹</button>
+          <h2 id="lb-level"></h2>
+          <button id="lb-next" type="button" aria-label="Next level">›</button>
+        </div>
+        <ol id="lb-list" class="lb-list"></ol>
+        <p id="lb-status" class="lb-status"></p>
+        <p id="lb-you" class="lb-status"></p>
+        <form id="lb-form" class="lb-form">
+          <label for="lb-name">Your name</label>
+          <input id="lb-name" autocomplete="nickname" spellcheck="false" />
+          <button type="submit">Save</button>
+        </form>
+        <p id="lb-name-note" class="lb-status"></p>
+        <button id="lb-back" type="button" class="quiet">Back</button>
       </div>
     </div>
     <div id="ending" hidden>

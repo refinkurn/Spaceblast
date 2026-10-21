@@ -1,12 +1,15 @@
 import { isRoomCode } from '../src/net/protocol';
+import { CORS_HEADERS, JSON_HEADERS, Leaderboard, MAX_BODY, SqlStore, scoresApi } from './leaderboard';
 import { Room, requestFromUrl, type Peer } from './room';
 
 // Cloudflare Worker: serves the game (the dist/ folder, via static assets) and
 // runs one Durable Object per room code at /room/CODE. Free tier is plenty for
 // testing with friends. Deploy with `npm run deploy` (see ONLINE.md).
+// The leaderboard (/api/scores) is one more Durable Object, 'global'.
 
 interface Env {
   ROOMS: DurableObjectNamespace;
+  LEADERBOARD: DurableObjectNamespace;
   ASSETS: Fetcher;
 }
 
@@ -21,6 +24,10 @@ const ROOM_REGION: DurableObjectLocationHint = 'apac';
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    if (url.pathname === '/api/scores') {
+      if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return env.LEADERBOARD.get(env.LEADERBOARD.idFromName('global'), { locationHint: ROOM_REGION }).fetch(request);
+    }
     const match = url.pathname.match(/\/room\/([A-Z]+)$/);
     if (!match) return env.ASSETS.fetch(request);
     if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected a WebSocket', { status: 426 });
@@ -79,5 +86,26 @@ export class RoomObject implements DurableObject {
         this.timer = null;
       }
     }, 16);
+  }
+}
+
+/** The leaderboard: every stage's scores in one SQLite-backed object. */
+export class LeaderboardObject implements DurableObject {
+  private lb: Leaderboard;
+
+  constructor(ctx: DurableObjectState) {
+    this.lb = new Leaderboard(new SqlStore(ctx.storage.sql));
+  }
+
+  async fetch(request: Request): Promise<Response> {
+    const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+    let text = '';
+    if (request.method === 'POST') {
+      if (Number(request.headers.get('Content-Length') ?? 0) > MAX_BODY) return json(400, { ok: false, reason: 'bad_body' });
+      text = await request.text();
+      if (new TextEncoder().encode(text).length > MAX_BODY) return json(400, { ok: false, reason: 'bad_body' });
+    }
+    const r = scoresApi(this.lb, request.method, new URL(request.url), text, Date.now());
+    return json(r.status, r.body);
   }
 }
