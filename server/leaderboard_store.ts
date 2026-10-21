@@ -36,6 +36,10 @@ export interface Store {
   rankOf(row: Row): number;
   limit(device: string): Limit | null;
   setLimit(device: string, limit: Limit): void;
+  /** Keeps only the best `keep` rows of a stage. */
+  trim(stage: string, keep: number): void;
+  /** Forgets rate-limit records last used before `day`. */
+  pruneLimits(day: number): void;
 }
 
 /** True if a ranks above b. */
@@ -77,6 +81,13 @@ export class MemoryStore implements Store {
   }
   setLimit(device: string, limit: Limit): void {
     this.limits.set(device, { ...limit });
+  }
+  trim(stage: string, keep: number): void {
+    const rows = this.stage(stage).sort((a, b) => (above(a, b) ? -1 : 1));
+    for (const r of rows.slice(keep)) this.rows.delete(MemoryStore.key(r.device, r.stage));
+  }
+  pruneLimits(day: number): void {
+    for (const [k, l] of this.limits) if (l.day < day) this.limits.delete(k);
   }
   private stage(stage: string): Row[] {
     return [...this.rows.values()].filter((r) => r.stage === stage);
@@ -152,5 +163,18 @@ export class SqlStore implements Store {
        ON CONFLICT (device) DO UPDATE SET last = excluded.last, day = excluded.day, count = excluded.count`,
       device, l.last, l.day, l.count,
     );
+  }
+  trim(stage: string, keep: number): void {
+    // Cheap count first (indexed): the delete only runs once a stage is over the cap.
+    const n = Number(this.sql.exec('SELECT COUNT(*) AS n FROM scores WHERE stage = ?', stage).toArray()[0]?.n ?? 0);
+    if (n <= keep) return;
+    this.sql.exec(
+      `DELETE FROM scores WHERE stage = ? AND rowid NOT IN (SELECT rowid FROM scores WHERE stage = ?
+       ORDER BY score DESC, seconds ASC, at ASC, device ASC LIMIT ?)`,
+      stage, stage, keep,
+    );
+  }
+  pruneLimits(day: number): void {
+    this.sql.exec('DELETE FROM limits WHERE day < ?', day);
   }
 }

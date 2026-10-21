@@ -1,5 +1,5 @@
 import { cleanName, defaultName } from '../src/services/name_filter';
-import { levelOfStage, maxScore } from '../src/services/score';
+import { levelOfStage, maxScore, scoreConsistent } from '../src/services/score';
 import { UUID_RE, type ScoreRow, type ScoreSubmission, type SubmitReply, type TopScores } from '../src/services/leaderboard_types';
 import { type Row, type Store } from './leaderboard_store';
 
@@ -16,6 +16,14 @@ export const POST_GAP_MS = 3000;
 export const DAILY_POSTS = 300;
 /** Largest POST body accepted (bytes). */
 export const MAX_BODY = 2048;
+/**
+ * Posts per UTC day from one network address, whatever device ids it sends
+ * (random ids would get round the per-device limit). Generous: a whole office
+ * or school can share one address.
+ */
+export const IP_DAILY_POSTS = 2000;
+/** Rows kept per stage: past this the lowest one goes, so random ids can't grow the table forever. */
+export const STAGE_CAP = 500;
 const DAY_MS = 86_400_000;
 
 export type Validated = { ok: true; sub: ScoreSubmission; renamed: boolean } | { ok: false; reason: string };
@@ -57,17 +65,43 @@ const scoreRow = (r: Row, rank: number): ScoreRow => ({
   stars: r.stars,
 });
 
-export class Leaderboard {
-  constructor(private store: Store) {}
+/** A short, non-reversible key for a network address (only used for rate limits; the address itself is never stored). */
+export function clientKey(address: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < address.length; i++) h = Math.imul(h ^ address.charCodeAt(i), 0x01000193);
+  return `ip:${(h >>> 0).toString(36)}`;
+}
 
-  /** A POST. `now` is ms since 1970. */
-  submit(body: unknown, now: number): SubmitReply {
+export class Leaderboard {
+  /** UTC day the old rate-limit records were last cleared. */
+  private prunedDay = -1;
+
+  /** `checkScores`: reject rows a real clear can't produce (tests of ranking turn it off). */
+  constructor(private store: Store, private checkScores = true) {}
+
+  /** A POST. `now` is ms since 1970; `client` is the sender's network address when the host knows it. */
+  submit(body: unknown, now: number, client?: string): SubmitReply {
     const v = validate(body);
     if (!v.ok) return v;
     const s = v.sub;
     const device = s.device_uuid;
+    // The score, time, hearts and stars must fit together the way the game computes them.
+    if (this.checkScores && !scoreConsistent(levelOfStage(s.stage_id)!, s.score, s.completion_time_seconds, s.hearts_left, s.stars)) {
+      return { ok: false, reason: 'bad_score' };
+    }
 
     const day = Math.floor(now / DAY_MS);
+    if (day !== this.prunedDay) {
+      this.prunedDay = day;
+      this.store.pruneLimits(day - 1);
+    }
+    if (client) {
+      const key = clientKey(client);
+      const ip = this.store.limit(key);
+      const ipCount = ip && ip.day === day ? ip.count : 0;
+      if (ipCount >= IP_DAILY_POSTS) return { ok: false, reason: 'daily_limit' };
+      this.store.setLimit(key, { last: now, day, count: ipCount + 1 });
+    }
     const lim = this.store.limit(device);
     if (lim && now - lim.last < POST_GAP_MS) return { ok: false, reason: 'too_fast' };
     const count = lim && lim.day === day ? lim.count : 0;
@@ -82,7 +116,10 @@ export class Leaderboard {
     const old = this.store.best(device, s.stage_id);
     const better = !old || fresh.score > old.score || (fresh.score === old.score && fresh.seconds < old.seconds);
     const best = better ? fresh : old;
-    if (better) this.store.put(fresh);
+    if (better) {
+      this.store.put(fresh);
+      this.store.trim(s.stage_id, STAGE_CAP);
+    }
     return { ok: true, rank: this.store.rankOf(best), best: best.score, name };
   }
 
@@ -106,7 +143,7 @@ export interface ApiReply {
  * (the host checks MAX_BODY before reading too much). OPTIONS and CORS
  * headers are the host's job (see CORS_HEADERS).
  */
-export function scoresApi(lb: Leaderboard, method: string, url: URL, bodyText: string, now: number): ApiReply {
+export function scoresApi(lb: Leaderboard, method: string, url: URL, bodyText: string, now: number, client?: string): ApiReply {
   if (method === 'GET') {
     const res = lb.top(url.searchParams.get('stage') ?? '', url.searchParams.get('device') ?? undefined);
     return res ? { status: 200, body: res } : { status: 400, body: { ok: false, reason: 'bad_stage' } };
@@ -119,7 +156,7 @@ export function scoresApi(lb: Leaderboard, method: string, url: URL, bodyText: s
   } catch {
     return { status: 400, body: { ok: false, reason: 'bad_json' } };
   }
-  const reply = lb.submit(body, now);
+  const reply = lb.submit(body, now, client);
   const status = reply.ok ? 200 : reply.reason === 'too_fast' || reply.reason === 'daily_limit' ? 429 : 400;
   return { status, body: reply };
 }

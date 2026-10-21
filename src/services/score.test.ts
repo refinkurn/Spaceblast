@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { levelOfStage, maxScore, parSeconds, scoreFor, scoreTarget, stageId, starsFor } from './score';
+import { LEVEL_COUNT, levelSpec } from '../sim/levels';
+import { levelOfStage, maxScore, parSeconds, scoreConsistent, scoreFor, scoreTarget, stageId, starsFor } from './score';
 import { cleanName, defaultName, isRude } from './name_filter';
 
 describe('story score', () => {
@@ -68,5 +69,29 @@ describe('leaderboard names', () => {
   it('makes friendly defaults', () => {
     expect(defaultName(() => 0)).toBe('Bosco_100');
     expect(cleanName(defaultName())).not.toBeNull();
+  });
+});
+
+describe('server plausibility check', () => {
+  it('accepts every genuine clear, exactly as the client sends it', () => {
+    for (let level = 1; level <= LEVEL_COUNT; level++) {
+      const most = levelSpec(level).roster.length + (levelSpec(level).boss ? 30 : 0);
+      for (let martians = 0; martians <= most; martians += levelSpec(level).boss ? 5 : 1) {
+        for (const heartsLeft of [1, 2, 3]) {
+          for (const secs of [1, 4, 5, 6, 30, 59, 60, 74, 75, 76, 200, 900]) {
+            const s = scoreFor({ level, martians, ticks: secs * 60 + 17, heartsLeft });
+            // story_score.ts sends max(5, seconds) and the stars from the real time.
+            expect(scoreConsistent(level, s.total, Math.max(5, s.seconds), heartsLeft, s.stars), `level ${level}, ${martians} M, ${heartsLeft} h, ${secs} s`).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  it('rejects a score that is not reachable', () => {
+    const s = scoreFor({ level: 3, martians: 2, ticks: 50 * 60, heartsLeft: 2 });
+    expect(scoreConsistent(3, s.total + 100, 50, 2, s.stars)).toBe(false);
+    expect(scoreConsistent(3, s.total, 50, 3, s.stars)).toBe(false);
+    expect(scoreConsistent(3, s.total, 40, 2, s.stars)).toBe(false);
   });
 });

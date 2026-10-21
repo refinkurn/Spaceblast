@@ -78,6 +78,25 @@ export function maxScore(level: number): number {
   return SCORE.clear + START_LIVES * SCORE.heart + par * SCORE.second + kills * SCORE.martian;
 }
 
+/**
+ * Could a real clear produce this row? The score must be clear + hearts + the
+ * time bonus for these seconds + a whole number of Martians (within the
+ * maxScore allowance), and the stars must be what starsFor gives. The client
+ * reports at least 5 s, so a reported 5 also allows the bonus of a faster clear.
+ */
+export function scoreConsistent(level: number, total: number, seconds: number, heartsLeft: number, stars: number): boolean {
+  const spec = levelSpec(level);
+  const par = parSeconds(level);
+  const maxKills = spec.roster.length * 3 + (spec.boss ? 150 : 20);
+  const fastest = seconds === 5 ? 0 : seconds;
+  for (let s = seconds; s >= fastest; s--) {
+    const time = par === null ? 0 : Math.max(0, (par - s) * SCORE.second);
+    const kills = (total - SCORE.clear - heartsLeft * SCORE.heart - time) / SCORE.martian;
+    if (Number.isInteger(kills) && kills >= 0 && kills <= maxKills && stars === starsFor(level, total, heartsLeft, s)) return true;
+  }
+  return false;
+}
+
 /** Leaderboard id for a level: sector-level, e.g. level 8 = "stage_2_3". */
 export function stageId(level: number): string {
   const spec = levelSpec(level);

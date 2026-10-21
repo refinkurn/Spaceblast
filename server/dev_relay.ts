@@ -36,7 +36,7 @@ function scoresMiddleware(lb: Leaderboard): Connect.NextHandleFunction {
       if (text.length > MAX_BODY) tooBig = true;
     });
     req.on('end', () => {
-      const r = scoresApi(lb, method, url, tooBig ? 'x'.repeat(MAX_BODY + 1) : text, Date.now());
+      const r = scoresApi(lb, method, url, tooBig ? 'x'.repeat(MAX_BODY + 1) : text, Date.now(), req.socket.remoteAddress);
       send(r.status, r.body);
     });
   };

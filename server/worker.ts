@@ -89,6 +89,31 @@ export class RoomObject implements DurableObject {
   }
 }
 
+/**
+ * Reads a request body, but stops (null) as soon as it passes `max` bytes, so a
+ * huge body without a Content-Length is never read in full.
+ */
+async function readCapped(request: Request, max: number): Promise<string | null> {
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const parts: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel();
+      return null;
+    }
+    parts.push(value);
+  }
+  const all = new Uint8Array(size);
+  let at = 0;
+  for (const p of parts) { all.set(p, at); at += p.byteLength; }
+  return new TextDecoder().decode(all);
+}
+
 /** The leaderboard: every stage's scores in one SQLite-backed object. */
 export class LeaderboardObject implements DurableObject {
   private lb: Leaderboard;
@@ -102,10 +127,13 @@ export class LeaderboardObject implements DurableObject {
     let text = '';
     if (request.method === 'POST') {
       if (Number(request.headers.get('Content-Length') ?? 0) > MAX_BODY) return json(400, { ok: false, reason: 'bad_body' });
-      text = await request.text();
-      if (new TextEncoder().encode(text).length > MAX_BODY) return json(400, { ok: false, reason: 'bad_body' });
+      const body = await readCapped(request, MAX_BODY);
+      if (body === null) return json(400, { ok: false, reason: 'bad_body' });
+      text = body;
     }
-    const r = scoresApi(this.lb, request.method, new URL(request.url), text, Date.now());
+    // Cloudflare puts the sender's address here; it only feeds a hashed rate limit.
+    const client = request.headers.get('CF-Connecting-IP') ?? undefined;
+    const r = scoresApi(this.lb, request.method, new URL(request.url), text, Date.now(), client);
     return json(r.status, r.body);
   }
 }

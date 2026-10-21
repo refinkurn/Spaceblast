@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import { maxScore } from '../src/services/score';
-import { DAILY_POSTS, Leaderboard, MemoryStore, SqlStore, scoresApi, validate, type SqlLike, type Store } from './leaderboard';
+import { DAILY_POSTS, IP_DAILY_POSTS, Leaderboard, MemoryStore, STAGE_CAP, SqlStore, clientKey, scoresApi, validate, type SqlLike, type Store } from './leaderboard';
 
 // node:sqlite stands in for Cloudflare's ctx.storage.sql, so the SQL is tested too.
 const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite') as {
@@ -68,7 +68,8 @@ describe.each<[string, () => Store]>([
   ['MemoryStore', () => new MemoryStore()],
   ['SqlStore', () => new SqlStore(sqlite())],
 ])('leaderboard on %s', (_, makeStore) => {
-  const board = () => new Leaderboard(makeStore());
+  // Ranking, limits and names: made-up scores, so the score check is off here (tested below).
+  const board = () => new Leaderboard(makeStore(), false);
 
   it('keeps only the best per device and stage; ties go to the faster time', () => {
     const lb = board();
@@ -134,7 +135,7 @@ describe('leaderboard: HTTP route', () => {
   const url = (q = '') => new URL(`http://x/api/scores${q}`);
 
   it('maps replies to 200 / 400 / 429', () => {
-    const lb = new Leaderboard(new MemoryStore());
+    const lb = new Leaderboard(new MemoryStore(), false);
     expect(scoresApi(lb, 'POST', url(), JSON.stringify(sub()), 0).status).toBe(200);
     expect(scoresApi(lb, 'POST', url(), JSON.stringify(sub()), 1000)).toEqual({ status: 429, body: { ok: false, reason: 'too_fast' } });
     expect(scoresApi(lb, 'POST', url(), JSON.stringify(sub({ score: 1e9 })), 9000).status).toBe(400);
@@ -142,5 +143,52 @@ describe('leaderboard: HTTP route', () => {
     expect(scoresApi(lb, 'POST', url(), ' '.repeat(3000), 9000).status).toBe(400);
     expect(scoresApi(lb, 'GET', url('?stage=stage_1_1'), '', 0).status).toBe(200);
     expect(scoresApi(lb, 'GET', url('?stage=bad'), '', 0).status).toBe(400);
+  });
+});
+
+describe('leaderboard hardening', () => {
+  // A real level 1 clear: 2,000 + 3 hearts x 1,000 + (75 - 60) s x 20 + 3 Martians x 500 = 6,800, 3 stars.
+  const real = sub({ score: 6800, completion_time_seconds: 60, hearts_left: 3, stars: 3 });
+
+  it('accepts a score a real clear can produce, rejects one it cannot', () => {
+    const lb = new Leaderboard(new MemoryStore());
+    expect(lb.submit(real, 0)).toMatchObject({ ok: true, rank: 1, best: 6800 });
+    expect(lb.submit(sub({ device_uuid: uuid(2), score: 6900 }), 0)).toEqual({ ok: false, reason: 'bad_score' }); // not a whole Martian
+    expect(lb.submit(sub({ device_uuid: uuid(3), score: 6800, stars: 2 }), 0)).toEqual({ ok: false, reason: 'bad_score' }); // wrong stars
+    expect(lb.submit(sub({ device_uuid: uuid(4), score: 6800, hearts_left: 1 }), 0)).toEqual({ ok: false, reason: 'bad_score' }); // hearts don't add up
+  });
+
+  for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['SqlStore', () => new SqlStore(sqlite())]] as [string, () => Store][]) {
+    it(`limits one network address whatever device ids it sends (${name})`, () => {
+      const lb = new Leaderboard(makeStore(), false);
+      for (let i = 0; i < IP_DAILY_POSTS; i++) expect(lb.submit(sub({ device_uuid: uuid(100 + i) }), 0, '203.0.113.7').ok).toBe(true);
+      expect(lb.submit(sub({ device_uuid: uuid(9999) }), 0, '203.0.113.7')).toEqual({ ok: false, reason: 'daily_limit' });
+      expect(lb.submit(sub({ device_uuid: uuid(9998) }), 0, '198.51.100.1').ok).toBe(true); // another address is fine
+      expect(lb.submit(sub({ device_uuid: uuid(9997) }), 86_400_000, '203.0.113.7').ok).toBe(true); // a new day
+    }, 30000); // 2,000 posts
+
+    it(`keeps at most STAGE_CAP rows per stage, dropping the lowest (${name})`, () => {
+      const store = makeStore();
+      const lb = new Leaderboard(store, false);
+      for (let i = 0; i < STAGE_CAP + 5; i++) lb.submit(sub({ device_uuid: uuid(i + 1), score: 1000 + i }), 0);
+      expect(store.top('stage_1_1', STAGE_CAP + 10)).toHaveLength(STAGE_CAP);
+      expect(store.best(uuid(1), 'stage_1_1')).toBeNull(); // the lowest went
+      expect(store.top('stage_1_1', 1)[0].score).toBe(1000 + STAGE_CAP + 4);
+    });
+
+    it(`forgets old rate-limit records (${name})`, () => {
+      const store = makeStore();
+      store.setLimit('x', { last: 0, day: 3, count: 1 });
+      store.setLimit('y', { last: 0, day: 5, count: 1 });
+      store.pruneLimits(5);
+      expect(store.limit('x')).toBeNull();
+      expect(store.limit('y')).not.toBeNull();
+    });
+  }
+
+  it('never stores the address itself', () => {
+    expect(clientKey('203.0.113.7')).toMatch(/^ip:[0-9a-z]+$/);
+    expect(clientKey('203.0.113.7')).not.toContain('203');
+    expect(clientKey('203.0.113.7')).toBe(clientKey('203.0.113.7'));
   });
 });

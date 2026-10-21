@@ -1,3 +1,4 @@
+import { UUID_RE } from './leaderboard_types';
 import { cleanName, defaultName } from './name_filter';
 
 // The leaderboard identity, with no sign-in: a random device id made on the
@@ -26,7 +27,7 @@ export function loadProfile(): Profile {
   if (cached) return cached;
   let p: Partial<Profile> = {};
   try { p = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Profile>; } catch { /* private mode */ }
-  const uuid = typeof p.uuid === 'string' && /^[0-9a-f-]{36}$/.test(p.uuid) ? p.uuid : newUuid();
+  const uuid = typeof p.uuid === 'string' && UUID_RE.test(p.uuid) ? p.uuid : newUuid();
   cached = { uuid, name: cleanName(p.name) ?? defaultName() };
   save(cached);
   return cached;
