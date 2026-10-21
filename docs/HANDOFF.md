@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Vest bubble, speed trail, new power-up icons** (src/view/hero_view.ts, src/flow/hud.ts)
-  Now: plain bubble; no speed trail; simple HUD icons.
-  Want: pulsing pale bubble while armor > 0; short yellow trail while moving with boots; new SVG icons in HUD and intro cards (pips stay).
-  Done when: bubble and trail behave as specced; icons match; tests and build pass.
-  Spec: docs/design/powerup-look.md (part 2)
 
 ## In progress
 
@@ -31,6 +26,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: vest bubble, speed trail, new icons (part 2): pulsing pale-cyan bubble (a little brighter per armor point up to 3); yellow 8-segment trail behind a moving hero with boots (longer per level, off when still or at reduced quality, `src/view/speed_trail.ts`); new coloured SVG icons in HUD and intro cards with pips in each power-up's colour; tests for trail, bubble and icon colours; 221 tests pass. Not seen on screen (headless check hit the story crawl).
 - 2026-10-21: power-up pick-up look (part 1): five low-poly items in the new colours inside a glass shell, floor aura, 30 deg/s spin and slow bob, shared 120-dot particle pool for idle sparkles and spawn/collect bursts; aura and idle dots off after `AdaptiveQuality` steps down (`reduced`); new `src/view/items_view.ts`, `item_look.ts`, `particles.ts` with tests; seen in a headless browser at 740x360 with no errors (items are small at that size); 217 tests pass.
 - 2026-10-21: invite link + reconnect screen: Invite button beside the room code (share sheet, else copies `?room=CODE`, shows "Link copied"); opening `?room=CODE` goes to Multiplayer with the code filled in and the name focused (joins only on Join, then `room` is removed from the URL); full-screen "Reconnecting to room CODE…" overlay shows/hides with `onReconnecting`, and hides on exit; parsing in `src/flow/invite.ts` with tests; 212 tests pass. Not tried on a phone or with a real dropped connection.
 - 2026-10-21: start countdown 3-2-1-BLAST! (0.6 s steps, offline Story after the level card and Battle rounds; held by the paused flag; skipped when level 1's first coach prompt is pending), red damage vignette (CSS, reduced-motion softer) on life/armor loss, vibration 30 ms on placing a Charge and 80 ms when hurt; logic in `src/flow/countdown.ts`; 209 tests pass. Not checked in a real browser or on a phone.

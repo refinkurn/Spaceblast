@@ -58,9 +58,8 @@ html, body {
 .icon { width: 18px; height: 18px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 0; }
 .icon.heart { color: #ff4f6d; }
 .lost .icon.heart { color: #ffffff2a; }
-.icon.oxygen { color: #5ad1ff; }
-.icon.oxygen circle { fill: none; stroke-width: 2.4; }
-.icon.oxygen text { font: 700 8px system-ui, sans-serif; fill: #5ad1ff; stroke: none; }
+.icon.oxygen { filter: drop-shadow(0 0 3px #7fe8ff99); }
+.icon.oxygen text { font: 700 7px system-ui, sans-serif; }
 .hud-chip {
   padding: 3px 10px;
   border-radius: 999px;
@@ -1003,3 +1002,8 @@ body.scene #coach { visibility: hidden; }
 .reconnect-spin { width: 44px; height: 44px; border: 4px solid #ffffff30; border-top-color: var(--accent); border-radius: 50%; animation: reconnect-spin 0.9s linear infinite; }
 @keyframes reconnect-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .reconnect-spin { animation-duration: 3s; } }
+
+/* Pips take their power-up's colour. */
+.power.charges .pips i.on { background: #00ffff; }
+.power.range .pips i.on { background: #ff5500; }
+.power.speed .pips i.on { background: #ffe600; }

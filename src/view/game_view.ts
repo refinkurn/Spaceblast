@@ -152,6 +152,7 @@ export class GameView {
     this.charges.sync(state, predicted?.p.charges);
     this.beams.sync(state);
     this.items.reduced = this.quality.reduced;
+    for (const h of this.heroes) h.reduced = this.quality.reduced;
     this.items.sync(state, time);
     this.gate.sync(state, time);
     this.martians.sync(state, this.prevMartians, alpha, time);

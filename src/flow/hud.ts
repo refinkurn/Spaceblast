@@ -13,18 +13,19 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
 const HEART =
   '<svg viewBox="0 0 24 24" class="icon heart"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3.1 1.7-1.9 3.2-3.1 5.3-3.1 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>';
+// Icons use the power-up colours from view/item_look.ts (docs/design/powerup-look.md).
 export const OXYGEN =
-  '<svg viewBox="0 0 24 24" class="icon oxygen"><circle cx="12" cy="12" r="9"/><text x="12" y="15.5" text-anchor="middle">O2</text></svg>';
+  '<svg viewBox="0 0 24 24" class="icon oxygen"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z" fill="#ffffff" stroke="#7fe8ff" stroke-width="2" stroke-linejoin="round"/><text x="12" y="14.5" text-anchor="middle" fill="#2a8fb0" stroke="none">O2</text></svg>';
 export const POWER_ICONS: Record<string, string> = {
-  charges: '<svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="13" r="7"/><path d="M14 6l3-3" stroke-width="2"/></svg>',
-  range: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M2 12h20" stroke-width="4" stroke-linecap="round"/></svg>',
-  speed: '<svg viewBox="0 0 24 24" class="icon"><path d="M4 6l7 6-7 6M12 6l7 6-7 6" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
-  freeze: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7" stroke-width="2.5" stroke-linecap="round"/></svg>',
+  charges: '<svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="14" r="7" fill="#1a103c" stroke="#00ffff" stroke-width="2"/><path d="M15 6.5l2.5-3M17.5 6l1.5 1.5" stroke="#00ffff" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="19.5" cy="3.5" r="1.8" fill="#00ffff" stroke="none"/></svg>',
+  range: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M2 12h20" stroke="#ff5500" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="3.2" fill="#ffcc00" stroke="none"/></svg>',
+  speed: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 3h5v10l4 3v4H9v-5l3-2z" fill="#ffe600" stroke="none"/><path d="M1 8h6M2 13h5" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
+  freeze: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7" stroke="#b9a4ff" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="2.4" fill="#ffffff" stroke="none"/></svg>',
 };
 
 function pips(label: string, key: string, value: number, max: number): string {
   const dots = Array.from({ length: max }, (_, i) => `<i class="${i < value ? 'on' : ''}"></i>`).join('');
-  return `<span class="power" title="${label} ${value}/${max}" aria-label="${label} ${value} of ${max}">${POWER_ICONS[key]}<span class="pips">${dots}</span></span>`;
+  return `<span class="power ${key}" title="${label} ${value}/${max}" aria-label="${label} ${value} of ${max}">${POWER_ICONS[key]}<span class="pips">${dots}</span></span>`;
 }
 
 export class Hud {
