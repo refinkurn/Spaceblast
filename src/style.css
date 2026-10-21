@@ -38,11 +38,24 @@ html, body {
   background: linear-gradient(#0009, #0000);
   pointer-events: none;
 }
-#hud .title { font-weight: 700; letter-spacing: 0.12em; color: var(--accent); }
+#hud { gap: 8px; }
+/* Left column, centre chip + clock, right buttons. Only the top-left column hangs below the bar, inside the left gutter. */
+.hud-left { position: absolute; top: 4px; left: max(12px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 3px; max-width: calc(var(--gutter) - 8px); }
+.hud-who { display: flex; align-items: center; gap: 6px; }
+.hud-avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; color: #fff; background: #3a7bff; border: 2px solid #ffffffcc; }
+.hud-mid { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hud-clock { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000a; }
+.hud-clock[hidden] { display: none; }
+#full-btn { margin-left: auto; }
+.hud-health { flex-wrap: wrap; }
+.hud-health.hurt { animation: hurt-flash 0.4s ease-out; }
+.hud-health.hurt .icon.heart, .hud-health.hurt .icon.oxygen { filter: drop-shadow(0 0 4px #ff2d4d) brightness(1.6); }
+@keyframes hurt-flash { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@media (prefers-reduced-motion: reduce) { .hud-health.hurt { animation: none; } }
 
 /* HUD: hearts and oxygen, stage chip, objective, power-up pips. */
 .hud-health { display: flex; gap: 2px; align-items: center; }
-.icon { width: 20px; height: 20px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 0; }
+.icon { width: 18px; height: 18px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 0; }
 .icon.heart { color: #ff4f6d; }
 .lost .icon.heart { color: #ffffff2a; }
 .icon.oxygen { color: #5ad1ff; }
@@ -60,21 +73,14 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .hud-chip.boss { background: #ff4f6d26; border-color: #ff4f6d; color: #ffd0d8; }
-.hud-goal { color: var(--ink-quiet); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
-.hud-powers { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.hud-goal { color: var(--ink-quiet); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
+.hud-powers { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
 .power { display: flex; gap: 4px; align-items: center; color: var(--accent); font-size: 12px; font-weight: 700; }
 .power .icon { width: 16px; height: 16px; }
 .power.freeze { color: #b9a4ff; }
 .pips { display: flex; gap: 2px; }
 .pips i { width: 6px; height: 10px; border-radius: 2px; background: #ffffff22; }
 .pips i.on { background: var(--accent); }
-@media (max-width: 900px) {
-  #hud .title { display: none; }
-  #hud { gap: 10px; }
-}
-@media (max-width: 700px) {
-  .hud-goal { display: none; }
-}
 #menu-btn {
   pointer-events: auto;
   font: inherit;

@@ -18,11 +18,15 @@
   <body>
     <canvas id="game"></canvas>
     <div id="hud">
-      <span class="title">SPACEBLAST</span>
-      <div id="hud-health" class="hud-health" aria-label="Lives and armor"></div>
-      <div id="hud-stage" class="hud-chip"></div>
-      <div id="hud-goal" class="hud-goal"></div>
-      <div id="hud-powers" class="hud-powers"></div>
+      <div class="hud-left">
+        <div class="hud-who"><span class="hud-avatar" aria-hidden="true">B</span><div id="hud-health" class="hud-health" aria-label="Lives and armor"></div></div>
+        <div id="hud-powers" class="hud-powers"></div>
+        <div id="hud-goal" class="hud-goal"></div>
+      </div>
+      <div class="hud-mid">
+        <div id="hud-stage" class="hud-chip"></div>
+        <div id="hud-clock" class="hud-clock" hidden></div>
+      </div>
       <button id="full-btn" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
       <button id="sound-btn" class="sound-btn" type="button" aria-label="Sound"></button>
       <button id="menu-btn" type="button">Menu</button>
