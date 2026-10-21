@@ -37,6 +37,21 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
   Want: slim full-width bottom banner (~84 px), 64 px portrait, 12-13 px name, 16 px+ text; standing sprite and Skip stay.
   Done when: prologue reads well at 740x360 with no overlap; tests and build pass.
   Spec: docs/design/menu-dialogue.md (part 2)
+- **Pause menu** (src/main.ts `openMenu`/loop, index.html `#hud`, style.css)
+  Now: the HUD Menu button quits straight to the main menu; no pause.
+  Want: 48 px pause button opens a card (Resume, Restart, Settings, Quit with confirm); pauses via the loop flag; online keeps the leave prompt.
+  Done when: pause/resume continues exactly; restart and quit work; tests and build pass.
+  Spec: docs/design/match-screens.md (part 1)
+- **End-of-match screen + boss title fix** (src/flow/screens.ts `#banner`, story_mode.ts, main.ts)
+  Now: text banner; boss clears say "<boss> destroyed!" (against canon).
+  Want: VICTORY / DEFEATED / LEVEL CLEAR title, Bosco happy/defeated sprite, summary (time, lives lost, stars, Martians cleared; battle: time + tally); boss title says survived/ruptured.
+  Done when: Story clear, game over and battle round all show it; tests cover summary text and boss title.
+  Spec: docs/design/match-screens.md (part 2)
+- **Lobby slot cards** (src/flow/online.ts, index.html `#online-lobby`, style.css)
+  Now: player list + bots stepper.
+  Want: 4 slot cards (players, then bots, then OPEN); host taps OPEN to add a bot, BOT to remove one (existing `bots` setting); stepper removed.
+  Done when: adding/removing bots by tap works and a 4th player joining still works; tests and build pass.
+  Spec: docs/design/match-screens.md (part 3)
 
 ## In progress
 
