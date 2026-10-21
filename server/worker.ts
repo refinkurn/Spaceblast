@@ -10,6 +10,14 @@ interface Env {
   ASSETS: Fetcher;
 }
 
+/**
+ * Where new rooms are created. Without a hint Cloudflare picks a data centre
+ * near the room's creator, which from Indonesia measured ~90 ms away;
+ * Asia-Pacific keeps rooms close to players in the region. (A hint only
+ * applies when a room is first created.)
+ */
+const ROOM_REGION: DurableObjectLocationHint = 'apac';
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -17,16 +25,31 @@ export default {
     if (!match) return env.ASSETS.fetch(request);
     if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected a WebSocket', { status: 426 });
     if (!isRoomCode(match[1])) return new Response('Bad room code', { status: 400 });
-    return env.ROOMS.get(env.ROOMS.idFromName(match[1])).fetch(request);
+    return env.ROOMS.get(env.ROOMS.idFromName(match[1]), { locationHint: ROOM_REGION }).fetch(request);
   },
 };
+
+/** The data centre this code runs in (e.g. "SIN"), from Cloudflare's trace page; '' if unknown. */
+async function dataCentre(): Promise<string> {
+  try {
+    const text = await (await fetch('https://cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(500) })).text();
+    return text.match(/^colo=(\w+)$/m)?.[1] ?? '';
+  } catch {
+    return '';
+  }
+}
 
 /** One room. Lives in memory while anyone is connected; its clock runs only during rounds. */
 export class RoomObject implements DurableObject {
   private room = new Room();
   private timer: ReturnType<typeof setInterval> | null = null;
+  private located: Promise<void> | null = null;
 
   async fetch(request: Request): Promise<Response> {
+    // Once per room: learn where it runs, for the players' stats overlay (only
+    // the first join waits for it: usually a few ms, 0.5 s at most).
+    this.located ??= dataCentre().then((where) => { this.room.where = where; });
+    await this.located;
     const [client, server] = Object.values(new WebSocketPair());
     server.accept();
     const peer: Peer = { send: (d) => server.send(d), close: (c, r) => server.close(c, r) };

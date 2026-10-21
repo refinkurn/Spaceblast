@@ -43,6 +43,25 @@ match. Blackouts never overlap the arena collapse.
 - Every second the phones compare a fingerprint of the game state. If they
   ever differ, the game shows "Out of sync" (that would be a bug in `src/sim`).
 
+## The stats line (finding lag)
+
+During online rounds a small line at the bottom shows, for this phone:
+
+- `SIN` — the Cloudflare data centre the room runs in (rooms are placed in
+  Asia-Pacific; see `ROOM_REGION` in `server/worker.ts`).
+- `ping 24±3 ms` — round trip to the room, and how much it wobbles.
+  High ping = the server is far; big wobble = an uneven connection (Wi-Fi).
+- `buffer 2+0` — updates held back to smooth out wobble, plus any backlog.
+  A growing second number means this phone is falling behind.
+- `late 0` — your presses that reached the server too late (counted per round).
+- `ahead 9` — how many ticks your own astronaut is drawn ahead of the shared game.
+- `60 fps · slowest 18 ms · work 4 ms` — frame rate, the slowest frame and
+  the most time one frame took to run the game and draw (over 2 s).
+  Low fps with high work = the phone itself is the bottleneck.
+
+A screenshot from each phone during a laggy moment tells which it is. Open
+the game with `?nostats` at the end of the address to hide the line.
+
 ## Test on your computer
 
     npm run dev

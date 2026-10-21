@@ -16,6 +16,9 @@ import { LightingView, ShiftPreviewView } from './level_view';
 // GameState (interpolating between ticks) and turns sim events into effects.
 // Reads the state only, never changes it.
 
+/** A touch-first device (phone or tablet): drawn with lighter settings. */
+const PHONE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+
 export class GameView {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
@@ -38,14 +41,16 @@ export class GameView {
   private prevMartians = new Map<number, { x: number; y: number }>();
   private colors: number[] = [];
 
-  /** Render resolution, lowered automatically on slow phones. */
-  private quality = new AdaptiveQuality(window.devicePixelRatio || 1);
+  /** Render resolution, lowered automatically on slow phones (phones start at 1.5x at most). */
+  private quality = new AdaptiveQuality(PHONE ? Math.min(window.devicePixelRatio || 1, 1.5) : window.devicePixelRatio || 1);
 
   constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    // Phones: a sharp screen needs no antialiasing, and plain shadows from a
+    // smaller map look almost the same at phone size for much less GPU work.
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !PHONE || (window.devicePixelRatio || 1) < 2 });
     this.renderer.setPixelRatio(this.quality.pixelRatio);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = PHONE ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 
     const scene = this.scene;
     scene.background = new THREE.Color(0x14161d);
@@ -53,7 +58,7 @@ export class GameView {
     const sun = new THREE.DirectionalLight(0xfff1dd, 2.2);
     sun.position.set(-5, 12, 6);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.mapSize.setScalar(PHONE ? 512 : 1024);
     Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
     scene.add(sky, sun);
     scene.add(this.board.group, this.charges.group, this.beams.group, this.debris.group, this.items.group, this.gate.group);

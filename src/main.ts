@@ -8,6 +8,7 @@ import { Hud } from './flow/hud';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound } from './flow/online_match';
 import { Predictor } from './net/predict';
+import { NetStats } from './flow/net_stats';
 import { Screens, type MenuChoice } from './flow/screens';
 import { CONTROL_SCALE, SettingsScreen } from './flow/settings';
 import { GameAudio } from './flow/sound';
@@ -52,6 +53,8 @@ const score = new MatchScore();
 /** The online round being played; null outside online play. */
 let net: OnlineRound | null = null;
 const predictor = new Predictor();
+/** Online stats line (ping, buffer, frame rate) for diagnosing lag on real phones. */
+const netStats = new NetStats();
 /** Sim player id of this browser's astronaut (always 0 offline). */
 let localId = 0;
 let lastWinner = -1;
@@ -486,8 +489,10 @@ const portrait = window.matchMedia('(orientation: portrait) and (max-width: 900p
 const MIN_FRAME_MS = 10;
 view.renderer.setAnimationLoop((now: number) => {
   if (now - last < MIN_FRAME_MS) return;
+  const workStart = performance.now();
+  const frameMs = now - last;
   layout(); // reads the canvas size only; catches sizes iOS never announced
-  view.frameTime(now - last);
+  view.frameTime(frameMs);
   const dt = Math.min(now - last, 250);
   last = now;
   acc += dt;
@@ -529,6 +534,10 @@ view.renderer.setAnimationLoop((now: number) => {
   // Online: your own astronaut is drawn from your latest presses (net/predict.ts).
   const predicted = !paused && !cine.active && mode === 'online' && net ? predictor.run(state, net.sync, localId) : null;
   view.render(cine.state ?? state, alpha, seconds, now / 1000, predicted && { id: localId, p: predicted });
+  netStats.update(now, frameMs, performance.now() - workStart, mode === 'online' && net && state.status === 'playing' ? {
+    where: online.where, rtt: online.rtt, spread: online.rttSpread, reserve: net.sync.reserve,
+    buffered: net.sync.buffered, late: net.sync.lateInputs, ahead: predictor.ahead,
+  } : null);
   announcer.update(state, now, connectionNote(now), overlay || cine.active || cutscene.active);
   audio.update(state, screens.menuOpen || online.screenOpen || screens.storyOpen);
   const keyList = playerKeys();

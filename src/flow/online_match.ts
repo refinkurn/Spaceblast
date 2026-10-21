@@ -38,6 +38,7 @@ export class OnlineRound {
     this.humans = s.players;
     this.settings = s.settings;
     this.sync = new FrameSync(s.players.length);
+    this.sync.local = s.local;
     if (s.frames) this.sync.receive(0, s.frames);
     const botColors = botColorsFor(s.players);
     for (const p of s.players) {

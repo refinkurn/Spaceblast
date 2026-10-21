@@ -109,7 +109,7 @@ export type ErrorReason = 'taken' | 'not_found' | 'full' | 'bad_code' | 'expired
 /** Server -> browser. A slot is a seat in the room (0-3) and stays the same all match. */
 export type ServerMsg =
   /** `token` lets this browser rejoin its seat after a dropped connection. */
-  | { t: 'welcome'; you: number; host: number; players: Profile[]; settings: RoomSettings; playing: boolean; token: string }
+  | { t: 'welcome'; you: number; host: number; players: Profile[]; settings: RoomSettings; playing: boolean; token: string; where?: string }
   /** Someone joined, or changed name or colour. */
   | { t: 'profile'; player: Profile }
   | { t: 'settings'; s: RoomSettings }

@@ -107,6 +107,9 @@ export class OnlineRoom {
     return this.net.rtt;
   }
 
+  /** The data centre the room runs in (e.g. "SIN"), or '' when the server doesn't say. */
+  where = '';
+
   /** How much that ping wobbles, in ms. */
   get rttSpread(): number {
     return this.net.rttSpread;
@@ -289,6 +292,7 @@ export class OnlineRoom {
         this.host = m.host;
         this.players = m.players;
         this.settings = m.settings;
+        this.where = m.where ?? '';
         // Reconnected mid-match: stay in the game (a resume follows) instead of the lobby.
         if (!back) this.showLobby(m.playing ? 'A match is on. You will join from the next round.' : '');
         break;

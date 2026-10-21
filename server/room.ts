@@ -101,6 +101,8 @@ export class Room {
   private host = -1;
   private round: Round | null = null;
   private r = 0;
+  /** Where this room runs (a Cloudflare data centre code like "SIN"), shown in the stats overlay. */
+  where = '';
 
   get empty(): boolean {
     return this.seats.size === 0;
@@ -297,7 +299,7 @@ export class Room {
     const seat = this.seats.get(slot)!;
     this.sendTo(slot, {
       t: 'welcome', you: slot, host: this.host, players: this.profiles(), settings: this.settings,
-      playing: !!this.round?.active, token: seat.token,
+      playing: !!this.round?.active, token: seat.token, ...(this.where ? { where: this.where } : {}),
     });
   }
 

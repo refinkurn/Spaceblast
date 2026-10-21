@@ -1,7 +1,7 @@
 import { NO_COMMAND } from '../sim/command';
 import { step } from '../sim/sim';
 import type { Charge, GameState, Player } from '../sim/state';
-import type { FrameSync } from './frames';
+import { FAR_BEHIND, type FrameSync } from './frames';
 
 // Online, the shared game only moves on the server's frames, and your own
 // presses come back in them a full round trip later. Drawn from that alone,
@@ -34,12 +34,23 @@ export class Predictor {
   /** Ticks drawn ahead of the confirmed state, eased so the view doesn't jump. */
   private lead = 0;
 
+  /** Ticks currently drawn ahead (for the stats overlay). */
+  get ahead(): number {
+    return this.lead;
+  }
+
   reset(): void {
     this.lead = 0;
   }
 
   run(state: GameState, sync: FrameSync, local: number): Prediction | null {
     if (state.status !== 'playing' || !state.players[local]?.alive) return null;
+    // Catching up after a stall (e.g. the app was in the background): the
+    // confirmed game races ahead anyway, so predicting is wasted work.
+    if (sync.buffered > FAR_BEHIND) {
+      this.lead = 0;
+      return null;
+    }
     // Ticks from the next one to simulate up to the newest press.
     const want = Math.max(0, Math.min(MAX_LEAD, sync.aim - sync.tick + 1));
     // Move at most a tick per frame (big jumps, e.g. after a reconnect, at once).

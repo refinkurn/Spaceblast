@@ -191,3 +191,17 @@ describe('room: abuse', () => {
     expect(b.got.at(-1)).toEqual({ t: 'pong', id: 42 });
   });
 });
+
+describe('room location', () => {
+  it('tells players where the room runs, when it knows', () => {
+    const room = new Room();
+    room.where = 'SIN';
+    const a = peer();
+    room.connect(a, req({ create: true, name: 'A' }), 0);
+    expect(a.got[0]).toMatchObject({ t: 'welcome', where: 'SIN' });
+    const plain = new Room();
+    const b = peer();
+    plain.connect(b, req({ create: true, name: 'B' }), 0);
+    expect(b.got[0]).not.toHaveProperty('where');
+  });
+});

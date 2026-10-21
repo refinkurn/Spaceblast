@@ -39,6 +39,10 @@ export class FrameSync {
   delay = 6;
   /** Recent worst lateness of a frame message (ms), decaying over a few seconds. */
   jitter = TICK_MS;
+  /** This browser's player index (for the stats), -1 if unknown. */
+  local = -1;
+  /** This browser's commands that reached the server too late and were replaced (stats). */
+  lateInputs = 0;
   private frames: number[][] = [];
   /** This browser's own packed commands by tick, until the server's frame for that tick arrives (for prediction). */
   private mine = new Map<number, number>();
@@ -61,6 +65,8 @@ export class FrameSync {
     c.forEach((row, i) => {
       if (Array.isArray(row) && row.length === this.players && row.every((v) => v === FRAME_LEFT || isPacked(v))) {
         this.frames[tick + i] = row as number[];
+        const sent = this.mine.get(tick + i);
+        if (sent !== undefined && this.local >= 0 && row[this.local] !== sent) this.lateInputs++;
         this.mine.delete(tick + i);
         this.latest = Math.max(this.latest, tick + i);
       }
