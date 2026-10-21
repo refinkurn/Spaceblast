@@ -1,4 +1,5 @@
 import { MAX_BOOTS, MAX_CHARGES, MAX_RANGE, START_LIVES } from '../sim/constants';
+import { haptics } from './haptics';
 import type { GameState } from '../sim/state';
 import { hudText, type HudInfo } from './hud_text';
 
@@ -41,6 +42,14 @@ export class Hud {
     this.health.classList.remove('hurt');
     void this.health.offsetWidth;
     this.health.classList.add('hurt');
+    // Red glow at the screen edges, and a buzz where the phone can.
+    const v = document.getElementById('vignette');
+    if (v) {
+      v.classList.remove('hit');
+      void v.offsetWidth;
+      v.classList.add('hit');
+    }
+    haptics.buzz(80);
   }
 
   update(state: GameState, info: HudInfo): void {

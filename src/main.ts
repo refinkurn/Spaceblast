@@ -6,6 +6,7 @@ import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
 import { haptics } from './flow/haptics';
+import { Countdown } from './flow/countdown';
 import { PauseMenu } from './flow/pause';
 import { battleSummary, type BannerExtra } from './flow/summary';
 import { OnlineRoom, type RoundStart } from './flow/online';
@@ -27,7 +28,7 @@ import type { PlayerCommand } from './sim/command';
 import { MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS } from './sim/constants';
 import { levelSpec } from './sim/levels';
 import { hashState, step } from './sim/sim';
-import { createGame, type GameState, type SimEvent } from './sim/state';
+import { createGame, playerTile, type GameState, type SimEvent } from './sim/state';
 import { GameView } from './view/game_view';
 
 // Wiring: game modes (Story, Battle vs bot, online rooms), the round flow and
@@ -66,6 +67,7 @@ let devRun = false;
 
 const screens = new Screens(startMode, openMenu, pauseButton);
 const hud = new Hud();
+const countdown = new Countdown();
 const online = new OnlineRoom();
 const announcer = new Announcer();
 const congrats = new Congrats();
@@ -164,6 +166,7 @@ function openMenu() {
     return;
   }
   leaveAsked = false;
+  countdown.cancel();
   pause.close();
   cine.stop();
   cutscene.cancel();
@@ -191,8 +194,11 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   screens.hideLevelCard();
   cardUp = false;
   leaveAsked = false;
+  countdown.cancel();
   pause.close();
   clearPresses();
+  // Offline Battle rounds count in right away; Story levels count in when their card closes.
+  if (mode === 'battle') countdown.start();
 }
 
 /** Drops charge presses queued before the round could see them. */
@@ -241,6 +247,15 @@ function localCommands(): PlayerCommand[] {
 
 function onEvent(e: SimEvent) {
   switch (e.type) {
+    case 'charge_placed': {
+      // A short buzz when your own astronaut sets a Charge (it appears on your tile).
+      const me = state.players[localId];
+      if (me && !quiet) {
+        const [tx, ty] = playerTile(me);
+        if (tx === e.tx && ty === e.ty) haptics.buzz(30);
+      }
+      break;
+    }
     case 'armor_hit':
       announcer.flash('Oxygen Vest absorbed the hit!');
       break;
@@ -469,7 +484,11 @@ function skipCard() {
   cardUp = false;
   screens.hideLevelCard();
   // The Story level really starts now: the tutorial may have something to say.
-  if (mode === 'survival') tutorial.start(story.level, state);
+  if (mode === 'survival') {
+    tutorial.start(story.level, state);
+    // Level 1's first coach prompt keeps its timing, so no count there.
+    if (!tutorial.startPending) countdown.start();
+  }
 }
 
 /** The notch / home-bar insets (env(safe-area-inset-*)), read off a hidden probe. */
@@ -535,7 +554,7 @@ view.renderer.setAnimationLoop((now: number) => {
   const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open || story.overlayOpen;
   // Offline games pause while the phone is upright (the "rotate" screen is up).
   const upright = portrait.matches && mode !== 'online';
-  const paused = overlay || pause.open || upright || cardUp || story.cardOpen || cine.active || cutscene.active || (mode === 'online' && !net);
+  const paused = overlay || pause.open || upright || cardUp || countdown.active || story.cardOpen || cine.active || cutscene.active || (mode === 'online' && !net);
   // Something took over the screen: let go of the stick and the charge button.
   // Coming back: forget presses made meanwhile (Space on a card must not drop a charge).
   if (paused && !wasPaused) touch.release();
@@ -564,6 +583,7 @@ view.renderer.setAnimationLoop((now: number) => {
   const seconds = dt / 1000;
   // During the cinematic the view shows its replay (or the final moment).
   cutscene.update(seconds);
+  if (!overlay && !pause.open && !upright) countdown.update(seconds);
   // Scenes hide the HUD and touch controls.
   document.body.classList.toggle('scene', cutscene.active || cine.active || story.endingOpen);
   const alpha = cine.active ? cine.update(seconds) : paused ? 1 : acc / TICK_MS;

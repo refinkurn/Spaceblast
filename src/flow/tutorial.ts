@@ -55,6 +55,11 @@ export class Tutorial {
     for (const b of this.beats()) if (b.trigger === 'level_start') this.queue.push(b);
   }
 
+  /** True when a step is waiting for the level to begin (the countdown is skipped then). */
+  get startPending(): boolean {
+    return this.queue.length > 0;
+  }
+
   /** Leaving the level (menu, game over, next level). */
   stop(): void {
     this.queue = [];

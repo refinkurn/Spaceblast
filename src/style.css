@@ -978,3 +978,18 @@ body.scene #coach { visibility: hidden; }
 .lb-form { display: flex; gap: 8px; align-items: center; justify-content: center; font-size: 14px; }
 .lb-form input { width: 150px; min-height: 44px; padding: 0 10px; font: inherit; font-size: 16px; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff40; border-radius: 10px; }
 .lb-form button { font-size: 15px; padding: 0 16px; }
+
+/* Start countdown (3-2-1-BLAST!) and the red damage flash at the screen edges. */
+#countdown { position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center; pointer-events: none; font: 900 min(28vh, 140px) system-ui, sans-serif; color: #fff; text-shadow: 0 0 24px #4aa3ff, 0 4px 0 #0a1a3a; }
+#countdown[hidden] { display: none; }
+#countdown.go { font-size: min(20vh, 100px); color: #ffd84a; text-shadow: 0 0 24px #ff8a1f, 0 4px 0 #5a2a00; }
+#countdown.tick { animation: count-pop 0.6s ease-out; }
+@keyframes count-pop { 0% { transform: scale(1.7); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 85% { opacity: 1; } 100% { transform: scale(0.9); opacity: 0.5; } }
+#vignette { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0; box-shadow: inset 0 0 90px 30px #ff1a3ccc; }
+#vignette.hit { animation: vignette-flash 0.35s ease-out; }
+@keyframes vignette-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  #countdown.tick { animation: none; }
+  #vignette { box-shadow: inset 0 0 50px 10px #ff1a3c88; }
+  #vignette.hit { animation-duration: 0.2s; }
+}
