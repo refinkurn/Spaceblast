@@ -89,6 +89,8 @@ export const BITE_REACH = 650;
 export const START_LIVES = 3;
 /** Invulnerability after warping back in (1.5 s). */
 export const SPAWN_SHIELD_TICKS = 90;
+/** Developer god mode: a shield this long never runs out (the hero view doesn't blink above half of it). Not a game rule. */
+export const GOD_SHIELD = 1_000_000_000;
 
 // --- Battle ---------------------------------------------------------------------
 /** Round clock for Battle vs bot (online rooms pick one of ROUND_SECONDS). */

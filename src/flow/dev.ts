@@ -15,8 +15,6 @@ export interface DevOptions {
   story: boolean;
 }
 
-/** Shield value used for god mode; the hero view doesn't blink above GOD_SHIELD / 2. */
-export const GOD_SHIELD = 1_000_000_000;
 
 const KEY = 'spaceblast.dev';
 

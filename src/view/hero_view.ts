@@ -1,8 +1,7 @@
 import * as THREE from 'three';
-import { DIR_DX, DIR_DY } from '../sim/constants';
+import { DIR_DX, DIR_DY, GOD_SHIELD } from '../sim/constants';
 import type { Player } from '../sim/state';
 import { toWorld } from './coords';
-import { GOD_SHIELD } from '../flow/dev';
 import { SpeedTrail, bubbleOpacity } from './speed_trail';
 
 /** Placeholder astronaut: a suit sphere, a glass helmet and a "nose" for facing. */
