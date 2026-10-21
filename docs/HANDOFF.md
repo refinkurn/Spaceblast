@@ -67,6 +67,16 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
   Want: Invite button (share sheet or copy `?room=CODE`); opening that link fills the code; full-screen "Reconnecting to room CODE…" while the link retries.
   Done when: link opens Multiplayer with the code; reconnect screen shows and hides; tests cover `?room=` parsing.
   Spec: docs/design/polish-settings-net.md (part 3)
+- **Power-up pick-up look** (src/view/actors_view.ts `ItemsView`, effects_view.ts)
+  Now: plain coloured shapes (cone, sphere, box, octahedron, torus) bobbing and spinning fast.
+  Want: low-poly item meshes in the new colours inside a glass shell, floor aura, shared idle particles, spawn/collect bursts; slow 30 deg/s spin; aura and particles off at reduced quality.
+  Done when: all 5 items are easy to tell apart in a dev level; tests and build pass.
+  Spec: docs/design/powerup-look.md (part 1)
+- **Vest bubble, speed trail, new power-up icons** (src/view/hero_view.ts, src/flow/hud.ts)
+  Now: plain bubble; no speed trail; simple HUD icons.
+  Want: pulsing pale bubble while armor > 0; short yellow trail while moving with boots; new SVG icons in HUD and intro cards (pips stay).
+  Done when: bubble and trail behave as specced; icons match; tests and build pass.
+  Spec: docs/design/powerup-look.md (part 2)
 
 ## In progress
 
