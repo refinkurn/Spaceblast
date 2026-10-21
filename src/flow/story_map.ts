@@ -92,6 +92,8 @@ export class StoryMap {
 
   hide(): void {
     this.clearTimers();
+    this.warp.hidden = true;
+    this.warp.classList.remove('on');
     this.root.hidden = true;
     this.card.hidden = true;
     cancelAnimationFrame(this.raf);

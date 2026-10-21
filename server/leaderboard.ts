@@ -65,11 +65,28 @@ const scoreRow = (r: Row, rank: number): ScoreRow => ({
   stars: r.stars,
 });
 
-/** A short, non-reversible key for a network address (only used for rate limits; the address itself is never stored). */
-export function clientKey(address: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < address.length; i++) h = Math.imul(h ^ address.charCodeAt(i), 0x01000193);
-  return `ip:${(h >>> 0).toString(36)}`;
+/**
+ * A key for a network address, only used for rate limits: a 53-bit hash mixed
+ * with a salt that is random per server instance and never stored, so the
+ * stored key can't be turned back into an address by trying every IPv4.
+ */
+export function clientKey(address: string, salt: string): string {
+  const text = salt + '|' + address;
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `ip:${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}`;
+}
+
+function randomSalt(): string {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 }
 
 export class Leaderboard {
@@ -77,7 +94,8 @@ export class Leaderboard {
   private prunedDay = -1;
 
   /** `checkScores`: reject rows a real clear can't produce (tests of ranking turn it off). */
-  constructor(private store: Store, private checkScores = true) {}
+  /** `salt`: for clientKey; random per instance unless a test fixes it. */
+  constructor(private store: Store, private checkScores = true, private salt = randomSalt()) {}
 
   /** A POST. `now` is ms since 1970; `client` is the sender's network address when the host knows it. */
   submit(body: unknown, now: number, client?: string): SubmitReply {
@@ -95,17 +113,18 @@ export class Leaderboard {
       this.prunedDay = day;
       this.store.pruneLimits(day - 1);
     }
+    // The device's own limits first, so posts refused there don't use up the address's budget.
+    const lim = this.store.limit(device);
+    if (lim && now - lim.last < POST_GAP_MS) return { ok: false, reason: 'too_fast' };
+    const count = lim && lim.day === day ? lim.count : 0;
+    if (count >= DAILY_POSTS) return { ok: false, reason: 'daily_limit' };
     if (client) {
-      const key = clientKey(client);
+      const key = clientKey(client, this.salt);
       const ip = this.store.limit(key);
       const ipCount = ip && ip.day === day ? ip.count : 0;
       if (ipCount >= IP_DAILY_POSTS) return { ok: false, reason: 'daily_limit' };
       this.store.setLimit(key, { last: now, day, count: ipCount + 1 });
     }
-    const lim = this.store.limit(device);
-    if (lim && now - lim.last < POST_GAP_MS) return { ok: false, reason: 'too_fast' };
-    const count = lim && lim.day === day ? lim.count : 0;
-    if (count >= DAILY_POSTS) return { ok: false, reason: 'daily_limit' };
     this.store.setLimit(device, { last: now, day, count: count + 1 });
 
     // A replaced (rude) name keeps the device's saved name if it has one.

@@ -186,9 +186,20 @@ describe('leaderboard hardening', () => {
     });
   }
 
-  it('never stores the address itself', () => {
-    expect(clientKey('203.0.113.7')).toMatch(/^ip:[0-9a-z]+$/);
-    expect(clientKey('203.0.113.7')).not.toContain('203');
-    expect(clientKey('203.0.113.7')).toBe(clientKey('203.0.113.7'));
+  it('never stores the address itself, and a different salt gives a different key', () => {
+    const k = clientKey('203.0.113.7', 's1');
+    expect(k).toMatch(/^ip:[0-9a-z]+$/);
+    expect(k).not.toContain('203');
+    expect(clientKey('203.0.113.7', 's1')).toBe(k);
+    expect(clientKey('203.0.113.7', 's2')).not.toBe(k);
+    expect(clientKey('203.0.113.8', 's1')).not.toBe(k);
+  });
+
+  it('posts a device is refused for do not use the address budget', () => {
+    const lb = new Leaderboard(new MemoryStore(), false, 'salt');
+    expect(lb.submit(sub(), 0, '203.0.113.7').ok).toBe(true);
+    for (let i = 0; i < 5; i++) expect(lb.submit(sub(), 100, '203.0.113.7')).toEqual({ ok: false, reason: 'too_fast' });
+    const store = (lb as unknown as { store: Store }).store;
+    expect(store.limit(clientKey('203.0.113.7', 'salt'))?.count).toBe(1);
   });
 });

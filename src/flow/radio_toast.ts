@@ -75,7 +75,8 @@ export class RadioToasts {
   event(e: SimEvent, state: GameState, seenCard: (item: number) => boolean): void {
     const line = toastFor(e, state, 0, seenCard);
     if (!line || this.said.has(line.key)) return;
-    this.said.add(line.key);
+    // Every absorbed hit gets its line; the other triggers speak once per level.
+    if (line !== RADIO.vestHit) this.said.add(line.key);
     this.queue.push(line);
   }
 
@@ -88,6 +89,7 @@ export class RadioToasts {
       else if (blocked) {
         // An alert took the lane: this line gets its turn again afterwards.
         this.queue.items.unshift(this.showing);
+        this.queue.items.length = Math.min(this.queue.items.length, QUEUE_MAX);
         this.stop();
       }
       return;

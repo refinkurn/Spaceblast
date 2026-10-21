@@ -15,7 +15,6 @@ export interface DevOptions {
   story: boolean;
 }
 
-
 const KEY = 'spaceblast.dev';
 
 function load(): { unlocked: boolean; opts: DevOptions } {
