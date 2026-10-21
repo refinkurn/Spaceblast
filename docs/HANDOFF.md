@@ -17,6 +17,16 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
+- **Compact level card** (`#level-card`, src/flow/story.ts `levelCard`, screens.ts, style.css)
+  Now: wide card with LEVEL n, sector, Kit briefing and Bosco reply.
+  Want: ~320x180 card: big `1-3` title, sector name, goal icon + text, Kit line only; dim backdrop; same pause/tap logic.
+  Done when: levels 1, 5, 8 show it; tests cover title and goal per level type.
+  Spec: docs/design/hud-intro.md (part 1)
+- **HUD layout + life-lost flash** (src/flow/hud.ts, index.html `#hud`, style.css)
+  Now: one top bar row; goal hidden on phones; no feedback on losing a life.
+  Want: top-left avatar + hearts, power-ups and goal under them; top-centre stage chip + clock (boss/battle only); buttons stay top-right; hearts flash on life or armor loss.
+  Done when: fits a 740x360 landscape viewport with no overlap; tests and build pass.
+  Spec: docs/design/hud-intro.md (part 2)
 ## In progress
 
 ## Blocked
