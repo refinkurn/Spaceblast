@@ -18,6 +18,8 @@ export class Screens {
   private banner = $('banner');
   private primary = $<HTMLButtonElement>('banner-btn');
   private onPrimary = () => {};
+  /** Replaces the menu action of the banner's second button for one banner. */
+  private menuOverride: (() => void) | null = null;
   private sprite = new SpriteView($<HTMLCanvasElement>('banner-sprite'));
   private spriteRaf = 0;
 
@@ -26,7 +28,7 @@ export class Screens {
     $('mode-survival').addEventListener('click', () => onMode('survival'));
     $('mode-online').addEventListener('click', () => onMode('online'));
     this.primary.addEventListener('click', () => this.firePrimary());
-    $('banner-menu').addEventListener('click', onMenu);
+    $('banner-menu').addEventListener('click', () => (this.menuOverride ?? onMenu)());
     $('menu-btn').addEventListener('click', onPause);
   }
 
@@ -105,6 +107,7 @@ export class Screens {
   /** The end-of-match card: big title, Bosco's pose, a summary and two buttons. `menuLabel` renames the second one (it always goes to the menu). */
   showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = 'Main menu', tip = '', extra: BannerExtra = {}): void {
     $('banner-menu').textContent = menuLabel;
+    this.menuOverride = extra.onMenu ?? null;
     $('banner-tip').textContent = tip ? `Tip: ${tip}` : '';
     $('banner-tip').hidden = !tip;
     $('banner-title').textContent = title;

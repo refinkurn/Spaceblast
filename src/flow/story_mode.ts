@@ -8,6 +8,7 @@ import { Crawl } from './crawl';
 import { martiansNear } from './encounter';
 import { IntroCards } from './intro_card';
 import { LeaderboardScreen } from './leaderboard_screen';
+import { StoryMap } from './story_map';
 import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress } from './progress';
 import { scoreFor } from '../services/score';
@@ -16,9 +17,9 @@ import type { Screens } from './screens';
 import { ENDING, SECTORS, levelCard, type LevelCardText } from './story';
 import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
-import { bossClearLine, starText, storySummary } from './summary';
+import { bossClearLine, storySummary } from './summary';
 
-// Story Mode flow: the level map (continue / replay with stars), each level's
+// Story Mode flow: the Story map (flow/story_map.ts), each level's
 // lead-in (sector card, boss cutscene, level card), results, retrying a level
 // after a game over, alien and power-up cards, and the ending. main.ts owns the game loop; this decides
 // what happens around it.
@@ -32,6 +33,8 @@ export interface StoryHost {
   readonly state: GameState;
   /** Shows the level card (the game waits until it is dismissed). */
   showLevelCard(card: LevelCardText): void;
+  /** Starting from the map's node card: no level card, play starts now (tutorial coach, countdown). */
+  beginPlay(): void;
   openMenu(): void;
 }
 
@@ -40,25 +43,22 @@ export class StoryMode {
   level = 1;
   readonly progress = new StoryProgress();
   private livesLost = 0;
-  private hub = $('story-hub');
   private ending = $('ending');
   private cards: IntroCards;
   private crawl = new Crawl();
   private board = new LeaderboardScreen(() => {
-    this.renderHub();
-    this.hub.hidden = false;
+    this.map.show();
     $('hub-board').focus();
   });
+  private map: StoryMap;
 
   constructor(private host: StoryHost, private screens: Screens, private cutscene: Cutscene, private view: GameView) {
     this.cards = new IntroCards(view);
-    $('hub-back').addEventListener('click', () => {
-      this.hub.hidden = true;
+    this.map = new StoryMap(this.progress, (level) => this.play(level, true, true), () => {
+      this.map.hide();
       host.openMenu();
-    });
-    $('hub-continue').addEventListener('click', () => this.play(this.progress.unlocked, true));
-    $('hub-board').addEventListener('click', () => {
-      this.hub.hidden = true;
+    }, () => {
+      this.map.hide();
       // Open on the last level you cleared (where you have a score), not the next, unplayed one.
       let last = 1;
       for (let n = 1; n <= LEVEL_COUNT; n++) if (this.progress.stars(n) > 0) last = n;
@@ -76,7 +76,7 @@ export class StoryMode {
 
   /** The level map, the ending or the opening crawl (the crawl handles its own keys). */
   get overlayOpen(): boolean {
-    return !this.hub.hidden || !this.ending.hidden || this.crawl.active || this.board.open;
+    return this.map.open || !this.ending.hidden || this.crawl.active || this.board.open;
   }
 
   /** An alien or power-up card is up (the game waits). */
@@ -95,28 +95,30 @@ export class StoryMode {
   }
 
 
-  /** "Story Mode" on the menu: the level map, or straight into level 1 the first time. */
+  /** "Story Mode" on the menu: the Story map, or straight into level 1 the first time. */
   open(): void {
     if (!this.progress.started) {
       this.play(1, true);
       return;
     }
-    this.renderHub();
-    this.hub.hidden = false;
-    $('hub-continue').focus();
+    this.map.show();
   }
 
   closeOverlays(): void {
-    this.hub.hidden = true;
+    this.map.hide();
     this.board.hide();
     this.cards.cancel();
     this.crawl.cancel();
     this.closeEnding();
   }
 
-  /** Starts a level: sector story card, boss cutscene, level card, then play. */
-  play(level: number, withStory: boolean): void {
-    this.hub.hidden = true;
+  /**
+   * Starts a level: sector story card, boss cutscene, level card, then play.
+   * fromMap: started from the map's node card, which already showed the level's
+   * goal, so there is no level card: play starts right after the scenes.
+   */
+  play(level: number, withStory: boolean, fromMap = false): void {
+    this.map.hide();
     this.screens.hideStory();
     this.cutscene.cancel();
     this.cards.cancel();
@@ -126,7 +128,8 @@ export class StoryMode {
     const spec = levelSpec(level);
     const state = this.host.newLevel(level);
     const card = () => {
-      this.host.showLevelCard(levelCard(spec));
+      if (fromMap) this.host.beginPlay();
+      else this.host.showLevelCard(levelCard(spec));
     };
     // The very first Story start on this save: after the opening scene, Captain
     // Kit's opening pop-up, then level 1's card.
@@ -221,8 +224,14 @@ export class StoryMode {
       const nextSpec = levelSpec(next);
       const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : `${levelRoster(next).length} Martians`;
       const upNext = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${nextGoal}.`;
-      this.screens.showBanner(spec.boss ? 'SURVIVED!' : 'LEVEL CLEAR', `${line}\n${upNext}`, 'Next level', () => this.play(next, true), 'Main menu', '',
-        { pose: 'happy', summary: [...storySummary(state, lost, stars), ...scoreRows(score, prevBest)] });
+      this.screens.showBanner(spec.boss ? 'SURVIVED!' : 'LEVEL CLEAR', `${line}\n${upNext}`, 'Next level', () => this.play(next, true), 'Map', '', {
+        pose: 'happy', summary: [...storySummary(state, lost, stars), ...scoreRows(score, prevBest)],
+        // "Map" goes back to the Story map, where Bosco walks (or warps) on to the next node.
+        onMenu: () => {
+          this.screens.hideBanner();
+          this.map.show({ from: level });
+        },
+      });
     });
   }
 
@@ -268,34 +277,5 @@ export class StoryMode {
     this.ending.hidden = true;
     this.view.heroes[0].celebrate(false);
     this.view.rig.focus(null);
-  }
-
-  private renderHub(): void {
-    const p = this.progress;
-    const next = p.unlocked;
-    $('hub-continue').textContent = p.finished && next >= LEVEL_COUNT
-      ? `Play level ${next} again`
-      : `Continue · Level ${next} · ${SECTORS[levelSpec(next).sector - 1].name}`;
-    $('hub-stars').textContent = `★ ${p.totalStars} / ${LEVEL_COUNT * 3} stars${p.finished ? ' · Story complete!' : ''}`;
-    const grid = $('hub-levels');
-    grid.innerHTML = '';
-    for (let n = 1; n <= LEVEL_COUNT; n++) {
-      const spec = levelSpec(n);
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.disabled = n > next;
-      if (spec.boss) b.classList.add('boss');
-      if (spec.rival) b.classList.add('duel');
-      if (n === next) b.classList.add('current');
-      const num = document.createElement('span');
-      num.textContent = String(n);
-      const stars = document.createElement('span');
-      stars.className = 'stars';
-      stars.textContent = p.stars(n) ? starText(p.stars(n)) : '';
-      b.append(num, stars);
-      b.setAttribute('aria-label', `Level ${n}${p.stars(n) ? `, ${p.stars(n)} stars` : ''}${n > next ? ', locked' : ''}`);
-      b.addEventListener('click', () => this.play(n, true));
-      grid.append(b);
-    }
   }
 }

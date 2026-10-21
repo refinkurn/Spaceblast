@@ -9,6 +9,8 @@ export interface BannerExtra {
   pose?: BannerPose;
   /** Label / value rows shown under the title. */
   summary?: [string, string][];
+  /** What the second button does instead of opening the menu (Story: back to the map). */
+  onMenu?: () => void;
 }
 
 export const fmtTime = (ticks: number) => {

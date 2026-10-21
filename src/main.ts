@@ -87,6 +87,7 @@ const story = new StoryMode({
     cardUp = true;
     screens.showLevelCard(card);
   },
+  beginPlay: () => beginStoryPlay(),
   openMenu,
 }, screens, cutscene, view);
 /** Story tutorial coach; starts when a level's card closes. */
@@ -487,12 +488,14 @@ function skipCard() {
   if (!cardUp) return;
   cardUp = false;
   screens.hideLevelCard();
-  // The Story level really starts now: the tutorial may have something to say.
-  if (mode === 'survival') {
-    tutorial.start(story.level, state);
-    // Level 1's first coach prompt keeps its timing, so no count there.
-    if (!tutorial.startPending) countdown.start();
-  }
+  if (mode === 'survival') beginStoryPlay();
+}
+
+/** The Story level really starts now (level card closed, or entered from the map): coach tips, then the count. */
+function beginStoryPlay() {
+  tutorial.start(story.level, state);
+  // Level 1's first coach prompt keeps its timing, so no count there.
+  if (!tutorial.startPending) countdown.start();
 }
 
 /** The notch / home-bar insets (env(safe-area-inset-*)), read off a hidden probe. */

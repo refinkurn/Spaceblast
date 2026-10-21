@@ -299,13 +299,34 @@
       <div id="cut-fade" class="cut-fade"></div>
     </div>
     <div id="story-hub" hidden>
-      <div class="hub-card">
-        <div class="kicker">Story Mode</div>
-        <button id="hub-continue" type="button" class="primary"></button>
-        <div id="hub-stars" class="hub-stars"></div>
-        <div id="hub-levels" class="hub-levels"></div>
-        <button id="hub-board" type="button">Leaderboard</button>
-        <button id="hub-back" type="button" class="quiet">Back</button>
+      <div class="map-head">
+        <div id="map-title" class="map-title"></div>
+        <div id="map-signal" class="map-signal">
+          <svg class="map-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
+          <div id="map-gauge" class="map-gauge" aria-hidden="true"></div>
+          <span id="map-signal-label" class="map-signal-label"></span>
+        </div>
+        <div class="map-right">
+          <span id="map-stars" class="map-stars"></span>
+          <button id="hub-board" type="button">Leaderboard</button>
+          <button id="hub-back" type="button" class="quiet">Back</button>
+        </div>
+      </div>
+      <div id="map-track" class="map-track"></div>
+      <div id="map-warp" class="map-warp" hidden></div>
+      <div id="map-card" class="map-card-backdrop" hidden>
+        <div class="map-card" role="dialog" aria-labelledby="map-card-title">
+          <div id="map-card-title" class="map-card-title"></div>
+          <div id="map-card-sector" class="map-card-sector"></div>
+          <div class="map-card-goal"><span id="map-card-icon" class="card-goal-icon" aria-hidden="true"></span><span id="map-card-goal"></span></div>
+          <div id="map-card-brief" class="map-card-brief"></div>
+          <ul id="map-card-stars" class="map-checklist"></ul>
+          <div id="map-card-best" class="map-card-best"></div>
+          <div class="map-card-actions">
+            <button id="map-card-back" type="button" class="quiet">Back</button>
+            <button id="map-card-enter" type="button" class="primary"></button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="leaderboard" role="dialog" aria-labelledby="lb-level" hidden>
