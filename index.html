@@ -78,12 +78,18 @@
       <div id="announce-count" class="announce-count"></div>
     </div>
     <div id="banner" hidden>
-      <div id="banner-title"></div>
-      <div id="banner-text"></div>
-      <div id="banner-tip" class="banner-tip" hidden></div>
-      <div class="actions">
-        <button id="banner-btn" type="button"></button>
-        <button id="banner-menu" class="quiet" type="button">Menu</button>
+      <div class="banner-card">
+        <div class="banner-head">
+          <canvas id="banner-sprite" class="banner-sprite" aria-hidden="true" hidden></canvas>
+          <div id="banner-title"></div>
+        </div>
+        <div id="banner-text"></div>
+        <dl id="banner-summary" class="banner-summary" hidden></dl>
+        <div id="banner-tip" class="banner-tip" hidden></div>
+        <div class="actions">
+          <button id="banner-btn" type="button"></button>
+          <button id="banner-menu" class="quiet" type="button">Main menu</button>
+        </div>
       </div>
     </div>
     <div id="story" hidden>

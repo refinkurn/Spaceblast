@@ -10,9 +10,10 @@ import { IntroCards } from './intro_card';
 import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress, starsFor } from './progress';
 import type { Screens } from './screens';
-import { BOSS_NAMES, ENDING, SECTORS, levelCard, type LevelCardText } from './story';
+import { ENDING, SECTORS, levelCard, type LevelCardText } from './story';
 import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
+import { bossClearLine, starText, storySummary } from './summary';
 
 // Story Mode flow: the level map (continue / replay with stars), each level's
 // lead-in (sector card, boss cutscene, level card), results, retrying a level
@@ -31,7 +32,6 @@ export interface StoryHost {
   openMenu(): void;
 }
 
-const starText = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
 
 export class StoryMode {
   level = 1;
@@ -194,16 +194,18 @@ export class StoryMode {
         return;
       }
       const next = level + 1;
-      const title = spec.boss ? `${BOSS_NAMES[spec.boss]} destroyed!` : `Level ${level} clear!`;
+      const line = spec.boss ? bossClearLine(spec.boss) : `Level ${level} clear!`;
       const upNext = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${levelRoster(next).length} Martians.`;
-      this.screens.showBanner(`${title}  ${starText(stars)}`, upNext, 'Next level', () => this.play(next, true));
+      this.screens.showBanner(spec.boss ? 'SURVIVED!' : 'LEVEL CLEAR', `${line}\n${upNext}`, 'Next level', () => this.play(next, true), 'Main menu', '',
+        { pose: 'happy', summary: storySummary(state, Math.min(this.livesLost, START_LIVES), stars) });
     });
   }
 
   private gameOver(): void {
     this.progress.save();
     const level = this.level;
-    this.screens.showBanner('Game over', `The Martians got you on level ${level}. Your progress is saved.`, `Retry level ${level}`, () => this.play(level, false), 'Menu', randomTip());
+    this.screens.showBanner('DEFEATED', `The Martians got you on level ${level}. Your progress is saved.`, `Retry level ${level}`, () => this.play(level, false), 'Main menu', randomTip(),
+      { pose: 'defeated', summary: storySummary(this.host.state, Math.min(this.livesLost, START_LIVES), 0) });
   }
 
   private showEnding(): void {

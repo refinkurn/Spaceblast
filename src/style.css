@@ -285,38 +285,60 @@ body.scene .net-stats { visibility: hidden; }
 }
 @media (prefers-reduced-motion: reduce) { #intro-card.pop .intro-box, #intro-card.fade { animation: none; } }
 
-/* Level clear / game over. */
+/* End of match: dark backdrop over the arena, centred card. */
 #banner {
   position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   z-index: 5;
-  min-width: min(320px, 80vw);
-  padding: 20px 28px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: #000a;
+}
+#banner[hidden] { display: none; }
+.banner-card {
+  width: min(360px, 88vw);
+  max-height: 96%;
+  box-sizing: border-box;
+  padding: 12px 20px 14px;
   border-radius: 14px;
-  background: #0e1118e6;
+  background: #0e1118f2;
   border: 1px solid #5ad1ff55;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
 }
-#banner[hidden] { display: none; }
-#banner-title { font-size: 24px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); }
-#banner-text { color: var(--ink-quiet); font-size: 14px; }
-#banner .actions { display: flex; gap: 10px; margin-top: 8px; }
+.banner-head { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.banner-sprite { flex: none; width: 72px; height: 72px; }
+.banner-sprite[hidden] { display: none; }
+#banner-title { font-size: clamp(26px, 8vh, 38px); font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
+#banner-text { color: var(--ink-quiet); font-size: 14px; white-space: pre-line; }
+.banner-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin: 0; }
+.banner-summary[hidden] { display: none; }
+.banner-summary div { padding: 4px 8px; border-radius: 8px; background: #ffffff10; }
+.banner-summary dt { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-quiet); }
+.banner-summary dd { margin: 0; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#banner .actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 #banner button {
-  min-height: 44px;
+  min-height: 48px;
   padding: 0 22px;
-  font: 600 15px system-ui, sans-serif;
+  font: 700 16px system-ui, sans-serif;
   color: #0e1118;
   background: var(--accent);
   border: 0;
   border-radius: 10px;
 }
 #banner button.quiet { color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; }
+@media (max-height: 420px) {
+  .banner-card { gap: 5px; padding: 8px 16px 10px; }
+  .banner-sprite { width: 56px; height: 56px; }
+  #banner .actions { flex-direction: row; }
+  #banner .actions button { flex: 1; min-height: 44px; }
+  #banner-tip { display: none; }
+}
 
 /* Main menu: a column of choices on the left, the character on the right. */
 #menu {

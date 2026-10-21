@@ -3,8 +3,12 @@
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 import { Menu, type BotLevel } from './menu';
+import { SpriteView } from '../view/sprite_renderer';
 import { GOAL_ICONS } from './goal_icons';
+import type { BannerExtra } from './summary';
 import type { LevelCardText } from './story';
+
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 export type MenuChoice = 'survival' | 'battle' | 'online';
 export type { BotLevel };
@@ -14,6 +18,8 @@ export class Screens {
   private banner = $('banner');
   private primary = $<HTMLButtonElement>('banner-btn');
   private onPrimary = () => {};
+  private sprite = new SpriteView($<HTMLCanvasElement>('banner-sprite'));
+  private spriteRaf = 0;
 
   constructor(onMode: (mode: MenuChoice) => void, onMenu: () => void, onPause: () => void = onMenu) {
     this.menu = new Menu(() => onMode('battle'));
@@ -96,16 +102,33 @@ export class Screens {
     this.menu.hide();
   }
 
-  /** `menuLabel` renames the second button (it always goes to the menu). */
-  showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = 'Menu', tip = ''): void {
+  /** The end-of-match card: big title, Bosco's pose, a summary and two buttons. `menuLabel` renames the second one (it always goes to the menu). */
+  showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = 'Main menu', tip = '', extra: BannerExtra = {}): void {
     $('banner-menu').textContent = menuLabel;
     $('banner-tip').textContent = tip ? `Tip: ${tip}` : '';
     $('banner-tip').hidden = !tip;
     $('banner-title').textContent = title;
     $('banner-text').textContent = text;
+    const rows = extra.summary ?? [];
+    const summary = $('banner-summary');
+    summary.innerHTML = rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+    summary.hidden = rows.length === 0;
+    this.sprite.show(extra.pose ? 'astropaw' : null, extra.pose ?? 'neutral');
     this.primary.textContent = button;
     this.onPrimary = onClick;
     this.banner.hidden = false;
+    this.animate();
+  }
+
+  /** Draws Bosco's pose while the card is up. */
+  private animate(): void {
+    if (this.spriteRaf) return;
+    const tick = () => {
+      if (this.banner.hidden) { this.spriteRaf = 0; return; }
+      this.sprite.draw();
+      this.spriteRaf = requestAnimationFrame(tick);
+    };
+    this.spriteRaf = requestAnimationFrame(tick);
   }
 
   hideBanner(): void {

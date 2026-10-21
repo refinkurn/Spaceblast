@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **End-of-match screen + boss title fix** (src/flow/screens.ts `#banner`, story_mode.ts, main.ts)
-  Now: text banner; boss clears say "<boss> destroyed!" (against canon).
-  Want: VICTORY / DEFEATED / LEVEL CLEAR title, Bosco happy/defeated sprite, summary (time, lives lost, stars, Martians cleared; battle: time + tally); boss title says survived/ruptured.
-  Done when: Story clear, game over and battle round all show it; tests cover summary text and boss title.
-  Spec: docs/design/match-screens.md (part 2)
 - **Lobby slot cards** (src/flow/online.ts, index.html `#online-lobby`, style.css)
   Now: player list + bots stepper.
   Want: 4 slot cards (players, then bots, then OPEN); host taps OPEN to add a bot, BOT to remove one (existing `bots` setting); stepper removed.
@@ -61,6 +56,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: end-of-match screen: VICTORY / DEFEATED / DRAW / LEVEL CLEAR / SURVIVED! title, Bosco happy/defeated sprite, summary (Story: time, lives lost, stars, Martians cleared; battle: round time + score), full-screen dim backdrop, "Main menu" button; boss clears now say "Hive ruptured!" / "Maze Master survived!" (never "destroyed"); words in `src/flow/summary.ts`; battle card checked at 740x360; 174 tests pass.
 - 2026-10-21: pause menu: 48 px pause button, PAUSED card (Resume, Restart level/round, Settings over the card, Quit with confirm), Escape/P toggles, auto-pause when the tab hides (offline); online keeps the leave prompt; logic in `src/flow/pause.ts`; checked in the browser at 740x360; 169 tests pass.
 - 2026-10-21: story dialogue banner: slim full-width bottom banner (min 84 px, grows for a 3rd line), 64 px portrait (hidden on narration), 13 px name, 16-20 px text, sprite sits above it, Skip 64x48; checked at 740x360; CSS tests (vitest now processes style.css); 166 tests pass.
 - 2026-10-21: menu: Story / Versus (Battle vs Bot, Multiplayer) / Settings (How to Play inside) / Credits; Back is first and pinned top-left on every sub-page (bot -> Versus, How to Play -> Settings); online lobby sits in a left panel (min(420px, 46vw)) with Back pinned top-left; checked at 740x360 (no page scroll); 5 new tests, 163 pass. Note: the menu art is not shown behind the lobby (the menu hides when the lobby opens).

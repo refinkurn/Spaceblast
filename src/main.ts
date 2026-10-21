@@ -6,6 +6,7 @@ import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
 import { PauseMenu } from './flow/pause';
+import { battleSummary, type BannerExtra } from './flow/summary';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound } from './flow/online_match';
 import { Predictor } from './net/predict';
@@ -294,16 +295,18 @@ function tally(): string {
 }
 
 function showRoundScore() {
-  const title = lastWinner < 0 ? 'Draw' : lastWinner === localId ? 'You win the round!' : `${playerName(lastWinner)} wins the round`;
+  const line = lastWinner < 0 ? 'Draw' : lastWinner === localId ? 'You win the round!' : `${playerName(lastWinner)} wins the round`;
+  const big = lastWinner < 0 ? 'DRAW' : lastWinner === localId ? 'VICTORY' : 'DEFEATED';
+  const extra: BannerExtra = { pose: lastWinner < 0 ? 'neutral' : lastWinner === localId ? 'happy' : 'defeated', summary: battleSummary(state, tally()) };
   const goal = `First to ${winsNeeded()} wins`;
   if (mode !== 'online') {
-    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => { score.nextRound(false); newGame(); }, 'Menu', randomTip(BATTLE_TIPS));
+    screens.showBanner(big, `${line} · ${goal}`, 'Next round', () => { score.nextRound(false); newGame(); }, 'Main menu', randomTip(BATTLE_TIPS), extra);
   } else if (online.total < 2) {
-    screens.showBanner(title, `${tally()} · Everyone else left.`, 'Back to room', () => { screens.hideBanner(); online.showLobby(); });
+    screens.showBanner(big, `${line} · Everyone else left.`, 'Back to room', () => { screens.hideBanner(); online.showLobby(); }, 'Main menu', '', extra);
   } else if (online.isHost) {
-    screens.showBanner(title, `${tally()} · ${goal}`, 'Next round', () => online.startRound(), 'Menu', randomTip(BATTLE_TIPS));
+    screens.showBanner(big, `${line} · ${goal}`, 'Next round', () => online.startRound(), 'Main menu', randomTip(BATTLE_TIPS), extra);
   } else {
-    screens.showBanner(title, `${tally()} · ${goal}`, 'Waiting for host…', () => {}, 'Menu', randomTip(BATTLE_TIPS));
+    screens.showBanner(big, `${line} · ${goal}`, 'Waiting for host…', () => {}, 'Main menu', randomTip(BATTLE_TIPS), extra);
   }
 }
 
