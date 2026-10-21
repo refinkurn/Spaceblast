@@ -12,7 +12,7 @@ Refindo decides. Story/design chat specs and queues. The build agent builds. Rea
 | Fix a hard bug in rules or online play | **Code session** | `use sim-specialist: <bug>` |
 | Know what is happening | **docs/HANDOFF.md** | nothing, just read it |
 
-Nothing is built unless it is in Ready. The nightly run (01:52 Jakarta time) takes the top Ready item, builds it if it is text, UI, assets or tests, and stops if the queue is empty.
+Nothing is built unless it is in Ready. The nightly run (01:52 Jakarta time) takes up to 4 Ready items from the top, one at a time, builds them if they are text, UI, input, assets or tests, and stops if the queue is empty or an item gets Blocked.
 
 ## Writing a good Ready item
 
