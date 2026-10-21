@@ -56,6 +56,8 @@ export class Menu {
   private hero = new SpriteView($<HTMLCanvasElement>('menu-hero'));
   /** When the page last changed: a double tap must not also press a button on the new page. */
   private switchedAt = 0;
+  /** When Settings was opened over a game (pause card): Back hides the menu and calls this. */
+  private returnTo: (() => void) | null = null;
 
   /** `onBattle` starts a battle once a difficulty is picked. */
   constructor(onBattle: () => void) {
@@ -92,8 +94,16 @@ export class Menu {
     return !this.el.hidden;
   }
 
+  /** Settings above the game; Back (or Escape) closes it and calls `onBack`. */
+  openSettingsOver(onBack: () => void): void {
+    this.returnTo = onBack;
+    this.el.hidden = false;
+    this.open('settings');
+  }
+
   /** Shows the menu on its main page. */
   show(): void {
+    this.returnTo = null;
     this.switchedAt = performance.now();
     this.el.hidden = false;
     this.open('main');
@@ -126,6 +136,13 @@ export class Menu {
   back(): void {
     const from = this.page;
     if (from === 'main') return;
+    if (from === 'settings' && this.returnTo) {
+      const back = this.returnTo;
+      this.returnTo = null;
+      this.hide();
+      back();
+      return;
+    }
     const step = BACK[from];
     this.open(step.page);
     $(step.focus).focus();

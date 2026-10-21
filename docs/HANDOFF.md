@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Pause menu** (src/main.ts `openMenu`/loop, index.html `#hud`, style.css)
-  Now: the HUD Menu button quits straight to the main menu; no pause.
-  Want: 48 px pause button opens a card (Resume, Restart, Settings, Quit with confirm); pauses via the loop flag; online keeps the leave prompt.
-  Done when: pause/resume continues exactly; restart and quit work; tests and build pass.
-  Spec: docs/design/match-screens.md (part 1)
 - **End-of-match screen + boss title fix** (src/flow/screens.ts `#banner`, story_mode.ts, main.ts)
   Now: text banner; boss clears say "<boss> destroyed!" (against canon).
   Want: VICTORY / DEFEATED / LEVEL CLEAR title, Bosco happy/defeated sprite, summary (time, lives lost, stars, Martians cleared; battle: time + tally); boss title says survived/ruptured.
@@ -66,6 +61,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: pause menu: 48 px pause button, PAUSED card (Resume, Restart level/round, Settings over the card, Quit with confirm), Escape/P toggles, auto-pause when the tab hides (offline); online keeps the leave prompt; logic in `src/flow/pause.ts`; checked in the browser at 740x360; 169 tests pass.
 - 2026-10-21: story dialogue banner: slim full-width bottom banner (min 84 px, grows for a 3rd line), 64 px portrait (hidden on narration), 13 px name, 16-20 px text, sprite sits above it, Skip 64x48; checked at 740x360; CSS tests (vitest now processes style.css); 166 tests pass.
 - 2026-10-21: menu: Story / Versus (Battle vs Bot, Multiplayer) / Settings (How to Play inside) / Credits; Back is first and pinned top-left on every sub-page (bot -> Versus, How to Play -> Settings); online lobby sits in a left panel (min(420px, 46vw)) with Back pinned top-left; checked at 740x360 (no page scroll); 5 new tests, 163 pass. Note: the menu art is not shown behind the lobby (the menu hides when the lobby opens).
 - 2026-10-21: HUD layout: top-left avatar + hearts + power-ups + short goal, top-centre stage chip with clock (boss/battle only), title dropped, hearts shake and flash on life/armor loss (CSS, reduced-motion safe); text logic in `hud_text.ts`; checked at 740x360; 5 new tests, 158 pass.

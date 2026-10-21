@@ -15,18 +15,23 @@ export class Screens {
   private primary = $<HTMLButtonElement>('banner-btn');
   private onPrimary = () => {};
 
-  constructor(onMode: (mode: MenuChoice) => void, onMenu: () => void) {
+  constructor(onMode: (mode: MenuChoice) => void, onMenu: () => void, onPause: () => void = onMenu) {
     this.menu = new Menu(() => onMode('battle'));
     $('mode-survival').addEventListener('click', () => onMode('survival'));
     $('mode-online').addEventListener('click', () => onMode('online'));
     this.primary.addEventListener('click', () => this.firePrimary());
     $('banner-menu').addEventListener('click', onMenu);
-    $('menu-btn').addEventListener('click', onMenu);
+    $('menu-btn').addEventListener('click', onPause);
   }
 
   /** Difficulty for Battle vs Bot (remembered). */
   get botLevel(): BotLevel {
     return this.menu.botLevel;
+  }
+
+  /** Pause card -> Settings: the settings page over the game. */
+  openSettingsOver(onBack: () => void): void {
+    this.menu.openSettingsOver(onBack);
   }
 
   get menuOpen(): boolean {

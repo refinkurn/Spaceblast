@@ -919,3 +919,16 @@ body.scene #coach { visibility: hidden; }
   #menu h1 { font-size: 22px; }
   .menu-page { gap: 4px; }
 }
+
+/* Pause card: sits under the menu (z 8) so Settings can open above it. */
+#pause-card { position: fixed; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: center; background: #0009; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+#pause-card[hidden], #pause-card [hidden] { display: none; }
+.pause-box { width: min(280px, 80vw); padding: 14px; border-radius: 14px; background: #0e1118f2; border: 1px solid #ffffff33; }
+.pause-list { display: flex; flex-direction: column; gap: 8px; text-align: center; }
+.pause-list h2 { margin: 0 0 2px; font-size: 22px; letter-spacing: 0.12em; }
+.pause-list p { margin: 0 0 4px; color: var(--ink-quiet); font-size: 14px; }
+.pause-list button { min-height: 48px; font: 700 17px system-ui, sans-serif; color: var(--ink); background: #ffffff0d; border: 1px solid #ffffff26; border-radius: 12px; }
+.pause-list button:hover, .pause-list button:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); }
+.pause-list #pause-resume, .pause-list #pause-keep { color: #0e1118; background: var(--accent); border: 0; }
+#menu-btn.pause-btn { width: 48px; min-height: 48px; padding: 0; display: grid; place-items: center; }
+@media (max-height: 400px) { .pause-list { gap: 5px; } .pause-list button { min-height: 44px; } }

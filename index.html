@@ -29,13 +29,30 @@
       </div>
       <button id="full-btn" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
       <button id="sound-btn" class="sound-btn" type="button" aria-label="Sound"></button>
-      <button id="menu-btn" type="button">Menu</button>
+      <button id="menu-btn" class="pause-btn" type="button" aria-label="Pause"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
     </div>
     <div id="stick-zone" aria-label="Movement joystick">
       <div id="stick-base"><div id="stick-knob"></div></div>
     </div>
     <div id="action-zone">
       <button id="place-btn" type="button" aria-label="Place charge">CHARGE</button>
+    </div>
+    <div id="pause-card" hidden>
+      <div class="pause-box" role="dialog" aria-labelledby="pause-title">
+        <div id="pause-main" class="pause-list">
+          <h2 id="pause-title">PAUSED</h2>
+          <button id="pause-resume" type="button">Resume</button>
+          <button id="pause-restart" type="button">Restart level</button>
+          <button id="pause-settings" type="button">Settings</button>
+          <button id="pause-quit" type="button">Quit to menu</button>
+        </div>
+        <div id="pause-confirm" class="pause-list" hidden>
+          <h2>Quit?</h2>
+          <p>Progress on this level is lost.</p>
+          <button id="pause-quit-yes" type="button">Quit</button>
+          <button id="pause-keep" type="button">Keep playing</button>
+        </div>
+      </div>
     </div>
     <div id="alert" hidden></div>
     <div id="coach" class="coach" hidden aria-live="polite"><span class="coach-label">Tip</span><span id="coach-text"></span></div>

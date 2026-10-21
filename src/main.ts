@@ -5,6 +5,7 @@ import { Congrats, type Standing } from './flow/congrats';
 import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
+import { PauseMenu } from './flow/pause';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound } from './flow/online_match';
 import { Predictor } from './net/predict';
@@ -61,7 +62,7 @@ let lastWinner = -1;
 /** Set when a run was started from the developer level select; enables its cheats. */
 let devRun = false;
 
-const screens = new Screens(startMode, openMenu);
+const screens = new Screens(startMode, openMenu, pauseButton);
 const hud = new Hud();
 const online = new OnlineRoom();
 const announcer = new Announcer();
@@ -94,6 +95,28 @@ const settings = new SettingsScreen((s) => {
   touch.setScale(CONTROL_SCALE[s.controls]);
 });
 const dev = new DevPanel(startAtLevel);
+const pause = new PauseMenu({
+  restart: () => { if (mode === 'battle') newGame(); else story.play(story.level, false); },
+  settings: (back) => screens.openSettingsOver(back),
+  quit: openMenu,
+});
+
+/** The pause card can open during live offline play only; online keeps the leave prompt. */
+function canPause(): boolean {
+  return mode !== 'online' && state.status === 'playing' && !screens.menuOpen && !screens.bannerOpen && !cardUp
+    && !story.cardOpen && !cutscene.active && !cine.active && !congrats.open && !story.overlayOpen;
+}
+
+/** The HUD's top-right button. */
+function pauseButton() {
+  if (pause.open) pause.close();
+  else if (canPause()) pause.show(mode);
+  else openMenu();
+}
+// Offline, the game pauses itself when the tab is hidden.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && !pause.open && canPause()) pause.show(mode);
+});
 setupFullscreen();
 installMultiTouchTaps();
 
@@ -137,6 +160,7 @@ function openMenu() {
     return;
   }
   leaveAsked = false;
+  pause.close();
   cine.stop();
   cutscene.cancel();
   story.closeOverlays();
@@ -163,6 +187,7 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   screens.hideLevelCard();
   cardUp = false;
   leaveAsked = false;
+  pause.close();
   clearPresses();
 }
 
@@ -410,8 +435,13 @@ window.addEventListener('keydown', (e) => {
   if (screens.menuOpen || online.screenOpen || story.overlayOpen) return;
   // Held keys repeat: a held Enter must not press "Next round" again and again.
   if (e.repeat) return;
+  if (pause.open) {
+    if (e.code === 'Escape' || e.code === 'KeyP') pause.close();
+    return;
+  }
+  if (e.code === 'KeyP' && canPause()) { pause.show(mode); return; }
   const confirm = e.code === 'Enter' || e.code === 'Space';
-  if (e.code === 'Escape') openMenu();
+  if (e.code === 'Escape') { if (canPause()) pause.show(mode); else openMenu(); }
   else if (cutscene.active) {
     if (confirm) cutscene.advance();
   } else if (story.cardOpen) {
@@ -499,7 +529,7 @@ view.renderer.setAnimationLoop((now: number) => {
   const overlay = screens.menuOpen || screens.storyOpen || online.screenOpen || congrats.open || story.overlayOpen;
   // Offline games pause while the phone is upright (the "rotate" screen is up).
   const upright = portrait.matches && mode !== 'online';
-  const paused = overlay || upright || cardUp || story.cardOpen || cine.active || cutscene.active || (mode === 'online' && !net);
+  const paused = overlay || pause.open || upright || cardUp || story.cardOpen || cine.active || cutscene.active || (mode === 'online' && !net);
   // Something took over the screen: let go of the stick and the charge button.
   // Coming back: forget presses made meanwhile (Space on a card must not drop a charge).
   if (paused && !wasPaused) touch.release();
