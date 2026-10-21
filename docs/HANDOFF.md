@@ -52,6 +52,21 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
   Want: 4 slot cards (players, then bots, then OPEN); host taps OPEN to add a bot, BOT to remove one (existing `bots` setting); stepper removed.
   Done when: adding/removing bots by tap works and a 4th player joining still works; tests and build pass.
   Spec: docs/design/match-screens.md (part 3)
+- **Settings: joystick mode + vibration** (src/flow/settings.ts, src/input/touch.ts, index.html `#settings`)
+  Now: control size, music and sound only; the stick always floats.
+  Want: Joystick Floating/Fixed; Vibration on/off (shown only where `navigator.vibrate` exists); both saved and applied instantly.
+  Done when: both joystick modes steer correctly; tests cover settings load/defaults.
+  Spec: docs/design/polish-settings-net.md (part 1)
+- **Start countdown + damage vignette + vibration** (src/flow/, main.ts, style.css)
+  Now: play starts the moment the card closes; no damage feedback at screen edges.
+  Want: 3-2-1-BLAST! (offline, held by the pause flag); red edge flash on life/armor loss; 30 ms buzz on placing a Charge, 80 ms when hurt.
+  Done when: countdown before each Story level and Battle round; vignette shows; tests and build pass.
+  Spec: docs/design/polish-settings-net.md (part 2)
+- **Invite link + reconnect screen** (src/flow/online.ts, main.ts, index.html `#online`)
+  Now: share the 4-letter code by hand; only a "Reconnected!" flash.
+  Want: Invite button (share sheet or copy `?room=CODE`); opening that link fills the code; full-screen "Reconnecting to room CODE…" while the link retries.
+  Done when: link opens Multiplayer with the code; reconnect screen shows and hides; tests cover `?room=` parsing.
+  Spec: docs/design/polish-settings-net.md (part 3)
 
 ## In progress
 
