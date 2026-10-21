@@ -55,7 +55,9 @@ export class LeaderboardApi {
           // Busy (429) or server trouble (5xx): try again later. Other 4xx: the
           // score was rejected for good, so it leaves the queue.
           if (res.status === 429 || res.status >= 500) break;
-          reply = (await res.json()) as SubmitReply;
+          // A reply that isn't JSON (e.g. a proxy's error page) still settles the
+          // score; letting the parse throw here would keep it queued forever.
+          reply = (await res.json().catch(() => ({ ok: false, reason: 'bad_reply' }))) as SubmitReply;
         } catch {
           break; // offline
         }

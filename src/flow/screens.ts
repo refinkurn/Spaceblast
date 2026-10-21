@@ -111,7 +111,8 @@ export class Screens {
     $('banner-text').textContent = text;
     const rows = extra.summary ?? [];
     const summary = $('banner-summary');
-    summary.innerHTML = rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+    // A long value (the score breakdown) gets a full-width row instead of wrapping in a narrow cell.
+    summary.innerHTML = rows.map(([k, v]) => `<div${v.length > 22 ? ' class="wide"' : ''}><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
     summary.hidden = rows.length === 0;
     this.sprite.show(extra.pose ? 'astropaw' : null, extra.pose ?? 'neutral');
     this.primary.textContent = button;

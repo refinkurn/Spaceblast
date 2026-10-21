@@ -62,3 +62,12 @@ describe('leaderboard client', () => {
     expect(await off.top('stage_1_1', 'abc')).toBeNull();
   });
 });
+
+describe('leaderboard client: odd replies', () => {
+  it('drops a score whose 4xx reply is not JSON instead of keeping it queued forever', async () => {
+    const store = memory();
+    const api = new LeaderboardApi((() => Promise.resolve(new Response('<html>Bad request</html>', { status: 400 }))) as typeof fetch, store, '', 0);
+    expect(await api.submit(sub('stage_1_1', 5000))).toMatchObject({ ok: false });
+    expect(api.pending).toBe(0);
+  });
+});

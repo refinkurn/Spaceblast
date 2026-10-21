@@ -2,6 +2,7 @@ import { bossWaveCount } from '../sim/boss';
 import { GATE_WAIT_TICKS } from '../sim/constants';
 import { gateOpen } from '../sim/items';
 import type { GameState } from '../sim/state';
+import { bossClearLine } from './summary';
 
 export interface HudInfo {
   mode: 'survival' | 'battle' | 'online';
@@ -49,7 +50,8 @@ export function hudText(state: GameState, info: HudInfo): HudText {
     return {
       stage: `BOSS WAVE ${Math.max(1, b.wave)}/${total}`,
       stageClass: 'boss',
-      goal: !b.alive ? 'Boss defeated!' : last ? 'Survive the boss' : 'Survive the waves',
+      // Bosses are outlasted, never defeated (canon): same words as the end-of-level card.
+      goal: !b.alive ? bossClearLine(b.kind) : last ? 'Survive the boss' : 'Survive the waves',
       clock: b.alive ? clock(b.timer) : '',
     };
   }

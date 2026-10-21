@@ -29,6 +29,15 @@ describe('hud text', () => {
     expect(t.clock).toMatch(/^\d+:\d\d$/);
   });
 
+  it('a finished boss is outlasted, never "defeated" (canon)', () => {
+    const hive = createGame(1, { boss: BossKind.GooplingHive });
+    hive.boss!.alive = false;
+    expect(hudText(hive, info({ level: 5 })).goal).toBe('Hive ruptured!');
+    const maze = createGame(1, { boss: BossKind.MazeMaster });
+    maze.boss!.alive = false;
+    expect(hudText(maze, info({ level: 15 })).goal).toBe('Maze Master survived!');
+  });
+
   it('battle shows the round score and the round clock', () => {
     const state = createGame(1, { mode: 'battle' });
     const t = hudText(state, info({ mode: 'battle', round: 2, score: [1, 0] }));

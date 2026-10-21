@@ -59,7 +59,10 @@ export class StoryMode {
     $('hub-continue').addEventListener('click', () => this.play(this.progress.unlocked, true));
     $('hub-board').addEventListener('click', () => {
       this.hub.hidden = true;
-      this.board.show(Math.min(this.progress.unlocked, LEVEL_COUNT));
+      // Open on the last level you cleared (where you have a score), not the next, unplayed one.
+      let last = 1;
+      for (let n = 1; n <= LEVEL_COUNT; n++) if (this.progress.stars(n) > 0) last = n;
+      this.board.show(last);
     });
     $('ending-btn').addEventListener('click', () => {
       this.closeEnding();
@@ -214,7 +217,10 @@ export class StoryMode {
       }
       const next = level + 1;
       const line = spec.boss ? bossClearLine(spec.boss) : `Level ${level} clear!`;
-      const upNext = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${levelRoster(next).length} Martians.`;
+      // Boss and duel levels have no Martian roster: name their goal instead of "0 Martians".
+      const nextSpec = levelSpec(next);
+      const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : `${levelRoster(next).length} Martians`;
+      const upNext = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${nextGoal}.`;
       this.screens.showBanner(spec.boss ? 'SURVIVED!' : 'LEVEL CLEAR', `${line}\n${upNext}`, 'Next level', () => this.play(next, true), 'Main menu', '',
         { pose: 'happy', summary: [...storySummary(state, lost, stars), ...scoreRows(score, prevBest)] });
     });

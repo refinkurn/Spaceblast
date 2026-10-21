@@ -28,7 +28,7 @@ export class LeaderboardScreen {
     $('lb-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const ok = renameProfile(input.value);
-      $('lb-name-note').textContent = ok ? 'Saved. It shows with your next score.' : 'Try another name (2-12 letters or numbers, nothing rude).';
+      $('lb-name-note').textContent = ok ? 'Saved. It shows with your next score.' : 'Try another name (2-12 letters, numbers, spaces, _ or -, nothing rude).';
       input.value = loadProfile().name;
     });
   }

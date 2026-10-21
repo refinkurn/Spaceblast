@@ -32,7 +32,8 @@ html, body {
   height: var(--hud);
   padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
   display: flex;
-  align-items: center;
+  /* Top-aligned: the 48 px buttons are taller than the bar and, centred, poked off the top edge. */
+  align-items: flex-start;
   gap: 16px;
   font-size: 14px;
   background: linear-gradient(#0009, #0000);
@@ -220,6 +221,8 @@ body.scene .net-stats { visibility: hidden; }
   inset: 0;
   z-index: 6;
   display: flex;
+  /* One card: its parts stack. Without this they lined up side by side across the screen. */
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -315,8 +318,11 @@ body.scene .net-stats { visibility: hidden; }
 .banner-sprite[hidden] { display: none; }
 #banner-title { font-size: clamp(26px, 8vh, 38px); font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
 #banner-text { color: var(--ink-quiet); font-size: 14px; white-space: pre-line; }
-.banner-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin: 0; }
+/* The stats scroll inside the card if they ever don't fit, so the buttons below always stay on screen. */
+.banner-card > * { flex: none; }
+.banner-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin: 0; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
 .banner-summary[hidden] { display: none; }
+.banner-summary .wide { grid-column: 1 / -1; }
 .banner-summary div { padding: 4px 8px; border-radius: 8px; background: #ffffff10; }
 .banner-summary dt { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-quiet); }
 .banner-summary dd { margin: 0; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -331,11 +337,17 @@ body.scene .net-stats { visibility: hidden; }
   border-radius: 10px;
 }
 #banner button.quiet { color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; }
-@media (max-height: 420px) {
-  .banner-card { gap: 5px; padding: 8px 16px 10px; }
-  .banner-sprite { width: 56px; height: 56px; }
+/* Short screens (landscape phones, laptops at 150% zoom): a wider card with three
+   stat columns, so a Story clear fits without scrolling. */
+@media (max-height: 700px) {
+  .banner-card { width: min(560px, 92vw); gap: 5px; padding: 8px 16px 10px; }
+  .banner-sprite { width: 48px; height: 48px; }
+  #banner-title { font-size: 26px; }
+  .banner-summary { grid-template-columns: repeat(3, 1fr); gap: 4px 8px; }
+  .banner-summary div { padding: 2px 8px; }
+  .banner-summary dd { font-size: 15px; }
   #banner .actions { flex-direction: row; }
-  #banner .actions button { flex: 1; min-height: 44px; }
+  #banner .actions button { flex: 1; }
   #banner-tip { display: none; }
 }
 
@@ -484,7 +496,7 @@ body.scene .net-stats { visibility: hidden; }
 }
 #online button.primary { color: #0e1118; background: var(--accent); border: 0; }
 #online button:disabled { opacity: 0.45; }
-#online button.quiet { min-height: 40px; font-weight: 500; }
+#online button.quiet { min-height: 48px; font-weight: 500; }
 .online-join { display: flex; gap: 8px; }
 .online-name { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-quiet); }
 #online input {
@@ -510,14 +522,14 @@ body.scene .net-stats { visibility: hidden; }
 .slot-tag { grid-area: tag; justify-self: end; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
 .slot .dot { grid-area: dot; width: 12px; height: 12px; border-radius: 50%; border: 1px dashed #ffffff44; }
 .slot-name { grid-area: name; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.swatches { display: grid; grid-template-columns: repeat(4, 40px); gap: 8px; }
-#online .swatches button { min-height: 40px; height: 40px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
+.swatches { display: grid; grid-template-columns: repeat(4, 48px); gap: 8px; }
+#online .swatches button { min-height: 48px; height: 48px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
 #online .swatches button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #14161d inset; }
 #online .swatches button:disabled { opacity: 0.2; }
 .setting-row { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-quiet); }
 .setting-row > span { min-width: 74px; text-align: right; }
 .segmented { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
-#online .segmented button { min-height: 38px; padding: 0 10px; font-size: 14px; }
+#online .segmented button { min-height: 48px; min-width: 48px; padding: 0 10px; font-size: 14px; }
 #online .segmented button[aria-pressed="true"] { color: #0e1118; background: var(--accent); border-color: var(--accent); }
 .online-status { min-height: 18px; font-size: 14px; color: var(--ink-quiet); }
 .online-status.error { color: #ffb4a2; }
@@ -559,7 +571,8 @@ body.scene .net-stats { visibility: hidden; }
 }
 .sound-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .menu-corner { position: absolute; top: 12px; right: max(12px, env(safe-area-inset-right)); display: flex; gap: 8px; }
-.menu-corner .sound-btn { min-width: 48px; min-height: 48px; }
+/* 48 px touch targets, the same size as the Pause button next to them. */
+.menu-corner .sound-btn, #hud .sound-btn { min-width: 48px; min-height: 48px; }
 
 /* Big warnings: Maze Shift, Blackout, boss waves, arena collapse. */
 .announce {
@@ -718,7 +731,7 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 .setting-line { display: flex; align-items: center; gap: 12px; justify-content: space-between; font-size: 15px; }
 .setting-line input[type="range"] { flex: 1; accent-color: var(--accent); min-height: 32px; }
 .setting-line output { min-width: 44px; text-align: right; color: var(--ink-quiet); }
-#settings .segmented button { min-height: 40px; padding: 0 12px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
+#settings .segmented button { min-height: 48px; min-width: 48px; padding: 0 12px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
 #settings .segmented button[aria-pressed="true"] { color: #0e1118; background: var(--accent); border-color: var(--accent); }
 
 /* Story cutscenes: letterbox bars, dialogue and a slam-in reveal caption. */
@@ -737,7 +750,10 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 @keyframes boom-flash { 0% { background-color: var(--boom, #fff); box-shadow: inset 0 0 0 100vmax var(--boom, #fff); } 100% { box-shadow: inset 0 0 0 100vmax transparent; } }
 /* The character: left side, standing on the dialogue box. */
 /* Full screen height, behind the dialogue box: the character stands at the bottom, its upper body above the box. */
-.cut-sprite { position: absolute; left: max(4px, env(safe-area-inset-left)); top: 0; bottom: calc(92px + env(safe-area-inset-bottom)); width: min(46vw, 120vh); height: auto; }
+/* An explicit height: a canvas with height:auto keeps its own aspect ratio and
+   ignores `bottom`, so the character was drawn in a short box at the top of the
+   screen and cut off mid-air. The banner (later in the markup) covers its feet. */
+.cut-sprite { position: absolute; left: max(4px, env(safe-area-inset-left)); top: 0; height: 100%; width: min(46vw, 120vh); }
 .cut-sprite[hidden] { display: none; }
 #cutscene.enter .cut-sprite { animation: sprite-in 0.35s cubic-bezier(.2, 1.2, .4, 1); }
 #cutscene.bump .cut-sprite { animation: sprite-bump 0.25s ease-out; }
@@ -811,7 +827,7 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 .hub-levels button:disabled { opacity: 0.3; }
 .hub-levels button .stars { font-size: 10px; letter-spacing: 1px; color: #ffd23f; }
 .hub-levels button.current { box-shadow: 0 0 0 2px var(--accent); }
-#hub-back { min-height: 40px; padding: 0 20px; font: 500 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; border-radius: 10px; }
+#hub-back { min-height: 48px; padding: 0 20px; font: 500 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; border-radius: 10px; }
 
 /* Ending: what you accomplished. */
 #ending { position: fixed; inset: 0; z-index: 10; display: flex; align-items: safe center; justify-content: flex-start; padding: 16px max(24px, env(safe-area-inset-left)); overflow-y: auto; background: linear-gradient(90deg, #0b0d12f2 0%, #0b0d12cc 45%, #0b0d1200 75%); }
@@ -855,7 +871,7 @@ button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; 
   #congrats-standings li { padding: 4px 10px; font-size: 14px; }
   .story-card p { font-size: 14px; line-height: 1.45; }
   .story-card h2 { font-size: 24px; }
-  .hub-levels button { min-height: 44px; }
+  .hub-levels button { min-height: 48px; }
 }
 @media (max-width: 700px) {
   .ending-card { max-width: 100%; }
@@ -894,7 +910,7 @@ button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; 
 body.scene #coach { visibility: hidden; }
 .banner-tip { font-size: 13px; color: var(--ink-quiet); font-style: italic; }
 .banner-tip[hidden] { display: none; }
-.quiet-btn { min-height: 40px; padding: 0 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
+.quiet-btn { min-height: 48px; padding: 0 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) { .coach.pop { animation: none; } }
 /* Menu key art (src/assets/menu/menu.json) replaces the plain backdrop. */
 #menu.art { background-color: #14161d; }
@@ -956,7 +972,7 @@ body.scene #coach { visibility: hidden; }
 .pause-list button:hover, .pause-list button:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); }
 .pause-list #pause-resume, .pause-list #pause-keep { color: #0e1118; background: var(--accent); border: 0; }
 #menu-btn.pause-btn { width: 48px; min-height: 48px; padding: 0; display: grid; place-items: center; }
-@media (max-height: 400px) { .pause-list { gap: 5px; } .pause-list button { min-height: 44px; } }
+@media (max-height: 400px) { .pause-list { gap: 5px; } }
 /* Story leaderboard (flow/leaderboard_screen.ts). */
 #leaderboard { position: fixed; inset: 0; z-index: 10; display: flex; align-items: safe center; justify-content: center; overflow-y: auto; background: #14161df2;
   padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
@@ -975,7 +991,7 @@ body.scene #coach { visibility: hidden; }
 .lb-status { margin: 0; font-size: 13px; color: var(--ink-quiet); min-height: 0; }
 .lb-status:empty { display: none; }
 .lb-form { display: flex; gap: 8px; align-items: center; justify-content: center; font-size: 14px; }
-.lb-form input { width: 150px; min-height: 44px; padding: 0 10px; font: inherit; font-size: 16px; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff40; border-radius: 10px; }
+.lb-form input { width: 150px; min-height: 48px; padding: 0 10px; font: inherit; font-size: 16px; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff40; border-radius: 10px; }
 .lb-form button { font-size: 15px; padding: 0 16px; }
 
 /* Start countdown (3-2-1-BLAST!) and the red damage flash at the screen edges. */
@@ -1007,3 +1023,4 @@ body.scene #coach { visibility: hidden; }
 .power.charges .pips i.on { background: #00ffff; }
 .power.range .pips i.on { background: #ff5500; }
 .power.speed .pips i.on { background: #ffe600; }
+#lb-back { align-self: center; min-height: 48px; padding: 0 28px; font: 500 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; border-radius: 10px; }
