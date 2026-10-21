@@ -5,6 +5,9 @@ import {
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
 import { ROUND_SECONDS } from '../sim/constants';
+import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
+
+export { botColorsFor };
 
 // The "Play online" screens: your name, create or join a room, then the lobby
 // (colour, and the host's match settings). During a match main.ts gets the
@@ -377,8 +380,6 @@ export class OnlineRoom {
       const b = el as HTMLButtonElement;
       b.addEventListener('click', () => this.changeSettings({ botLevel: b.dataset.level as RoomSettings['botLevel'] }));
     }
-    $('bots-less').addEventListener('click', () => this.changeSettings({ bots: this.settings.bots - 1 }));
-    $('bots-more').addEventListener('click', () => this.changeSettings({ bots: this.settings.bots + 1 }));
   }
 
   private changeSettings(change: Partial<RoomSettings>): void {
@@ -387,23 +388,7 @@ export class OnlineRoom {
   }
 
   private renderLobby(note = ''): void {
-    const list = $('online-players');
-    list.innerHTML = '';
-    const chip = (color: string, text: string, bot = false) => {
-      const li = document.createElement('li');
-      li.classList.toggle('bot', bot);
-      const dot = document.createElement('span');
-      dot.className = 'dot';
-      dot.style.background = color;
-      li.append(dot, text);
-      list.append(li);
-    };
-    for (const p of this.players) {
-      const tags = [p.slot === this.you ? 'you' : '', p.slot === this.host ? 'host' : ''].filter(Boolean).join(', ');
-      chip(PLAYER_COLORS[p.color], `${p.name}${tags ? ` (${tags})` : ''}`);
-    }
-    const botColors = botColorsFor(this.players);
-    for (let i = 0; i < this.settings.bots; i++) chip(PLAYER_COLORS[botColors[i]], `Bot ${i + 1}`, true);
+    this.renderSlots();
 
     const mine = this.me()?.color;
     [...$('online-colors').children].forEach((el, i) => {
@@ -435,9 +420,6 @@ export class OnlineRoom {
     }
     toggle('set-maze', this.settings.maze);
     toggle('set-blackout', this.settings.blackout);
-    $('bots-count').textContent = String(this.settings.bots);
-    $<HTMLButtonElement>('bots-less').disabled = !host || this.settings.bots <= 0;
-    $<HTMLButtonElement>('bots-more').disabled = !host || this.total >= MAX_PLAYERS;
 
     const start = $<HTMLButtonElement>('online-start');
     start.hidden = !host;
@@ -448,13 +430,40 @@ export class OnlineRoom {
     this.setStatus(note || waiting);
   }
 
+  /** The four slot cards. The host taps OPEN to add a bot and BOT to remove one. */
+  private renderSlots(): void {
+    const box = $('online-slots');
+    box.innerHTML = '';
+    const slots = lobbySlots(this.players, this.settings.bots, this.host, this.you);
+    for (const slot of slots) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `slot ${slot.kind}`;
+      const next = botsAfterTap(slot, this.settings.bots);
+      card.disabled = !this.isHost || next === null;
+      if (next !== null && this.isHost) {
+        card.setAttribute('aria-label', slot.kind === 'open' ? `${slot.label}: add a bot` : `${slot.label}: remove ${slot.name}`);
+        card.addEventListener('click', () => this.changeSettings({ bots: next }));
+      }
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      dot.style.background = slot.color || 'transparent';
+      const name = document.createElement('span');
+      name.className = 'slot-name';
+      name.textContent = slot.you ? `${slot.name} (you)` : slot.name;
+      const tag = document.createElement('span');
+      tag.className = 'slot-tag';
+      tag.textContent = slot.tag;
+      const label = document.createElement('span');
+      label.className = 'slot-label';
+      label.textContent = slot.label;
+      card.append(label, dot, name, tag);
+      box.append(card);
+    }
+  }
+
   private setStatus(text: string, error = false): void {
     this.status.textContent = text;
     this.status.classList.toggle('error', error);
   }
-}
-
-/** Bots take the free colours in order, so every browser agrees. */
-export function botColorsFor(players: Profile[]): number[] {
-  return PLAYER_COLORS.map((_, i) => i).filter((i) => !players.some((p) => p.color === i));
 }

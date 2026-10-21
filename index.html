@@ -216,7 +216,7 @@
           <div class="lobby-col" id="lobby-left">
             <div class="online-code-label">Room code</div>
             <div id="online-room" class="online-room"></div>
-            <ul id="online-players"></ul>
+            <div id="online-slots" class="slots" aria-label="Player slots"></div>
             <div class="online-code-label">Your colour</div>
             <div id="online-colors" class="swatches"></div>
           </div>
@@ -241,13 +241,8 @@
               </div>
             </div>
             <div class="setting-row">
-              <span>Bots</span>
+              <span>Bot level</span>
               <div class="bots-row">
-                <div class="stepper">
-                  <button id="bots-less" type="button" aria-label="Fewer bots">−</button>
-                  <output id="bots-count">0</output>
-                  <button id="bots-more" type="button" aria-label="More bots">+</button>
-                </div>
                 <div id="set-bot-level" class="segmented">
                   <button type="button" data-level="easy">Easy</button>
                   <button type="button" data-level="normal">Normal</button>

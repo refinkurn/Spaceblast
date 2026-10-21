@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Lobby slot cards** (src/flow/online.ts, index.html `#online-lobby`, style.css)
-  Now: player list + bots stepper.
-  Want: 4 slot cards (players, then bots, then OPEN); host taps OPEN to add a bot, BOT to remove one (existing `bots` setting); stepper removed.
-  Done when: adding/removing bots by tap works and a 4th player joining still works; tests and build pass.
-  Spec: docs/design/match-screens.md (part 3)
 - **Settings: joystick mode + vibration** (src/flow/settings.ts, src/input/touch.ts, index.html `#settings`)
   Now: control size, music and sound only; the stick always floats.
   Want: Joystick Floating/Fixed; Vibration on/off (shown only where `navigator.vibrate` exists); both saved and applied instantly.
@@ -56,6 +51,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: lobby slot cards: P1-P4 cards (players, then bots, then OPEN; HOST/BOT/OPEN tags); host taps OPEN to add a bot and BOT to remove one via the existing `bots` setting; stepper removed (Bot level Easy/Normal/Hard stays); logic in `src/flow/lobby_slots.ts`; tapped through against the dev room server at 740x360; 177 tests pass.
 - 2026-10-21: end-of-match screen: VICTORY / DEFEATED / DRAW / LEVEL CLEAR / SURVIVED! title, Bosco happy/defeated sprite, summary (Story: time, lives lost, stars, Martians cleared; battle: round time + score), full-screen dim backdrop, "Main menu" button; boss clears now say "Hive ruptured!" / "Maze Master survived!" (never "destroyed"); words in `src/flow/summary.ts`; battle card checked at 740x360; 174 tests pass.
 - 2026-10-21: pause menu: 48 px pause button, PAUSED card (Resume, Restart level/round, Settings over the card, Quit with confirm), Escape/P toggles, auto-pause when the tab hides (offline); online keeps the leave prompt; logic in `src/flow/pause.ts`; checked in the browser at 740x360; 169 tests pass.
 - 2026-10-21: story dialogue banner: slim full-width bottom banner (min 84 px, grows for a 3rd line), 64 px portrait (hidden on narration), 13 px name, 16-20 px text, sprite sits above it, Skip 64x48; checked at 740x360; CSS tests (vitest now processes style.css); 166 tests pass.
