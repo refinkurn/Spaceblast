@@ -5,8 +5,8 @@ import { POWERUP_CARDS } from './powerup_cards';
 import { CONTROL_WORDS } from './tutorial_script';
 
 // The main menu: a column of choices on the left, Astropaw standing on the
-// right. Battle vs Bot, Settings, How to Play and Credits open in the same
-// column (Back or Escape returns). Arrow keys move between the choices; Enter,
+// right. Versus (Battle vs Bot, Multiplayer), Settings (with How to Play) and
+// Credits open in the same column (Back, pinned top-left, or Escape returns). Arrow keys move between the choices; Enter,
 // Space or a tap picks one.
 // The look comes from src/assets/menu/menu.json: background image (the size
 // that suits the screen), readability overlay, focal point, and whether a
@@ -14,7 +14,7 @@ import { CONTROL_WORDS } from './tutorial_script';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-export type MenuPage = 'main' | 'bot' | 'settings' | 'howto' | 'credits';
+export type MenuPage = 'main' | 'versus' | 'bot' | 'settings' | 'howto' | 'credits';
 export type BotLevel = 'easy' | 'normal' | 'hard';
 const BOT_KEY = 'spaceblast.botLevel';
 /** Taps ignored for this long after the menu changes page (keyboard presses still work). */
@@ -32,10 +32,20 @@ const artUrl = (file: string) => ART_URLS[`../assets/menu/${file}`];
 
 const PAGES: Record<MenuPage, string> = {
   main: 'menu-main',
+  versus: 'menu-versus-page',
   bot: 'menu-bot',
   settings: 'settings',
   howto: 'menu-howto-page',
   credits: 'menu-credits-page',
+};
+
+/** Where Back goes from each sub-page, and which button to refocus there. */
+export const BACK: Record<Exclude<MenuPage, 'main'>, { page: MenuPage; focus: string }> = {
+  versus: { page: 'main', focus: 'menu-versus' },
+  bot: { page: 'versus', focus: 'mode-battle' },
+  settings: { page: 'main', focus: 'menu-settings' },
+  howto: { page: 'settings', focus: 'menu-howto' },
+  credits: { page: 'main', focus: 'menu-credits' },
 };
 
 export class Menu {
@@ -53,6 +63,7 @@ export class Menu {
       const saved = localStorage.getItem(BOT_KEY);
       if (saved === 'easy' || saved === 'normal' || saved === 'hard') this.botLevel = saved;
     } catch { /* private mode */ }
+    $('menu-versus').addEventListener('click', () => this.open('versus'));
     $('mode-battle').addEventListener('click', () => this.open('bot'));
     $('menu-settings').addEventListener('click', () => this.open('settings'));
     $('menu-howto').addEventListener('click', () => this.open('howto'));
@@ -102,17 +113,22 @@ export class Menu {
         b.setAttribute('aria-current', String((b as HTMLElement).dataset.level === this.botLevel));
       }
     }
-    const first = page === 'bot' ? $('menu-bot').querySelector<HTMLElement>(`[data-level="${this.botLevel}"]`) : this.choices()[0];
+    // Back is first in every sub-page; start on the first real choice instead.
+    const list = this.choices();
+    const first = page === 'bot'
+      ? $('menu-bot').querySelector<HTMLElement>(`[data-level="${this.botLevel}"]`)
+      : (list.find((b) => !b.classList.contains('menu-back')) ?? list[0]);
     first?.focus();
     this.drawHero();
   }
 
-  /** Back to the main column (from a submenu). */
+  /** One step back: Battle vs Bot returns to Versus, How to Play to Settings, the rest to the main column. */
   back(): void {
     const from = this.page;
-    this.open('main');
-    const to = { bot: 'mode-battle', settings: 'menu-settings', howto: 'menu-howto', credits: 'menu-credits' }[from as Exclude<MenuPage, 'main'>];
-    if (to) $(to).focus();
+    if (from === 'main') return;
+    const step = BACK[from];
+    this.open(step.page);
+    $(step.focus).focus();
   }
 
   /** Background (smallest image that covers the screen), overlay, and the optional character. */

@@ -105,20 +105,25 @@
         <p class="tagline">Animal astronauts vs hungry Martians</p>
         <nav id="menu-main" class="menu-page menu-list" aria-label="Main menu">
           <button id="mode-survival" type="button">Story Mode</button>
-          <button id="mode-battle" type="button">Battle vs Bot</button>
-          <button id="mode-online" type="button">Multiplayer</button>
+          <button id="menu-versus" type="button">Versus</button>
           <button id="menu-settings" type="button">Settings</button>
-          <button id="menu-howto" type="button">How to Play</button>
           <button id="menu-credits" type="button">Credits</button>
         </nav>
+        <nav id="menu-versus-page" class="menu-page menu-list" aria-label="Versus" hidden>
+          <button type="button" class="menu-back">Back</button>
+          <h2>Versus</h2>
+          <button id="mode-battle" type="button">Battle vs Bot</button>
+          <button id="mode-online" type="button">Multiplayer</button>
+        </nav>
         <nav id="menu-bot" class="menu-page menu-list" aria-label="Battle vs Bot" hidden>
+          <button type="button" class="menu-back">Back</button>
           <h2>Battle vs Bot</h2>
           <button type="button" data-level="easy">Easy</button>
           <button type="button" data-level="normal">Normal</button>
           <button type="button" data-level="hard">Hard</button>
-          <button type="button" class="menu-back">Back</button>
         </nav>
         <div id="settings" class="menu-page" hidden>
+          <button id="settings-done" type="button" class="menu-back">Back</button>
           <h2>Settings</h2>
           <div class="menu-scroll">
             <label class="setting-line">Music
@@ -146,22 +151,24 @@
             <div class="setting-line">Tutorial
               <button id="settings-tutorial" type="button" class="quiet-btn">Show the tutorial again</button>
             </div>
+            <div class="setting-line">Help
+              <button id="menu-howto" type="button" class="quiet-btn">How to Play</button>
+            </div>
           </div>
-          <button id="settings-done" type="button" class="menu-back">Back</button>
         </div>
         <div id="menu-howto-page" class="menu-page menu-text" hidden>
+          <button type="button" class="menu-back">Back</button>
           <h2>How to Play</h2>
           <div id="howto-body" class="menu-scroll"></div>
-          <button type="button" class="menu-back">Back</button>
         </div>
         <div id="menu-credits-page" class="menu-page menu-text" hidden>
+          <button type="button" class="menu-back">Back</button>
           <h2>Credits</h2>
           <div class="menu-scroll">
             <p><strong>Spaceblast</strong> by Refindo</p>
             <p>Built with Three.js and Vite. Sound effects and music are made in code.</p>
             <p>Art credits go here when the final characters and models are in.</p>
           </div>
-          <button type="button" class="menu-back">Back</button>
         </div>
       </div>
       <div class="menu-right">

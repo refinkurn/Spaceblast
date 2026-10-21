@@ -339,6 +339,8 @@ body.scene .net-stats { visibility: hidden; }
 #menu h2 { margin: 0 0 2px; font-size: 22px; letter-spacing: 0.06em; }
 .menu-page { min-height: 0; display: flex; flex-direction: column; gap: 6px; }
 .menu-page[hidden] { display: none; }
+/* Sub-pages: Back is the first item, a 48 px button pinned at the top-left of the panel. */
+.menu-page .menu-back { align-self: flex-start; min-width: 96px; margin-bottom: 4px; }
 .menu-list button, .menu-back {
   min-height: 48px;
   padding: 0 18px;
@@ -440,7 +442,13 @@ body.scene .net-stats { visibility: hidden; }
   background: #14161df2;
 }
 #online[hidden], #online [hidden] { display: none !important; }
-.online-card { width: min(800px, 96vw); display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+/* The lobby lives in the left panel, the same width as the menu column. */
+#online {
+  justify-content: flex-start;
+  padding-left: max(28px, env(safe-area-inset-left));
+}
+.online-card { width: min(420px, 46vw); min-width: 260px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; padding-top: 52px; }
+#online button#online-back { position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(28px, env(safe-area-inset-left)); min-height: 48px; min-width: 96px; z-index: 1; }
 #online-choose { display: flex; flex-direction: column; gap: 12px; align-items: center; width: min(420px, 100%); }
 #online-lobby { display: flex; gap: 24px; width: 100%; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
 .lobby-col { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 260px; flex: 1 1 260px; }

@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Menu: 4 buttons + Versus page** (src/flow/menu.ts, index.html `#menu`, `#online`, style.css)
-  Now: 6 buttons (Story, Battle vs Bot, Multiplayer, Settings, How to Play, Credits); Back at the bottom; lobby is a centred card.
-  Want: Story / Versus (Battle vs Bot, Multiplayer) / Settings (How to Play inside) / Credits; Back pinned top-left; lobby in the left panel.
-  Done when: all paths work by tap and keyboard; no page scroll at 740x360; tests and build pass.
-  Spec: docs/design/menu-dialogue.md (part 1)
 - **Story dialogue banner** (src/flow/cutscene.ts, index.html `#cutscene`, style.css)
   Now: tall dialogue box, 76 px portrait.
   Want: slim full-width bottom banner (~84 px), 64 px portrait, 12-13 px name, 16 px+ text; standing sprite and Skip stay.
@@ -76,6 +71,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: menu: Story / Versus (Battle vs Bot, Multiplayer) / Settings (How to Play inside) / Credits; Back is first and pinned top-left on every sub-page (bot -> Versus, How to Play -> Settings); online lobby sits in a left panel (min(420px, 46vw)) with Back pinned top-left; checked at 740x360 (no page scroll); 5 new tests, 163 pass. Note: the menu art is not shown behind the lobby (the menu hides when the lobby opens).
 - 2026-10-21: HUD layout: top-left avatar + hearts + power-ups + short goal, top-centre stage chip with clock (boss/battle only), title dropped, hearts shake and flash on life/armor loss (CSS, reduced-motion safe); text logic in `hud_text.ts`; checked at 740x360; 5 new tests, 158 pass.
 - 2026-10-21: compact level card: `1-3` / `1-5 BOSS` title, sector name, goal icon + text, Kit line only, dim backdrop; Bosco reply no longer shown; 5 new tests, 153 pass.
 - 2026-10-21: 4-player lag, step 1 (Refindo): measured the live room server from the dev PC: steady 60 Hz frames (worst gap 36 ms) but ~90 ms ping, so rooms are now placed in Asia-Pacific (`ROOM_REGION`) and report their data centre; on-screen stats line during online rounds (ping, wobble, buffer, late presses, fps, frame work; ONLINE.md explains it, `?nostats` hides it); lighter rendering on phones (no antialiasing on sharp screens, plain 512 px shadows, 1.5x resolution cap). Next: a 4-player test with screenshots of the stats line. 148 tests pass.
