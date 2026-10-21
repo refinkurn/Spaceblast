@@ -5,6 +5,7 @@ import { Congrats, type Standing } from './flow/congrats';
 import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
+import { haptics } from './flow/haptics';
 import { PauseMenu } from './flow/pause';
 import { battleSummary, type BannerExtra } from './flow/summary';
 import { OnlineRoom, type RoundStart } from './flow/online';
@@ -94,6 +95,8 @@ $('settings-tutorial').addEventListener('click', () => {
 const settings = new SettingsScreen((s) => {
   audio.setVolumes(s.music, s.sfx);
   touch.setScale(CONTROL_SCALE[s.controls]);
+  touch.setMode(s.joystick);
+  haptics.enabled = s.vibration;
 });
 const dev = new DevPanel(startAtLevel);
 const pause = new PauseMenu({

@@ -1,5 +1,7 @@
-// Floating virtual joystick in the left gutter plus the charge button in the
+// Virtual joystick (floating or fixed) in the left gutter plus the charge button in the
 // right gutter. Pointer events cover touch, mouse and pen alike.
+
+import { floatingCenter, restPosition, type JoystickMode } from './stick_geometry';
 
 export class TouchSource {
   /** Stick vector, screen space (+x right, +y down), length 0..1 after dead zone. */
@@ -14,6 +16,7 @@ export class TouchSource {
   private cy = 0;
   private radius = 56;
   private readonly deadZone = 0.22;
+  private mode: JoystickMode = 'floating';
 
   constructor(
     private zone: HTMLElement,
@@ -70,12 +73,20 @@ export class TouchSource {
     try {
       this.zone.setPointerCapture(e.pointerId);
     } catch { /* the finger already lifted: the touch still works without capture */ }
-    // The stick appears where the thumb lands, clamped inside the zone.
     const r = this.zone.getBoundingClientRect();
-    this.cx = Math.min(Math.max(e.clientX, r.left + this.radius), r.right - this.radius);
-    this.cy = Math.min(Math.max(e.clientY, r.top + this.radius), r.bottom - this.radius);
-    this.base.style.left = `${this.cx - r.left}px`;
-    this.base.style.top = `${this.cy - r.top}px`;
+    if (this.mode === 'fixed') {
+      // Steer relative to the base that stays put, wherever in the gutter the finger lands.
+      const b = this.base.getBoundingClientRect();
+      this.cx = b.left + b.width / 2;
+      this.cy = b.top + b.height / 2;
+    } else {
+      // The stick appears where the thumb lands, clamped inside the zone.
+      const c = floatingCenter(r, this.radius, e.clientX, e.clientY);
+      this.cx = c.x;
+      this.cy = c.y;
+      this.base.style.left = `${this.cx - r.left}px`;
+      this.base.style.top = `${this.cy - r.top}px`;
+    }
     this.base.classList.add('active');
     this.move(e);
   }
@@ -104,13 +115,21 @@ export class TouchSource {
     this.vector = { x: 0, y: 0 };
     this.knob.style.transform = 'translate(0px, 0px)';
     this.base.classList.remove('active');
-    this.base.style.left = '50%';
-    this.base.style.top = '62%';
+    const rest = restPosition(this.mode, this.radius);
+    this.base.style.left = rest.left;
+    this.base.style.top = rest.top;
+  }
+
+  /** Settings: floating (under the thumb) or fixed (bottom-left of the gutter). Applies at once. */
+  setMode(mode: JoystickMode): void {
+    this.mode = mode;
+    this.release();
   }
 
   /** Settings: bigger or smaller controls (the CSS sizes follow --ctl). */
   setScale(scale: number): void {
     this.radius = 56 * scale;
+    this.reset();
     document.documentElement.style.setProperty('--ctl', String(scale));
   }
 }

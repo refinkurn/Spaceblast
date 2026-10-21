@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Settings: joystick mode + vibration** (src/flow/settings.ts, src/input/touch.ts, index.html `#settings`)
-  Now: control size, music and sound only; the stick always floats.
-  Want: Joystick Floating/Fixed; Vibration on/off (shown only where `navigator.vibrate` exists); both saved and applied instantly.
-  Done when: both joystick modes steer correctly; tests cover settings load/defaults.
-  Spec: docs/design/polish-settings-net.md (part 1)
 - **Start countdown + damage vignette + vibration** (src/flow/, main.ts, style.css)
   Now: play starts the moment the card closes; no damage feedback at screen edges.
   Want: 3-2-1-BLAST! (offline, held by the pause flag); red edge flash on life/armor loss; 30 ms buzz on placing a Charge, 80 ms when hurt.
@@ -51,6 +46,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: settings: Joystick Floating/Fixed (fixed = base bottom-left of the gutter above the safe area, steers relative to it; instant) and Vibration On/Off (shown only where `navigator.vibrate` exists); both saved; `haptics.buzz()` ready for part 2 of the countdown item; checked in the browser at 740x360; tests for load/defaults and stick geometry; 182 tests pass.
 - 2026-10-21: lobby slot cards: P1-P4 cards (players, then bots, then OPEN; HOST/BOT/OPEN tags); host taps OPEN to add a bot and BOT to remove one via the existing `bots` setting; stepper removed (Bot level Easy/Normal/Hard stays); logic in `src/flow/lobby_slots.ts`; tapped through against the dev room server at 740x360; 177 tests pass.
 - 2026-10-21: end-of-match screen: VICTORY / DEFEATED / DRAW / LEVEL CLEAR / SURVIVED! title, Bosco happy/defeated sprite, summary (Story: time, lives lost, stars, Martians cleared; battle: round time + score), full-screen dim backdrop, "Main menu" button; boss clears now say "Hive ruptured!" / "Maze Master survived!" (never "destroyed"); words in `src/flow/summary.ts`; battle card checked at 740x360; 174 tests pass.
 - 2026-10-21: pause menu: 48 px pause button, PAUSED card (Resume, Restart level/round, Settings over the card, Quit with confirm), Escape/P toggles, auto-pause when the tab hides (offline); online keeps the leave prompt; logic in `src/flow/pause.ts`; checked in the browser at 740x360; 169 tests pass.

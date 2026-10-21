@@ -3,6 +3,8 @@
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 const KEY = 'spaceblast.settings';
 
+import type { JoystickMode } from '../input/stick_geometry';
+
 export type ControlSize = 'small' | 'normal' | 'large';
 /** Round-end cinematic: replay + winner, winner only, or none. */
 export type CinematicLength = 'full' | 'short' | 'off';
@@ -13,13 +15,17 @@ export interface Settings {
   sfx: number;
   controls: ControlSize;
   cinematic: CinematicLength;
+  joystick: JoystickMode;
+  /** Haptic buzz (only used where navigator.vibrate exists). */
+  vibration: boolean;
 }
 
-const DEFAULTS: Settings = { music: 70, sfx: 90, controls: 'normal', cinematic: 'full' };
+const DEFAULTS: Settings = { music: 70, sfx: 90, controls: 'normal', cinematic: 'full', joystick: 'floating', vibration: true };
+export const DEFAULT_SETTINGS = DEFAULTS;
 export const CONTROL_SCALE: Record<ControlSize, number> = { small: 0.82, normal: 1, large: 1.22 };
 
 /** Saved settings, checked field by field (old or edited data falls back to defaults). */
-function load(): Settings {
+export function loadSettings(): Settings {
   let raw: Partial<Settings> = {};
   try {
     raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {};
@@ -30,11 +36,13 @@ function load(): Settings {
     sfx: volume(raw.sfx, DEFAULTS.sfx),
     controls: raw.controls === 'small' || raw.controls === 'large' ? raw.controls : DEFAULTS.controls,
     cinematic: raw.cinematic === 'short' || raw.cinematic === 'off' ? raw.cinematic : 'full',
+    joystick: raw.joystick === 'fixed' ? 'fixed' : 'floating',
+    vibration: typeof raw.vibration === 'boolean' ? raw.vibration : DEFAULTS.vibration,
   };
 }
 
 export class SettingsScreen {
-  readonly value: Settings = load();
+  readonly value: Settings = loadSettings();
 
   /** `onChange` runs now and after every change. */
   constructor(private onChange: (s: Settings) => void) {
@@ -43,11 +51,17 @@ export class SettingsScreen {
       input.value = String(this.value[key]);
       input.addEventListener('input', () => this.set({ [key]: Number(input.value) }));
     }
-    for (const [group, key] of [['set-controls', 'controls'], ['set-cinematic', 'cinematic']] as const) {
+    for (const [group, key] of [['set-controls', 'controls'], ['set-cinematic', 'cinematic'], ['set-joystick', 'joystick']] as const) {
       for (const el of $(group).children) {
         const b = el as HTMLButtonElement;
         b.addEventListener('click', () => this.set({ [key]: b.dataset.value } as Partial<Settings>));
       }
+    }
+    // Vibration: shown only where the browser can buzz (iOS Safari has no navigator.vibrate).
+    $('set-vibration-line').hidden = !('vibrate' in navigator);
+    for (const el of $('set-vibration').children) {
+      const b = el as HTMLButtonElement;
+      b.addEventListener('click', () => this.set({ vibration: b.dataset.value === 'on' }));
     }
     this.render();
     onChange(this.value);
@@ -61,7 +75,10 @@ export class SettingsScreen {
   }
 
   private render(): void {
-    for (const [group, key] of [['set-controls', 'controls'], ['set-cinematic', 'cinematic']] as const) {
+    for (const el of $('set-vibration').children) {
+      el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === (this.value.vibration ? 'on' : 'off')));
+    }
+    for (const [group, key] of [['set-controls', 'controls'], ['set-cinematic', 'cinematic'], ['set-joystick', 'joystick']] as const) {
       for (const el of $(group).children) el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === this.value[key]));
     }
     $('set-music-value').textContent = `${this.value.music}%`;
