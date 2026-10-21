@@ -6,6 +6,7 @@ import { DevPanel, GOD_SHIELD } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
 import { haptics } from './flow/haptics';
+import { parseRoomParam } from './flow/invite';
 import { Countdown } from './flow/countdown';
 import { PauseMenu } from './flow/pause';
 import { battleSummary, type BannerExtra } from './flow/summary';
@@ -376,12 +377,15 @@ online.onAway = (slot, away) => {
   announcer.flash(away ? `${name} lost connection, reconnecting…` : `${name} is back!`);
 };
 online.onReconnecting = (on) => {
+  $('reconnect-text').textContent = `Reconnecting to room ${online.code}…`;
+  $('reconnect').hidden = !on;
   if (!on) announcer.flash('Reconnected!');
 };
 online.onHash = (r, tick, h) => {
   if (net?.otherHash(r, tick, h)) desync(tick);
 };
 online.onExit = (reason) => {
+  $('reconnect').hidden = true;
   net = null;
   cine.stop();
   congrats.hide();
@@ -531,6 +535,19 @@ layout(true);
 // A map plays behind the start screen; the sim waits while any card or the menu is open.
 newGame();
 openMenu();
+// An invite link (?room=CODE) opens Multiplayer with the code filled in.
+{
+  const invited = parseRoomParam(window.location.search);
+  if (invited) {
+    startMode('online');
+    online.prefillCode(invited);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('room');
+      history.replaceState(null, '', url);
+    } catch { /* keep the address as it is */ }
+  }
+}
 let acc = 0;
 let last = performance.now();
 let wasPaused = false;

@@ -212,6 +212,7 @@
         <canvas id="menu-hero" class="menu-hero" aria-label="Astropaw"></canvas>
       </div>
     </div>
+    <div id="reconnect" hidden role="alert"><div class="reconnect-box"><div class="reconnect-spin" aria-hidden="true"></div><div id="reconnect-text"></div></div></div>
     <div id="online" hidden>
       <div class="online-card">
         <div class="kicker">Play online</div>
@@ -229,7 +230,8 @@
         <div id="online-lobby" hidden>
           <div class="lobby-col" id="lobby-left">
             <div class="online-code-label">Room code</div>
-            <div id="online-room" class="online-room"></div>
+            <div class="online-room-row"><div id="online-room" class="online-room"></div><button id="online-invite" type="button">Invite</button></div>
+            <div id="online-invite-note" class="online-code-label" aria-live="polite"></div>
             <div id="online-slots" class="slots" aria-label="Player slots"></div>
             <div class="online-code-label">Your colour</div>
             <div id="online-colors" class="swatches"></div>

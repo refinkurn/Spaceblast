@@ -4,6 +4,7 @@ import {
   CODE_LETTERS, DEFAULT_SETTINGS, MAX_PLAYERS, PLAYER_COLORS, isRoomCode,
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
+import { shareInvite } from './invite';
 import { ROUND_SECONDS } from '../sim/constants';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
 
@@ -84,6 +85,11 @@ export class OnlineRoom {
     $('online-rejoin').addEventListener('click', () => this.rejoinSaved());
     this.nameInput.value = this.prefs.name;
     $('online-create').addEventListener('click', () => this.create());
+    $('online-invite').addEventListener('click', async () => {
+      const note = await shareInvite(this.code);
+      $('online-invite-note').textContent = note;
+      if (note) setTimeout(() => { $('online-invite-note').textContent = ''; }, 4000);
+    });
     $('online-join').addEventListener('click', () => this.join(this.codeInput.value));
     this.codeInput.addEventListener('input', () => {
       this.codeInput.value = [...this.codeInput.value.toUpperCase()].filter((c) => CODE_LETTERS.includes(c)).join('');
@@ -154,6 +160,12 @@ export class OnlineRoom {
     const rejoin = $('online-rejoin');
     rejoin.hidden = !seat;
     if (seat) rejoin.textContent = `Rejoin room ${seat.code}`;
+  }
+
+  /** An invite link was opened: fill in the code and focus the name. Joins only on Join. */
+  prefillCode(code: string): void {
+    this.codeInput.value = code;
+    this.nameInput.focus();
   }
 
   /** Back to the lobby (the connection stays open). */

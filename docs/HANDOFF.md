@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Invite link + reconnect screen** (src/flow/online.ts, main.ts, index.html `#online`)
-  Now: share the 4-letter code by hand; only a "Reconnected!" flash.
-  Want: Invite button (share sheet or copy `?room=CODE`); opening that link fills the code; full-screen "Reconnecting to room CODE…" while the link retries.
-  Done when: link opens Multiplayer with the code; reconnect screen shows and hides; tests cover `?room=` parsing.
-  Spec: docs/design/polish-settings-net.md (part 3)
 - **Power-up pick-up look** (src/view/actors_view.ts `ItemsView`, effects_view.ts)
   Now: plain coloured shapes (cone, sphere, box, octahedron, torus) bobbing and spinning fast.
   Want: low-poly item meshes in the new colours inside a glass shell, floor aura, shared idle particles, spawn/collect bursts; slow 30 deg/s spin; aura and particles off at reduced quality.
@@ -41,6 +36,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: invite link + reconnect screen: Invite button beside the room code (share sheet, else copies `?room=CODE`, shows "Link copied"); opening `?room=CODE` goes to Multiplayer with the code filled in and the name focused (joins only on Join, then `room` is removed from the URL); full-screen "Reconnecting to room CODE…" overlay shows/hides with `onReconnecting`, and hides on exit; parsing in `src/flow/invite.ts` with tests; 212 tests pass. Not tried on a phone or with a real dropped connection.
 - 2026-10-21: start countdown 3-2-1-BLAST! (0.6 s steps, offline Story after the level card and Battle rounds; held by the paused flag; skipped when level 1's first coach prompt is pending), red damage vignette (CSS, reduced-motion softer) on life/armor loss, vibration 30 ms on placing a Charge and 80 ms when hurt; logic in `src/flow/countdown.ts`; 209 tests pass. Not checked in a real browser or on a phone.
 - 2026-10-21: Story score + online leaderboard (Refindo, direct): score = clear 2,000 + 500/Martian + time under par x20 + 1,000/heart; new stars (target score, 3 = all hearts under par); no-login device profile + name word filter; POST/GET /api/scores on a Cloudflare Durable Object (caps, 3 s / 300-a-day limits) and in the dev server; offline queue; Leaderboard screen on the level map. Needs `npm run deploy` to go live. Spec: docs/design/leaderboard.md. 199 tests pass.
 - 2026-10-21: settings: Joystick Floating/Fixed (fixed = base bottom-left of the gutter above the safe area, steers relative to it; instant) and Vibration On/Off (shown only where `navigator.vibrate` exists); both saved; `haptics.buzz()` ready for part 2 of the countdown item; checked in the browser at 740x360; tests for load/defaults and stick geometry; 182 tests pass.
