@@ -11,6 +11,13 @@ describe('settings load', () => {
     expect(loadSettings()).toMatchObject({ joystick: 'floating', vibration: true, controls: 'normal', music: 70, sfx: 90 });
   });
 
+  it('screen shake: on by default, kept when saved', () => {
+    store(null);
+    expect(loadSettings().screenShake).toBe(true);
+    store(JSON.stringify({ screenShake: false }));
+    expect(loadSettings().screenShake).toBe(false);
+  });
+
   it('keeps saved joystick and vibration choices', () => {
     store(JSON.stringify({ joystick: 'fixed', vibration: false }));
     expect(loadSettings()).toMatchObject({ joystick: 'fixed', vibration: false });

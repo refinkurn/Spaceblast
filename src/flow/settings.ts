@@ -18,9 +18,13 @@ export interface Settings {
   joystick: JoystickMode;
   /** Haptic buzz (only used where navigator.vibrate exists). */
   vibration: boolean;
+  /** Camera shake on nearby blasts. */
+  screenShake: boolean;
 }
 
-const DEFAULTS: Settings = { music: 70, sfx: 90, controls: 'normal', cinematic: 'full', joystick: 'floating', vibration: true };
+/** Players who ask for reduced motion start with screen shake off. */
+const prefersReducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DEFAULTS: Settings = { music: 70, sfx: 90, controls: 'normal', cinematic: 'full', joystick: 'floating', vibration: true, screenShake: true };
 export const DEFAULT_SETTINGS = DEFAULTS;
 export const CONTROL_SCALE: Record<ControlSize, number> = { small: 0.82, normal: 1, large: 1.22 };
 
@@ -38,6 +42,7 @@ export function loadSettings(): Settings {
     cinematic: raw.cinematic === 'short' || raw.cinematic === 'off' ? raw.cinematic : 'full',
     joystick: raw.joystick === 'fixed' ? 'fixed' : 'floating',
     vibration: typeof raw.vibration === 'boolean' ? raw.vibration : DEFAULTS.vibration,
+    screenShake: typeof raw.screenShake === 'boolean' ? raw.screenShake : !prefersReducedMotion(),
   };
 }
 
@@ -63,6 +68,10 @@ export class SettingsScreen {
       const b = el as HTMLButtonElement;
       b.addEventListener('click', () => this.set({ vibration: b.dataset.value === 'on' }));
     }
+    for (const el of $('set-shake').children) {
+      const b = el as HTMLButtonElement;
+      b.addEventListener('click', () => this.set({ screenShake: b.dataset.value === 'on' }));
+    }
     this.render();
     onChange(this.value);
   }
@@ -77,6 +86,9 @@ export class SettingsScreen {
   private render(): void {
     for (const el of $('set-vibration').children) {
       el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === (this.value.vibration ? 'on' : 'off')));
+    }
+    for (const el of $('set-shake').children) {
+      el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === (this.value.screenShake ? 'on' : 'off')));
     }
     for (const [group, key] of [['set-controls', 'controls'], ['set-cinematic', 'cinematic'], ['set-joystick', 'joystick']] as const) {
       for (const el of $(group).children) el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === this.value[key]));

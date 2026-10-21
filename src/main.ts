@@ -104,6 +104,7 @@ const settings = new SettingsScreen((s) => {
   touch.setScale(CONTROL_SCALE[s.controls]);
   touch.setMode(s.joystick);
   haptics.enabled = s.vibration;
+  view.rig.shakeOn = s.screenShake;
 });
 const dev = new DevPanel(startAtLevel);
 const pause = new PauseMenu({
@@ -264,6 +265,10 @@ function onEvent(e: SimEvent) {
       }
       break;
     }
+    case 'item_picked':
+      // A light tap when your astronaut grabs a power-up.
+      if (e.id === localId && !quiet) haptics.buzz(15);
+      break;
     case 'armor_hit':
       announcer.flash('Oxygen Vest absorbed the hit!');
       break;

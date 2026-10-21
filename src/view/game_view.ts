@@ -1,16 +1,17 @@
 import * as THREE from 'three';
 import { AdaptiveQuality } from './quality';
-import { GRID_H, GRID_W } from '../sim/constants';
+import { GRID_H, GRID_W, TILE } from '../sim/constants';
 import type { GameState, SimEvent } from '../sim/state';
 import type { Prediction } from '../net/predict';
 import { GateView, MartiansView, PortalsView } from './actors_view';
 import { ItemsView } from './items_view';
 import { BoardView } from './board_view';
 import { BossView, CrossPreviewView } from './boss_view';
-import { CameraRig } from './camera_rig';
+import { CameraRig, blastShake } from './camera_rig';
 import { toWorld } from './coords';
 import { BeamsView, ChargesView, DebrisView } from './effects_view';
 import { HeroView } from './hero_view';
+import { TileHighlight } from './tile_highlight';
 import { LightingView, ShiftPreviewView } from './level_view';
 
 // The whole 3D scene: renderer, lights, camera and every view. It draws a
@@ -41,6 +42,9 @@ export class GameView {
   private prevPlayers: { x: number; y: number }[] = [];
   private prevMartians = new Map<number, { x: number; y: number }>();
   private colors: number[] = [];
+  /** The player this screen belongs to: shakes are measured from them, and their tile is highlighted. */
+  private you = 0;
+  private highlight = new TileHighlight();
 
   /** Render resolution, lowered automatically on slow phones (phones start at 1.5x at most). */
   private quality = new AdaptiveQuality(PHONE ? Math.min(window.devicePixelRatio || 1, 1.5) : window.devicePixelRatio || 1);
@@ -65,12 +69,15 @@ export class GameView {
     scene.add(this.board.group, this.charges.group, this.beams.group, this.debris.group, this.items.group, this.gate.group);
     scene.add(this.martians.group, this.portals.group, this.boss.group, this.crossPreview.group, this.shiftPreview.group);
     for (const h of this.heroes) scene.add(h.group);
+    scene.add(this.highlight.mesh);
     this.lighting = new LightingView([sky, sun], scene, scene.background as THREE.Color);
   }
 
   /** Resets everything for a new map. `colors` per player; `local` gets the "you" arrow (-1 for none). */
   build(state: GameState, colors: number[], local: number): void {
     this.colors = colors;
+    this.you = local >= 0 ? local : 0;
+    this.highlight.setColor(colors[this.you] ?? 0xffffff);
     this.board.build(state);
     this.charges.clear();
     this.items.clear();
@@ -99,9 +106,12 @@ export class GameView {
         board.breakRock(e.tx, e.ty);
         debris.burst(e.tx, e.ty, 0xd9773f);
         break;
-      case 'charge_exploded':
-        rig.shake();
+      case 'charge_exploded': {
+        // Near blasts shake hard, ones across the arena barely or not at all.
+        const me = state.players[this.you];
+        if (me) rig.shake(blastShake(Math.abs(Math.round(me.x / TILE) - e.tx) + Math.abs(Math.round(me.y / TILE) - e.ty)));
         break;
+      }
       case 'player_died':
         debris.burst(e.tx, e.ty, this.colors[e.id] ?? 0xffffff, 14);
         break;
@@ -121,10 +131,10 @@ export class GameView {
           board.addRock(i % GRID_W, Math.floor(i / GRID_W));
           debris.burst(i % GRID_W, Math.floor(i / GRID_W), 0xd9773f, 4);
         }
-        rig.shake(0.3);
+        rig.shake(0.5);
         break;
       case 'boss_cross':
-        rig.shake(0.5);
+        rig.shake(0.8);
         break;
       case 'boss_defeated':
         if (state.boss) debris.burst(state.boss.tile % GRID_W, Math.floor(state.boss.tile / GRID_W), 0xffe9a8, 30);
@@ -161,6 +171,8 @@ export class GameView {
     this.crossPreview.sync(state, time);
     this.shiftPreview.sync(state, time);
     this.lighting.sync(state, state.players.map((_, i) => this.heroes[i].group), dt);
+    // Online the local astronaut is drawn from the prediction: mark the tile it is drawn on.
+    this.highlight.update(predicted?.id === this.you ? predicted.p.cur : state.players[this.you] ?? null, dt);
     this.board.update(dt);
     this.debris.update(dt);
     this.rig.update(dt);

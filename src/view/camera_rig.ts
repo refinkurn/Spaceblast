@@ -1,6 +1,25 @@
 import * as THREE from 'three';
 import { GRID_H, GRID_W } from '../sim/constants';
 
+/** Impact shake (docs/design/radio-juice.md): world units at full strength, decay time, wobble rate, and when it is over. */
+const SHAKE_AMP = 0.06;
+const SHAKE_DECAY = 0.06;
+const SHAKE_HZ = 18;
+export const SHAKE_END = 0.25;
+/** Blasts this many tiles (Manhattan) or more from you don't shake. */
+const SHAKE_REACH = 7;
+
+/** Shake strength 0..1 for an explosion `tiles` (Manhattan) away from the local player. */
+export function blastShake(tiles: number): number {
+  return Math.max(0, 1 - tiles / SHAKE_REACH);
+}
+
+/** The shake offset `t` seconds into an impulse of strength `amp` (0 once it is over). */
+export function shakeOffset(amp: number, t: number): number {
+  if (t >= SHAKE_END) return 0;
+  return amp * SHAKE_AMP * Math.exp(-t / SHAKE_DECAY) * Math.sin(2 * Math.PI * SHAKE_HZ * t);
+}
+
 /**
  * Fixed angled top-down camera. Fits the arena (plus its border) into the
  * screen area left free between the touch-control gutters and below the HUD,
@@ -13,7 +32,12 @@ export class CameraRig {
   /** How much of the outer border ring stays in frame (0 = none, 1 = all). */
   borderInFrame = 0.35;
   private base = new THREE.Vector3();
-  private shakeLeft = 0;
+  /** Screen shake setting (off: no shake at all). */
+  shakeOn = true;
+  /** The running impulse: strength 0..1 and seconds since it started; the strongest request this frame. */
+  private shakeAmp = 0;
+  private shakeT = SHAKE_END;
+  private shakeAsk = 0;
   /** Where the fitted camera looks, and how far away it sits. */
   private aim = new THREE.Vector3();
   private dist = 20;
@@ -108,13 +132,23 @@ export class CameraRig {
     this.zoom = 1;
   }
 
-  shake(seconds = 0.18): void {
-    this.shakeLeft = Math.max(this.shakeLeft, seconds);
+  /** An impact, strength 0..1. Several in one frame: the strongest counts, they don't add up. */
+  shake(strength = 1): void {
+    this.shakeAsk = Math.max(this.shakeAsk, Math.min(1, strength));
   }
 
   update(dt: number): void {
-    this.shakeLeft = Math.max(0, this.shakeLeft - dt);
-    const a = this.shakeLeft > 0 ? 0.06 : 0;
+    // A new impact restarts the impulse only if it beats what is left of the current one.
+    if (this.shakeOn && this.shakeAsk > 0) {
+      const left = this.shakeT < SHAKE_END ? this.shakeAmp * Math.exp(-this.shakeT / SHAKE_DECAY) : 0;
+      if (this.shakeAsk > left) {
+        this.shakeAmp = this.shakeAsk;
+        this.shakeT = 0;
+      }
+    }
+    this.shakeAsk = 0;
+    const off = this.shakeOn ? shakeOffset(this.shakeAmp, this.shakeT) : 0;
+    this.shakeT += dt;
     const k = 1 - Math.exp(-4 * dt);
     this.look.lerp(this.lookGoal, k);
     this.zoom += (this.zoomGoal - this.zoom) * k;
@@ -123,8 +157,11 @@ export class CameraRig {
     if (moved) this.camera.position.copy(this.look).addScaledVector(this.dir, this.dist * this.zoom);
     else this.camera.position.copy(this.base);
     this.camera.lookAt(moved ? this.look : this.aim);
-    this.camera.position.x += (Math.random() - 0.5) * a;
-    this.camera.position.y += (Math.random() - 0.5) * a;
-    this.camera.position.z += (Math.random() - 0.5) * a;
+    // Added after positioning, recomputed every frame and never stored: the camera ends exactly where it was.
+    if (off !== 0) {
+      this.camera.position.x += off;
+      this.camera.position.z += off * 0.6;
+      this.camera.rotateZ(off * 0.15); // a tiny roll
+    }
   }
 }
