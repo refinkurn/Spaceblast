@@ -32,6 +32,7 @@ import { levelSpec } from './sim/levels';
 import { hashState, step } from './sim/sim';
 import { createGame, playerTile, type GameState, type SimEvent } from './sim/state';
 import { GameView } from './view/game_view';
+import { applyDom, t } from './utils/i18n';
 
 // Wiring: game modes (Story, Battle vs bot, online rooms), the round flow and
 // the fixed 60 Hz loop. Rendering lives in view/game_view.ts, online rounds in
@@ -69,6 +70,8 @@ let devRun = false;
 
 const screens = new Screens(startMode, openMenu, pauseButton);
 const hud = new Hud();
+// Static labels in index.html take their words from src/config/locales.json.
+applyDom();
 const countdown = new Countdown();
 /** Captain Kit's one-line radio toasts (Story only). */
 const radio = new RadioToasts();
@@ -97,7 +100,7 @@ const story = new StoryMode({
 const tutorial = new Tutorial(story.progress.beats);
 $('settings-tutorial').addEventListener('click', () => {
   story.progress.resetTutorial();
-  $('settings-tutorial').textContent = 'It will show again from level 1';
+  $('settings-tutorial').textContent = t('settings.tutorialReset');
 });
 const settings = new SettingsScreen((s) => {
   audio.setVolumes(s.music, s.sfx);
@@ -165,10 +168,10 @@ let leaveAsked = false;
 function openMenu() {
   if (online.connected && mode === 'online' && net && state.status === 'playing' && !leaveAsked) {
     leaveAsked = true;
-    screens.showBanner('Leave the match?', `You'll leave room ${online.code}, and your astronaut is out for this round.`, 'Keep playing', () => {
+    screens.showBanner(t('online.leaveTitle'), t('online.leaveText', { code: online.code }), t('online.keepPlaying'), () => {
       leaveAsked = false;
       screens.hideBanner();
-    }, 'Leave');
+    }, t('online.leave'));
     return;
   }
   leaveAsked = false;
@@ -270,10 +273,10 @@ function onEvent(e: SimEvent) {
       if (e.id === localId && !quiet) haptics.buzz(15);
       break;
     case 'armor_hit':
-      announcer.flash('Oxygen Vest absorbed the hit!');
+      announcer.flash(t('alert.vestHit'));
       break;
     case 'gate_moved':
-      announcer.flash(e.hidden ? 'The Warp Gate moved under a rock!' : 'The Warp Gate moved!');
+      announcer.flash(e.hidden ? t('alert.gateMovedHidden') : t('alert.gateMoved'));
       break;
     case 'round_over':
       roundOver(e.winner);
@@ -287,8 +290,8 @@ function playerKeys(): string[] {
 }
 
 function playerName(id: number): string {
-  if (id === localId) return 'You';
-  return net && mode === 'online' ? net.names[id] : 'The bot';
+  if (id === localId) return t('common.you');
+  return net && mode === 'online' ? net.names[id] : t('battle.theBot');
 }
 
 function winsNeeded(): number {
@@ -304,10 +307,10 @@ function roundOver(winner: number) {
     afterRound();
     return;
   }
-  const title = winner < 0 ? 'Draw!' : winner === localId ? 'You win!' : `${playerName(winner)} wins!`;
+  const title = winner < 0 ? t('battle.drawTitle') : winner === localId ? t('battle.youWin') : t('battle.wins', { name: playerName(winner) });
   cine.start(state, {
     winner,
-    kicker: `Round ${score.round}`,
+    kicker: t('battle.round', { n: score.round }),
     title,
     color: winner >= 0 ? colors()[winner] : 0xffffff,
     colors: colors(),
@@ -326,18 +329,19 @@ function tally(): string {
 }
 
 function showRoundScore() {
-  const line = lastWinner < 0 ? 'Draw' : lastWinner === localId ? 'You win the round!' : `${playerName(lastWinner)} wins the round`;
-  const big = lastWinner < 0 ? 'DRAW' : lastWinner === localId ? 'VICTORY' : 'DEFEATED';
+  const line = lastWinner < 0 ? t('battle.roundDraw') : lastWinner === localId ? t('battle.youWinRound') : t('battle.winsRound', { name: playerName(lastWinner) });
+  const big = lastWinner < 0 ? t('banner.draw') : lastWinner === localId ? t('banner.victory') : t('banner.defeated');
   const extra: BannerExtra = { pose: lastWinner < 0 ? 'neutral' : lastWinner === localId ? 'happy' : 'defeated', summary: battleSummary(state, tally()) };
-  const goal = `First to ${winsNeeded()} wins`;
+  const goal = t('battle.firstTo', { n: winsNeeded() });
+  const menu = t('banner.mainMenu');
   if (mode !== 'online') {
-    screens.showBanner(big, `${line} · ${goal}`, 'Next round', () => { score.nextRound(false); newGame(); }, 'Main menu', randomTip(BATTLE_TIPS), extra);
+    screens.showBanner(big, `${line} · ${goal}`, t('banner.nextRound'), () => { score.nextRound(false); newGame(); }, menu, randomTip(BATTLE_TIPS), extra);
   } else if (online.total < 2) {
-    screens.showBanner(big, `${line} · Everyone else left.`, 'Back to room', () => { screens.hideBanner(); online.showLobby(); }, 'Main menu', '', extra);
+    screens.showBanner(big, `${line} · ${t('battle.everyoneLeft')}`, t('banner.backToRoom'), () => { screens.hideBanner(); online.showLobby(); }, menu, '', extra);
   } else if (online.isHost) {
-    screens.showBanner(big, `${line} · ${goal}`, 'Next round', () => online.startRound(), 'Main menu', randomTip(BATTLE_TIPS), extra);
+    screens.showBanner(big, `${line} · ${goal}`, t('banner.nextRound'), () => online.startRound(), menu, randomTip(BATTLE_TIPS), extra);
   } else {
-    screens.showBanner(big, `${line} · ${goal}`, 'Waiting for host…', () => {}, 'Main menu', randomTip(BATTLE_TIPS), extra);
+    screens.showBanner(big, `${line} · ${goal}`, t('banner.waitingHost'), () => {}, menu, randomTip(BATTLE_TIPS), extra);
   }
 }
 
@@ -345,18 +349,18 @@ function showMatchWinner() {
   const keyList = playerKeys();
   const cols = colors();
   const standings: Standing[] = keyList.map((key, id) => ({
-    name: net && mode === 'online' ? net.names[id] : id === 0 ? 'You' : 'Bot',
+    name: net && mode === 'online' ? net.names[id] : id === 0 ? t('common.you') : t('common.bot'),
     color: cols[id],
     wins: score.of(key),
     you: id === localId,
   }));
   const winner = standings.find((s) => s.wins >= winsNeeded()) ?? null;
   if (mode === 'online') {
-    congrats.show(winner, standings, [{ label: 'Back to room', primary: true, onClick: () => { congrats.hide(); online.showLobby(); } }]);
+    congrats.show(winner, standings, [{ label: t('banner.backToRoom'), primary: true, onClick: () => { congrats.hide(); online.showLobby(); } }]);
   } else {
     congrats.show(winner, standings, [
-      { label: 'Play again', primary: true, onClick: () => { congrats.hide(); startMode('battle'); } },
-      { label: 'Menu', onClick: openMenu },
+      { label: t('banner.playAgain'), primary: true, onClick: () => { congrats.hide(); startMode('battle'); } },
+      { label: t('banner.menu'), onClick: openMenu },
     ]);
   }
 }
@@ -385,13 +389,13 @@ online.onLeft = () => {
   if (mode === 'online' && screens.bannerOpen) showRoundScore(); // the host may have changed
 };
 online.onAway = (slot, away) => {
-  const name = net?.humans.find((p) => p.slot === slot)?.name ?? 'A player';
-  announcer.flash(away ? `${name} lost connection, reconnecting…` : `${name} is back!`);
+  const name = net?.humans.find((p) => p.slot === slot)?.name ?? t('online.aPlayer');
+  announcer.flash(away ? t('online.playerAway', { name }) : t('online.playerBack', { name }));
 };
 online.onReconnecting = (on) => {
-  $('reconnect-text').textContent = `Reconnecting to room ${online.code}…`;
+  $('reconnect-text').textContent = t('online.reconnectingTo', { code: online.code });
   $('reconnect').hidden = !on;
-  if (!on) announcer.flash('Reconnected!');
+  if (!on) announcer.flash(t('online.reconnected'));
 };
 online.onHash = (r, tick, h) => {
   if (net?.otherHash(r, tick, h)) desync(tick);
@@ -456,15 +460,15 @@ function onlineFrame(now: number) {
 /** The small note about this browser's connection, or ''. */
 function connectionNote(now: number): string {
   if (!net || state.status !== 'playing') return '';
-  if (online.reconnecting) return 'Connection lost, reconnecting…';
-  if (net.sync.lastFrameAt > 0 && now - net.sync.lastFrameAt > 1000) return 'Waiting for the server…';
-  if (online.rtt > 250) return `Weak connection · ping ${Math.round(online.rtt)} ms`;
+  if (online.reconnecting) return t('net.lost');
+  if (net.sync.lastFrameAt > 0 && now - net.sync.lastFrameAt > 1000) return t('net.waitingServer');
+  if (online.rtt > 250) return t('net.weak', { ms: Math.round(online.rtt) });
   return '';
 }
 
 function desync(tick: number) {
   console.error(`Online desync at tick ${tick}`);
-  announcer.flash('Out of sync with the other players!');
+  announcer.flash(t('net.desync'));
 }
 
 // --- Keys, taps, layout -------------------------------------------------------------

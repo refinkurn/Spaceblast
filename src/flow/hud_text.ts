@@ -3,6 +3,7 @@ import { GATE_WAIT_TICKS } from '../sim/constants';
 import { gateOpen } from '../sim/items';
 import type { GameState } from '../sim/state';
 import { bossClearLine } from './summary';
+import { t } from '../utils/i18n';
 
 export interface HudInfo {
   mode: 'survival' | 'battle' | 'online';
@@ -38,26 +39,26 @@ export const levelChip = (level: number, sector: number) => `${sector}-${((level
 export function hudText(state: GameState, info: HudInfo): HudText {
   if (info.mode === 'online') {
     const o = info.online ?? { mine: 0, best: 0 };
-    return { stage: `Round ${info.round} · You ${o.mine}–${o.best} Top`, stageClass: '', goal: 'Last one standing', clock: clock(state.timeLeft) };
+    return { stage: t('hud.onlineRound', { n: info.round, mine: o.mine, best: o.best }), stageClass: '', goal: t('hud.lastStanding'), clock: clock(state.timeLeft) };
   }
   if (info.mode === 'battle') {
-    return { stage: `Round ${info.round} · You ${info.score[0]}–${info.score[1]} Bot`, stageClass: '', goal: 'Last one standing', clock: clock(state.timeLeft) };
+    return { stage: t('hud.botRound', { n: info.round, mine: info.score[0], best: info.score[1] }), stageClass: '', goal: t('hud.lastStanding'), clock: clock(state.timeLeft) };
   }
   if (state.boss) {
     const b = state.boss;
     const total = bossWaveCount(b);
     const last = b.wave >= total;
     return {
-      stage: `BOSS WAVE ${Math.max(1, b.wave)}/${total}`,
+      stage: t('hud.bossWave', { n: Math.max(1, b.wave), total }),
       stageClass: 'boss',
       // Bosses are outlasted, never defeated (canon): same words as the end-of-level card.
-      goal: !b.alive ? bossClearLine(b.kind) : last ? 'Survive the boss' : 'Survive the waves',
+      goal: !b.alive ? bossClearLine(b.kind) : last ? t('hud.surviveBoss') : t('hud.surviveWaves'),
       clock: b.alive ? clock(b.timer) : '',
     };
   }
-  if (state.rival) return { stage: 'RIVAL DUEL', stageClass: 'boss', goal: 'Stun Ducking', clock: '' };
+  if (state.rival) return { stage: t('hud.rivalDuel'), stageClass: 'boss', goal: t('hud.stunDucking'), clock: '' };
   const goal = gateOpen(state)
-    ? state.rules.gateWander ? `Gate moves in ${clock(GATE_WAIT_TICKS - state.gateWait)}` : 'Gate open!'
-    : 'Find the Gate';
+    ? state.rules.gateWander ? t('hud.gateMoves', { time: clock(GATE_WAIT_TICKS - state.gateWait) }) : t('hud.gateOpen')
+    : t('hud.findGate');
   return { stage: levelChip(info.level, info.sector), stageClass: '', goal, clock: '' };
 }

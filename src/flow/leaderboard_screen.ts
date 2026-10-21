@@ -4,6 +4,7 @@ import { NAME_MAX } from '../services/name_filter';
 import { loadProfile, renameProfile } from '../services/profile';
 import { stageId } from '../services/score';
 import type { ScoreRow } from '../services/leaderboard_types';
+import { t } from '../utils/i18n';
 
 // The Story leaderboard, opened from the level map: one level at a time
 // (arrows to change), the top 10, your own best and rank, and your name.
@@ -28,7 +29,7 @@ export class LeaderboardScreen {
     $('lb-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const ok = renameProfile(input.value);
-      $('lb-name-note').textContent = ok ? 'Saved. It shows with your next score.' : 'Try another name (2-12 letters, numbers, spaces, _ or -, nothing rude).';
+      $('lb-name-note').textContent = ok ? t('lb.saved') : t('lb.badName');
       input.value = loadProfile().name;
     });
   }
@@ -41,7 +42,7 @@ export class LeaderboardScreen {
     this.level = Math.max(1, Math.min(LEVEL_COUNT, level));
     this.el.hidden = false;
     $<HTMLInputElement>('lb-name').value = loadProfile().name;
-    $('lb-level').textContent = `Level ${this.level}`;
+    $('lb-level').textContent = t('lb.level', { n: this.level });
     $<HTMLButtonElement>('lb-prev').disabled = this.level <= 1;
     $<HTMLButtonElement>('lb-next').disabled = this.level >= LEVEL_COUNT;
     const list = $('lb-list');
@@ -53,10 +54,10 @@ export class LeaderboardScreen {
     void leaderboard.top(stageId(this.level), me.uuid).then((res) => {
       if (ask !== this.asked || !this.open) return;
       if (!res) {
-        $('lb-status').textContent = 'Offline. Scores are sent when you are back online.';
+        $('lb-status').textContent = t('lb.offline');
         return;
       }
-      $('lb-status').textContent = res.top.length ? '' : 'No scores yet. Be the first!';
+      $('lb-status').textContent = res.top.length ? '' : t('lb.empty');
       for (const row of res.top) list.append(this.row(row, row.rank === res.you?.rank && row.display_name === res.you?.display_name));
       if (res.you && !res.top.some((r) => r.rank === res.you!.rank)) $('lb-you').textContent = `You: #${res.you.rank} · ${fmt(res.you.score)}`;
     });

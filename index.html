@@ -29,30 +29,30 @@
         <div id="hud-stage" class="hud-chip"></div>
         <div id="hud-clock" class="hud-clock" hidden></div>
       </div>
-      <button id="full-btn" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
-      <button id="sound-btn" class="sound-btn" type="button" aria-label="Sound"></button>
-      <button id="menu-btn" class="pause-btn" type="button" aria-label="Pause"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+      <button id="full-btn" class="sound-btn full-btn" type="button" aria-label="Full screen" data-i18n-aria="aria.full-btn"></button>
+      <button id="sound-btn" class="sound-btn" type="button" aria-label="Sound" data-i18n-aria="aria.sound-btn"></button>
+      <button id="menu-btn" class="pause-btn" type="button" aria-label="Pause" data-i18n-aria="aria.menu-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
     </div>
     <div id="stick-zone" aria-label="Movement joystick">
       <div id="stick-base"><div id="stick-knob"></div></div>
     </div>
     <div id="action-zone">
-      <button id="place-btn" type="button" aria-label="Place charge">CHARGE</button>
+      <button id="place-btn" type="button" aria-label="Place charge" data-i18n="html.place-btn" data-i18n-aria="aria.place-btn">CHARGE</button>
     </div>
     <div id="pause-card" hidden>
       <div class="pause-box" role="dialog" aria-labelledby="pause-title">
         <div id="pause-main" class="pause-list">
-          <h2 id="pause-title">PAUSED</h2>
-          <button id="pause-resume" type="button">Resume</button>
-          <button id="pause-restart" type="button">Restart level</button>
-          <button id="pause-settings" type="button">Settings</button>
-          <button id="pause-quit" type="button">Quit to menu</button>
+          <h2 id="pause-title" data-i18n="html.pause-title">PAUSED</h2>
+          <button id="pause-resume" type="button" data-i18n="html.pause-resume">Resume</button>
+          <button id="pause-restart" type="button" data-i18n="html.pause-restart">Restart level</button>
+          <button id="pause-settings" type="button" data-i18n="html.pause-settings">Settings</button>
+          <button id="pause-quit" type="button" data-i18n="html.pause-quit">Quit to menu</button>
         </div>
         <div id="pause-confirm" class="pause-list" hidden>
           <h2>Quit?</h2>
           <p>Progress on this level is lost.</p>
-          <button id="pause-quit-yes" type="button">Quit</button>
-          <button id="pause-keep" type="button">Keep playing</button>
+          <button id="pause-quit-yes" type="button" data-i18n="html.pause-quit-yes">Quit</button>
+          <button id="pause-keep" type="button" data-i18n="html.pause-keep">Keep playing</button>
         </div>
       </div>
     </div>
@@ -64,7 +64,7 @@
       <div class="cine-title"></div>
       <div class="cine-hint">Tap to skip</div>
     </div>
-    <div id="cine-tag" class="cine-tag" hidden>Replay · slow motion</div>
+    <div id="cine-tag" class="cine-tag" hidden data-i18n="html.cine-tag">Replay · slow motion</div>
     <div id="congrats" hidden>
       <div id="congrats-confetti" class="confetti" aria-hidden="true"></div>
       <div class="congrats-card">
@@ -91,7 +91,7 @@
         <div id="banner-tip" class="banner-tip" hidden></div>
         <div class="actions">
           <button id="banner-btn" type="button"></button>
-          <button id="banner-menu" class="quiet" type="button">Main menu</button>
+          <button id="banner-menu" class="quiet" type="button" data-i18n="html.banner-menu">Main menu</button>
         </div>
       </div>
     </div>
@@ -100,7 +100,7 @@
         <div id="story-kicker" class="kicker"></div>
         <h2 id="story-title"></h2>
         <p id="story-text"></p>
-        <button id="story-btn" type="button">Begin</button>
+        <button id="story-btn" type="button" data-i18n="html.story-btn">Begin</button>
       </div>
     </div>
     <div id="level-card" hidden>
@@ -118,28 +118,28 @@
         <p id="intro-speaker" class="intro-speaker"></p>
         <p class="intro-tip"><strong id="intro-label"></strong> <span id="intro-hint"></span></p>
         <p id="intro-tap" class="intro-tap"></p>
-        <button id="intro-skip" class="intro-skip" type="button" hidden>Skip</button>
+        <button id="intro-skip" class="intro-skip" type="button" hidden data-i18n="html.intro-skip">Skip</button>
       </div>
     </div>
     <div id="menu">
       <div class="menu-corner">
-        <button id="menu-full" class="sound-btn full-btn" type="button" aria-label="Full screen"></button>
-        <button id="menu-sound" class="sound-btn" type="button" aria-label="Sound"></button>
+        <button id="menu-full" class="sound-btn full-btn" type="button" aria-label="Full screen" data-i18n-aria="aria.menu-full"></button>
+        <button id="menu-sound" class="sound-btn" type="button" aria-label="Sound" data-i18n-aria="aria.menu-sound"></button>
       </div>
       <div class="menu-left">
         <h1>SPACEBLAST</h1>
         <p class="tagline">Animal astronauts vs hungry Martians</p>
         <nav id="menu-main" class="menu-page menu-list" aria-label="Main menu">
-          <button id="mode-survival" type="button">Story Mode</button>
-          <button id="menu-versus" type="button">Versus</button>
-          <button id="menu-settings" type="button">Settings</button>
-          <button id="menu-credits" type="button">Credits</button>
+          <button id="mode-survival" type="button" data-i18n="html.mode-survival">Story Mode</button>
+          <button id="menu-versus" type="button" data-i18n="html.menu-versus">Versus</button>
+          <button id="menu-settings" type="button" data-i18n="html.menu-settings">Settings</button>
+          <button id="menu-credits" type="button" data-i18n="html.menu-credits">Credits</button>
         </nav>
         <nav id="menu-versus-page" class="menu-page menu-list" aria-label="Versus" hidden>
           <button type="button" class="menu-back">Back</button>
           <h2>Versus</h2>
-          <button id="mode-battle" type="button">Battle vs Bot</button>
-          <button id="mode-online" type="button">Multiplayer</button>
+          <button id="mode-battle" type="button" data-i18n="html.mode-battle">Battle vs Bot</button>
+          <button id="mode-online" type="button" data-i18n="html.mode-online">Multiplayer</button>
         </nav>
         <nav id="menu-bot" class="menu-page menu-list" aria-label="Battle vs Bot" hidden>
           <button type="button" class="menu-back">Back</button>
@@ -149,7 +149,7 @@
           <button type="button" data-level="hard">Hard</button>
         </nav>
         <div id="settings" class="menu-page" hidden>
-          <button id="settings-done" type="button" class="menu-back">Back</button>
+          <button id="settings-done" type="button" class="menu-back" data-i18n="html.settings-done">Back</button>
           <h2>Settings</h2>
           <div class="menu-scroll">
             <label class="setting-line">Music
@@ -162,41 +162,41 @@
             </label>
             <div class="setting-line">Touch controls
               <div id="set-controls" class="segmented">
-                <button type="button" data-value="small">Small</button>
-                <button type="button" data-value="normal">Normal</button>
-                <button type="button" data-value="large">Large</button>
+                <button type="button" data-value="small" data-i18n="opt.set-controls.small">Small</button>
+                <button type="button" data-value="normal" data-i18n="opt.set-controls.normal">Normal</button>
+                <button type="button" data-value="large" data-i18n="opt.set-controls.large">Large</button>
               </div>
             </div>
             <div class="setting-line">Joystick
               <div id="set-joystick" class="segmented">
-                <button type="button" data-value="floating">Floating</button>
-                <button type="button" data-value="fixed">Fixed</button>
+                <button type="button" data-value="floating" data-i18n="opt.set-joystick.floating">Floating</button>
+                <button type="button" data-value="fixed" data-i18n="opt.set-joystick.fixed">Fixed</button>
               </div>
             </div>
             <div id="set-vibration-line" class="setting-line">Vibration
               <div id="set-vibration" class="segmented">
-                <button type="button" data-value="on">On</button>
-                <button type="button" data-value="off">Off</button>
+                <button type="button" data-value="on" data-i18n="opt.set-vibration.on">On</button>
+                <button type="button" data-value="off" data-i18n="opt.set-vibration.off">Off</button>
               </div>
             </div>
             <div class="setting-line">Screen shake
               <div id="set-shake" class="segmented">
-                <button type="button" data-value="on">On</button>
-                <button type="button" data-value="off">Off</button>
+                <button type="button" data-value="on" data-i18n="opt.set-shake.on">On</button>
+                <button type="button" data-value="off" data-i18n="opt.set-shake.off">Off</button>
               </div>
             </div>
             <div class="setting-line">Round replays
               <div id="set-cinematic" class="segmented">
-                <button type="button" data-value="full">Full</button>
-                <button type="button" data-value="short">Short</button>
-                <button type="button" data-value="off">Off</button>
+                <button type="button" data-value="full" data-i18n="opt.set-cinematic.full">Full</button>
+                <button type="button" data-value="short" data-i18n="opt.set-cinematic.short">Short</button>
+                <button type="button" data-value="off" data-i18n="opt.set-cinematic.off">Off</button>
               </div>
             </div>
             <div class="setting-line">Tutorial
-              <button id="settings-tutorial" type="button" class="quiet-btn">Show the tutorial again</button>
+              <button id="settings-tutorial" type="button" class="quiet-btn" data-i18n="html.settings-tutorial">Show the tutorial again</button>
             </div>
             <div class="setting-line">Help
-              <button id="menu-howto" type="button" class="quiet-btn">How to Play</button>
+              <button id="menu-howto" type="button" class="quiet-btn" data-i18n="html.menu-howto">How to Play</button>
             </div>
           </div>
         </div>
@@ -222,29 +222,29 @@
     <div id="reconnect" hidden role="alert"><div class="reconnect-box"><div class="reconnect-spin" aria-hidden="true"></div><div id="reconnect-text"></div></div></div>
     <div id="online" hidden>
       <div class="online-card">
-        <div class="kicker">Play online</div>
+        <div class="kicker" data-i18n="html.kicker.play_online">Play online</div>
         <div id="online-choose">
           <label class="online-name">Your name
             <input id="online-name" maxlength="12" autocomplete="nickname" spellcheck="false" placeholder="Astronaut" />
           </label>
-          <button id="online-rejoin" type="button" class="primary" hidden>Rejoin</button>
-          <button id="online-create" type="button" class="primary">Create room</button>
+          <button id="online-rejoin" type="button" class="primary" hidden data-i18n="html.online-rejoin">Rejoin</button>
+          <button id="online-create" type="button" class="primary" data-i18n="html.online-create">Create room</button>
           <div class="online-join">
             <input id="online-code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Room code" />
-            <button id="online-join" type="button">Join</button>
+            <button id="online-join" type="button" data-i18n="html.online-join">Join</button>
           </div>
         </div>
         <div id="online-lobby" hidden>
           <div class="lobby-col" id="lobby-left">
             <div class="online-code-label">Room code</div>
-            <div class="online-room-row"><div id="online-room" class="online-room"></div><button id="online-invite" type="button">Invite</button></div>
+            <div class="online-room-row"><div id="online-room" class="online-room"></div><button id="online-invite" type="button" data-i18n="html.online-invite">Invite</button></div>
             <div id="online-invite-note" class="online-code-label" aria-live="polite"></div>
             <div id="online-slots" class="slots" aria-label="Player slots"></div>
             <div class="online-code-label">Your colour</div>
             <div id="online-colors" class="swatches"></div>
           </div>
           <div class="lobby-col">
-            <div class="online-code-label" id="settings-label">Match settings</div>
+            <div class="online-code-label" id="settings-label" data-i18n="html.settings-label">Match settings</div>
             <div class="setting-row">
               <span>Round time</span>
               <div id="set-time" class="segmented"></div>
@@ -252,8 +252,8 @@
             <div class="setting-row">
               <span>Scenarios</span>
               <div class="segmented">
-                <button id="set-maze" type="button" aria-pressed="false">Maze Shift</button>
-                <button id="set-blackout" type="button" aria-pressed="false">Blackout</button>
+                <button id="set-maze" type="button" aria-pressed="false" data-i18n="html.set-maze">Maze Shift</button>
+                <button id="set-blackout" type="button" aria-pressed="false" data-i18n="html.set-blackout">Blackout</button>
               </div>
             </div>
             <div class="setting-row">
@@ -273,28 +273,28 @@
                 </div>
               </div>
             </div>
-            <button id="online-start" type="button" class="primary">Start match</button>
+            <button id="online-start" type="button" class="primary" data-i18n="html.online-start">Start match</button>
           </div>
         </div>
         <div id="online-status" class="online-status"></div>
-        <button id="online-back" type="button" class="quiet">Back</button>
+        <button id="online-back" type="button" class="quiet" data-i18n="html.online-back">Back</button>
       </div>
     </div>
     <div id="start-screen">
       <h1>SPACEBLAST</h1>
       <p class="tagline">Animal astronauts vs hungry Martians</p>
       <p class="tap">Tap to start</p>
-      <p id="start-tip" class="start-tip" hidden>Tip: add Spaceblast to your Home Screen to play full screen</p>
+      <p id="start-tip" class="start-tip" hidden data-i18n="html.start-tip">Tip: add Spaceblast to your Home Screen to play full screen</p>
     </div>
     <div id="crawl" hidden>
       <div class="crawl-stage"><div id="crawl-text" class="crawl-text"></div></div>
-      <button id="crawl-skip" type="button">Skip ›</button>
+      <button id="crawl-skip" type="button" data-i18n="html.crawl-skip">Skip ›</button>
     </div>
     <div id="cutscene" hidden>
       <div class="cut-bg"></div>
       <canvas id="cut-sprite" class="cut-sprite" aria-hidden="true"></canvas>
       <div id="cut-reveal" class="cut-reveal" hidden></div>
-      <button id="cut-skip" type="button">Skip ›</button>
+      <button id="cut-skip" type="button" data-i18n="html.cut-skip">Skip ›</button>
       <div class="cut-box">
         <canvas id="cut-portrait" class="cut-portrait" aria-hidden="true"></canvas>
         <div class="cut-lines">
@@ -315,8 +315,8 @@
         </div>
         <div class="map-right">
           <span id="map-stars" class="map-stars"></span>
-          <button id="hub-board" type="button">Leaderboard</button>
-          <button id="hub-back" type="button" class="quiet">Back</button>
+          <button id="hub-board" type="button" data-i18n="html.hub-board">Leaderboard</button>
+          <button id="hub-back" type="button" class="quiet" data-i18n="html.hub-back">Back</button>
         </div>
       </div>
       <div id="map-track" class="map-track"></div>
@@ -330,7 +330,7 @@
           <ul id="map-card-stars" class="map-checklist"></ul>
           <div id="map-card-best" class="map-card-best"></div>
           <div class="map-card-actions">
-            <button id="map-card-back" type="button" class="quiet">Back</button>
+            <button id="map-card-back" type="button" class="quiet" data-i18n="html.map-card-back">Back</button>
             <button id="map-card-enter" type="button" class="primary"></button>
           </div>
         </div>
@@ -338,11 +338,11 @@
     </div>
     <div id="leaderboard" role="dialog" aria-labelledby="lb-level" hidden>
       <div class="lb-card">
-        <div class="kicker">Leaderboard</div>
+        <div class="kicker" data-i18n="html.kicker.leaderboard">Leaderboard</div>
         <div class="lb-pick">
-          <button id="lb-prev" type="button" aria-label="Previous level">‹</button>
+          <button id="lb-prev" type="button" aria-label="Previous level" data-i18n-aria="aria.lb-prev">‹</button>
           <h2 id="lb-level"></h2>
-          <button id="lb-next" type="button" aria-label="Next level">›</button>
+          <button id="lb-next" type="button" aria-label="Next level" data-i18n-aria="aria.lb-next">›</button>
         </div>
         <ol id="lb-list" class="lb-list"></ol>
         <p id="lb-status" class="lb-status"></p>
@@ -353,28 +353,28 @@
           <button type="submit">Save</button>
         </form>
         <p id="lb-name-note" class="lb-status"></p>
-        <button id="lb-back" type="button" class="quiet">Back</button>
+        <button id="lb-back" type="button" class="quiet" data-i18n="html.lb-back">Back</button>
       </div>
     </div>
     <div id="ending" hidden>
       <div class="ending-card">
-        <div class="kicker">Mission accomplished</div>
+        <div class="kicker" data-i18n="html.kicker.mission_accomplished">Mission accomplished</div>
         <h2>The Biscuit is going home.</h2>
         <ul id="ending-stats"></ul>
         <p id="ending-text"></p>
-        <button id="ending-btn" type="button" class="primary">Back to menu</button>
+        <button id="ending-btn" type="button" class="primary" data-i18n="html.ending-btn">Back to menu</button>
       </div>
     </div>
     <div id="install" hidden>
       <div class="install-card">
-        <div class="kicker">Full screen on iPhone</div>
+        <div class="kicker" data-i18n="html.kicker.full_screen_on_iphone">Full screen on iPhone</div>
         <h2>Play without the browser bars</h2>
         <ol>
           <li>Tap <strong>Share</strong> <svg viewBox="0 0 24 24" class="inline-icon"><path d="M12 3v12M7 8l5-5 5 5M5 12v8h14v-8"/></svg> in Safari's toolbar.</li>
           <li>Choose <strong>Add to Home Screen</strong>.</li>
           <li>Open <strong>Spaceblast</strong> from your Home Screen: it plays full screen, like an app.</li>
         </ol>
-        <button id="install-ok" type="button">Got it</button>
+        <button id="install-ok" type="button" data-i18n="html.install-ok">Got it</button>
       </div>
     </div>
     <div id="rotate">

@@ -3,16 +3,17 @@ import { BossKind, Item } from '../sim/constants';
 import { createGame } from '../sim/state';
 import { RADIO, RADIO_POWERUP } from './radio_lines';
 import { QUEUE_MAX, ToastQueue, toastFor } from './radio_toast';
+import { t } from '../utils/i18n';
 
-const line = (text: string) => ({ text });
+const line = (key: string) => ({ key });
 
 describe('radio toast queue', () => {
   it('plays lines in order', () => {
     const q = new ToastQueue();
     q.push(line('a'));
     q.push(line('b'));
-    expect(q.next()?.text).toBe('a');
-    expect(q.next()?.text).toBe('b');
+    expect(q.next()?.key).toBe('a');
+    expect(q.next()?.key).toBe('b');
     expect(q.next()).toBeUndefined();
   });
 
@@ -20,13 +21,13 @@ describe('radio toast queue', () => {
     const q = new ToastQueue();
     for (const t of ['a', 'b', 'c', 'd']) q.push(line(t));
     expect(QUEUE_MAX).toBe(3);
-    expect(q.items.map((l) => l.text)).toEqual(['b', 'c', 'd']);
+    expect(q.items.map((l) => l.key)).toEqual(['b', 'c', 'd']);
   });
 
   it('drops an older copy of the same line', () => {
     const q = new ToastQueue();
     for (const t of ['a', 'b', 'a']) q.push(line(t));
-    expect(q.items.map((l) => l.text)).toEqual(['b', 'a']);
+    expect(q.items.map((l) => l.key)).toEqual(['b', 'a']);
   });
 });
 
@@ -65,9 +66,10 @@ describe('radio toast triggers', () => {
 
   it('lines are Kit on the radio, short enough for one line, and never say "bomb"', () => {
     for (const l of [...Object.values(RADIO), ...Object.values(RADIO_POWERUP)]) {
-      expect(l!.text.startsWith('Kit: ')).toBe(true);
-      expect(l!.text.length).toBeLessThanOrEqual(52);
-      expect(l!.text.toLowerCase()).not.toContain('bomb');
+      const text = t(l!.key);
+      expect(text.startsWith('Kit: ')).toBe(true);
+      expect(text.length).toBeLessThanOrEqual(52);
+      expect(text.toLowerCase()).not.toContain('bomb');
     }
   });
 });

@@ -1,6 +1,7 @@
 import { bossWarning } from '../sim/boss';
 import { COLLAPSE_WARNING_TICKS, LevelEvent } from '../sim/constants';
 import type { GameState } from '../sim/state';
+import { t } from '../utils/i18n';
 
 // On-screen warnings. Big ones (Maze Shift, Blackout, boss waves, the arena
 // collapse) pop up large for a moment, hard to miss, then shrink to a compact
@@ -24,15 +25,15 @@ const BIG_MS = 800;
 
 function bigFor(state: GameState): Big | null {
   if (state.status !== 'playing') return null;
-  if (state.boss && bossWarning(state)) return { kind: 'boss', title: `Boss wave ${state.boss.wave + 1}`, count: secs(state.boss.timer) };
+  if (state.boss && bossWarning(state)) return { kind: 'boss', title: t('warn.bossWave', { n: state.boss.wave + 1 }), count: secs(state.boss.timer) };
   if (state.event !== LevelEvent.None && state.eventWarning > 0 && !state.boss) {
     const maze = state.event === LevelEvent.MazeShift;
-    return { kind: maze ? 'maze' : 'blackout', title: maze ? 'Maze Shift' : 'Blackout', count: secs(state.eventWarning) };
+    return { kind: maze ? 'maze' : 'blackout', title: maze ? t('warn.maze') : t('warn.blackout'), count: secs(state.eventWarning) };
   }
   if (state.mode === 'battle') {
-    if (state.timeLeft > 0 && state.timeLeft <= COLLAPSE_WARNING_TICKS) return { kind: 'collapse', title: 'Arena collapse', count: secs(state.timeLeft) };
+    if (state.timeLeft > 0 && state.timeLeft <= COLLAPSE_WARNING_TICKS) return { kind: 'collapse', title: t('warn.collapse'), count: secs(state.timeLeft) };
     // "Collapsing!" stays big for 2 s, then shrinks to the small pill.
-    if (state.timeLeft === 0 && state.collapseTicks < 120) return { kind: 'collapse', title: 'Arena collapsing!', count: 0 };
+    if (state.timeLeft === 0 && state.collapseTicks < 120) return { kind: 'collapse', title: t('warn.collapsing'), count: 0 };
   }
   return null;
 }
@@ -81,8 +82,8 @@ export class Announcer {
     }
 
     const parts: string[] = [];
-    if (state.event === LevelEvent.Blackout && state.eventActive > 0) parts.push(`Blackout · ${secs(state.eventActive)}s`);
-    if (state.mode === 'battle' && state.timeLeft === 0 && !big) parts.push('Arena collapsing!');
+    if (state.event === LevelEvent.Blackout && state.eventActive > 0) parts.push(t('warn.blackoutLeft', { s: secs(state.eventActive) }));
+    if (state.mode === 'battle' && state.timeLeft === 0 && !big) parts.push(t('warn.collapsing'));
     if (note) parts.push(note);
     if (parts.length === 0 && now < this.flashUntil) parts.push(this.flashText);
     const text = parts.join(' · ');

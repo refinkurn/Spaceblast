@@ -18,6 +18,7 @@ import { ENDING, SECTORS, levelCard, type LevelCardText } from './story';
 import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
 import { bossClearLine, storySummary } from './summary';
+import { t } from '../utils/i18n';
 
 // Story Mode flow: the Story map (flow/story_map.ts), each level's
 // lead-in (sector card, boss cutscene, level card), results, retrying a level
@@ -151,7 +152,7 @@ export class StoryMode {
     // Sectors with an opening scene get it instead of the plain story card.
     if (withStory && isSectorStart(level) && !scene) {
       const sector = SECTORS[spec.sector - 1];
-      this.screens.showStory(`Sector ${spec.sector} of 4`, sector.name, sector.story, 'Begin', intro);
+      this.screens.showStory(t('story.sectorOf', { n: spec.sector }), sector.name, sector.story, t('story.begin'), intro);
     } else if (level === 1 && withStory) {
       // The story begins: the opening crawl, then the prologue scene.
       this.crawl.play(OPENING_CRAWL, intro);
@@ -225,12 +226,12 @@ export class StoryMode {
         return;
       }
       const next = level + 1;
-      const line = spec.boss ? bossClearLine(spec.boss) : `Level ${level} clear!`;
+      const line = spec.boss ? bossClearLine(spec.boss) : t('story.levelClear', { n: level });
       // Boss and duel levels have no Martian roster: name their goal instead of "0 Martians".
       const nextSpec = levelSpec(next);
-      const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : `${levelRoster(next).length} Martians`;
-      const upNext = isSectorStart(next) ? `Sector ${spec.sector} complete. Next: ${SECTORS[spec.sector].name}.` : `Next: level ${next}, ${nextGoal}.`;
-      this.screens.showBanner(spec.boss ? 'SURVIVED!' : 'LEVEL CLEAR', `${line}\n${upNext}`, 'Next level', () => this.play(next, true), 'Map', '', {
+      const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : t('story.martians', { n: levelRoster(next).length });
+      const upNext = isSectorStart(next) ? t('story.sectorComplete', { n: spec.sector, name: SECTORS[spec.sector].name }) : t('story.next', { n: next, goal: nextGoal });
+      this.screens.showBanner(spec.boss ? t('banner.survived') : t('banner.levelClear'), `${line}\n${upNext}`, t('banner.nextLevel'), () => this.play(next, true), t('banner.map'), '', {
         pose: 'happy', summary: [...storySummary(state, lost, stars), ...scoreRows(score, prevBest)],
         // "Map" goes back to the Story map, where Bosco walks (or warps) on to the next node.
         onMenu: () => {
@@ -244,7 +245,7 @@ export class StoryMode {
   private gameOver(): void {
     this.progress.save();
     const level = this.level;
-    this.screens.showBanner('DEFEATED', `The Martians got you on level ${level}. Your progress is saved.`, `Retry level ${level}`, () => this.play(level, false), 'Main menu', randomTip(),
+    this.screens.showBanner(t('banner.defeated'), t('story.gameOver', { n: level }), t('story.retry', { n: level }), () => this.play(level, false), t('banner.mainMenu'), randomTip(),
       { pose: 'defeated', summary: storySummary(this.host.state, Math.min(this.livesLost, START_LIVES), 0) });
   }
 
@@ -253,12 +254,12 @@ export class StoryMode {
     const minutes = Math.floor(s.ticks / 3600);
     const seconds = Math.floor(s.ticks / 60) % 60;
     const rows: [string, string][] = [
-      ['Levels cleared', `${LEVEL_COUNT} / ${LEVEL_COUNT}`],
-      ['Stars', `${this.progress.totalStars} / ${LEVEL_COUNT * 3}`],
-      ['Martians defeated', String(s.martians)],
-      ['Bosses beaten', String(s.bosses)],
-      ['Lives lost', String(s.livesLost)],
-      ['Time played', `${minutes}m ${String(seconds).padStart(2, '0')}s`],
+      [t('ending.levels'), `${LEVEL_COUNT} / ${LEVEL_COUNT}`],
+      [t('ending.stars'), `${this.progress.totalStars} / ${LEVEL_COUNT * 3}`],
+      [t('ending.martians'), String(s.martians)],
+      [t('ending.bosses'), String(s.bosses)],
+      [t('ending.lives'), String(s.livesLost)],
+      [t('ending.time'), t('ending.timeValue', { m: minutes, s: String(seconds).padStart(2, '0') })],
     ];
     const list = $('ending-stats');
     list.innerHTML = '';

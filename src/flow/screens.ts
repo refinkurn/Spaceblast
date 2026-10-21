@@ -7,6 +7,7 @@ import { SpriteView } from '../view/sprite_renderer';
 import { GOAL_ICONS } from './goal_icons';
 import type { BannerExtra } from './summary';
 import type { LevelCardText } from './story';
+import { t } from '../utils/i18n';
 
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
@@ -85,7 +86,7 @@ export class Screens {
     $('card-goal-icon').innerHTML = GOAL_ICONS[card.goal.icon];
     $('card-goal-text').textContent = card.goal.text;
     $('card-briefing').textContent = card.briefing;
-    $('card-hint').textContent = window.matchMedia('(pointer: coarse)').matches ? 'Tap to start' : 'Click to start';
+    $('card-hint').textContent = window.matchMedia('(pointer: coarse)').matches ? t('card.tapStart') : t('card.clickStart');
     $('level-card').hidden = false;
   }
 
@@ -105,7 +106,7 @@ export class Screens {
   }
 
   /** The end-of-match card: big title, Bosco's pose, a summary and two buttons. `menuLabel` renames the second one (it always goes to the menu). */
-  showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = 'Main menu', tip = '', extra: BannerExtra = {}): void {
+  showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = t('banner.mainMenu'), tip = '', extra: BannerExtra = {}): void {
     $('banner-menu').textContent = menuLabel;
     this.menuOverride = extra.onMenu ?? null;
     $('banner-tip').textContent = tip ? `Tip: ${tip}` : '';

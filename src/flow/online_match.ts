@@ -5,6 +5,7 @@ import type { PlayerCommand } from '../sim/command';
 import { NO_EVENTS } from '../sim/levels';
 import type { GameOptions, GameState } from '../sim/state';
 import { botColorsFor, type RoundStart } from './online';
+import { t } from '../utils/i18n';
 
 // One online round: who plays (humans from the room, then bots), the server's
 // frames, and the desync check. Every browser builds exactly the same
@@ -47,7 +48,7 @@ export class OnlineRound {
       this.keys.push(`p${p.slot}`);
     }
     this.bots = Array.from({ length: s.settings.bots }, (_, i) => {
-      this.names.push(`Bot ${i + 1}`);
+      this.names.push(t('lobby.bot', { n: i + 1 }));
       this.colors.push(hex(PLAYER_COLORS[botColors[i]]));
       this.keys.push(`b${i}`);
       return new Bot(s.players.length + i, s.seed, s.settings.botLevel);

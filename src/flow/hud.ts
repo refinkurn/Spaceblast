@@ -2,6 +2,7 @@ import { MAX_BOOTS, MAX_CHARGES, MAX_RANGE, START_LIVES } from '../sim/constants
 import { haptics } from './haptics';
 import type { GameState } from '../sim/state';
 import { hudText, type HudInfo } from './hud_text';
+import { t as tr } from '../utils/i18n';
 
 export type { HudInfo };
 
@@ -68,9 +69,9 @@ export class Hud {
 
     const t = hudText(state, info);
     const powers =
-      pips('Charges', 'charges', p.maxCharges, MAX_CHARGES) +
-      pips('Beam range', 'range', p.range, MAX_RANGE) +
-      pips('Speed', 'speed', p.boots, MAX_BOOTS) +
+      pips(tr('hud.charges'), 'charges', p.maxCharges, MAX_CHARGES) +
+      pips(tr('hud.range'), 'range', p.range, MAX_RANGE) +
+      pips(tr('hud.speed'), 'speed', p.boots, MAX_BOOTS) +
       (state.freeze > 0 ? `<span class="power freeze">${POWER_ICONS.freeze}${Math.ceil(state.freeze / 60)}s</span>` : '');
 
     const next = [health, `${t.stageClass}|${t.stage}`, t.goal, powers, t.clock];

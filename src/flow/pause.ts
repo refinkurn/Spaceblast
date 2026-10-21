@@ -1,3 +1,4 @@
+import { t } from '../utils/i18n';
 // The pause card (offline Story and Battle vs Bot): Resume, Restart, Settings,
 // Quit to menu (with a confirm). It only raises a flag; main.ts's loop reads
 // `open` to hold the game, so nothing here touches the sim.
@@ -10,7 +11,7 @@ export interface PauseActions {
   quit(): void;
 }
 
-export const restartLabel = (mode: 'survival' | 'battle' | 'online') => (mode === 'battle' ? 'Restart round' : 'Restart level');
+export const restartLabel = (mode: 'survival' | 'battle' | 'online') => (mode === 'battle' ? t('pause.restartRound') : t('pause.restartLevel'));
 
 export class PauseMenu {
   private card = $('pause-card');

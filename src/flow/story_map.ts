@@ -6,6 +6,7 @@ import { bestLine, bossLabel, coreSignal, enterLabel, nodeGoal, sectorStars, sec
 import type { StoryProgress } from './progress';
 import { levelCard } from './story';
 import './story_map.css';
+import { t } from '../utils/i18n';
 
 // The Story map (docs/design/story-map.md): a header with the Core signal
 // gauge, a sideways-scrolling track of four themed sectors with a node per
@@ -164,7 +165,7 @@ export class StoryMap {
       + `<span class="map-node-num">${card.title.replace(' BOSS', '')}</span>`
       + (locked ? PADLOCK : boss === null ? GATE : '')
       + (boss ? `<span class="map-node-name">${boss}</span>` : '');
-    b.setAttribute('aria-label', `Level ${card.title}${boss ? `, ${boss}` : ''}${stars ? `, ${stars} stars` : ''}${locked ? ', locked' : ''}`);
+    b.setAttribute('aria-label', t('map.aria.level', { title: card.title }) + (boss ? `, ${boss}` : '') + (stars ? t('map.aria.stars', { n: stars }) : '') + (locked ? t('map.aria.locked') : ''));
     b.addEventListener('click', () => { if (!b.classList.contains('locked')) this.openCard(level); });
     this.nodes.set(level, b);
     return b;
@@ -228,7 +229,7 @@ export class StoryMap {
     b.classList.remove('locked');
     b.classList.add('current', 'pop');
     b.querySelector('.map-lock')?.replaceWith(document.createRange().createContextualFragment(bossLabel(level) ? '' : GATE));
-    b.setAttribute('aria-label', (b.getAttribute('aria-label') ?? '').replace(', locked', ''));
+    b.setAttribute('aria-label', (b.getAttribute('aria-label') ?? '').replace(t('map.aria.locked'), ''));
   }
 
   private scrollTo(level: number): void {

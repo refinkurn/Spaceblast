@@ -1,3 +1,4 @@
+import { t } from '../utils/i18n';
 // The 3-2-1-BLAST! count before offline Story levels and Battle rounds. It runs on
 // real time and holds the game through the `paused` flag in main.ts; it never
 // touches the sim. Online rounds start on the room server's clock, so no countdown there.
@@ -10,7 +11,8 @@ export const STEPS = ['3', '2', '1', 'BLAST!'] as const;
 export function countdownLabel(elapsed: number): string | null {
   if (elapsed < 0) return STEPS[0];
   const i = Math.floor(elapsed / STEP_SECONDS);
-  return i < STEPS.length ? STEPS[i] : null;
+  if (i >= STEPS.length) return null;
+  return i === STEPS.length - 1 ? t('countdown.go') : STEPS[i];
 }
 
 export class Countdown {

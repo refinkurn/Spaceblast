@@ -3,6 +3,7 @@ import { Music } from '../audio/music';
 import { Sfx } from '../audio/sfx';
 import { enterFullscreen } from './fullscreen';
 import type { GameState, SimEvent } from '../sim/state';
+import { t } from '../utils/i18n';
 
 // Game audio wiring: the tap-to-start screen (phones need a tap before any
 // sound), the sound buttons, button clicks, music moods and event sounds.
@@ -14,7 +15,7 @@ const ICONS: Record<SoundSetting, string> = {
   sfx: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>',
   off: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
 };
-const LABELS: Record<SoundSetting, string> = { all: 'Sound: music and effects', sfx: 'Sound: effects only', off: 'Sound off' };
+const LABELS: Record<SoundSetting, string> = { all: 'sound.all', sfx: 'sound.sfx', off: 'sound.off' };
 
 export class GameAudio {
   private engine = new AudioEngine();
@@ -100,8 +101,8 @@ export class GameAudio {
   private renderButtons(): void {
     for (const b of this.buttons) {
       b.innerHTML = ICONS[this.engine.setting];
-      b.setAttribute('aria-label', LABELS[this.engine.setting]);
-      b.title = LABELS[this.engine.setting];
+      b.setAttribute('aria-label', t(LABELS[this.engine.setting]));
+      b.title = t(LABELS[this.engine.setting]);
     }
   }
 }

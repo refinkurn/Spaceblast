@@ -1,4 +1,5 @@
 import { isRoomCode } from '../net/protocol';
+import { t } from '../utils/i18n';
 
 // Invite links: the game's URL with `?room=CODE`. Opening one goes to the
 // Multiplayer screen with the code filled in; the player still taps Join.
@@ -24,7 +25,7 @@ export async function shareInvite(code: string): Promise<string> {
   const url = inviteUrl(code, window.location.href);
   try {
     if (navigator.share) {
-      await navigator.share({ title: 'Spaceblast', text: `Join my Spaceblast room ${code}`, url });
+      await navigator.share({ title: 'Spaceblast', text: t('invite.share', { code }), url });
       return '';
     }
   } catch (e) {
@@ -32,7 +33,7 @@ export async function shareInvite(code: string): Promise<string> {
   }
   try {
     await navigator.clipboard.writeText(url);
-    return 'Link copied';
+    return t('invite.copied');
   } catch {
     return url; // last resort: show the link so it can be copied by hand
   }

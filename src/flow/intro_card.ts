@@ -2,6 +2,7 @@ import { TILE } from '../sim/constants';
 import type { GameState } from '../sim/state';
 import type { GameView } from '../view/game_view';
 import type { Shot } from './cutscene';
+import { t } from '../utils/i18n';
 
 // Pokédex-style intro cards: the first time a kind of Martian shows up or a
 // power-up is picked up in Story Mode, Captain Kit explains it. A card is one
@@ -105,7 +106,7 @@ export class IntroCards {
     $('intro-label').textContent = card.label ? `${card.label}:` : '';
     $('intro-hint').textContent = card.hint ?? '';
     $('intro-skip').hidden = !q.skip;
-    $('intro-tap').textContent = window.matchMedia('(pointer: coarse)').matches ? 'Tap to continue' : 'Click to continue';
+    $('intro-tap').textContent = window.matchMedia('(pointer: coarse)').matches ? t('card.tapContinue') : t('card.clickContinue');
     this.el.hidden = false;
     this.el.classList.toggle('fade', !!card.fade);
     this.el.classList.remove('pop');

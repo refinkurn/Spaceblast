@@ -7,6 +7,7 @@ import {
 import { shareInvite } from './invite';
 import { ROUND_SECONDS } from '../sim/constants';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
+import { t } from '../utils/i18n';
 
 export { botColorsFor };
 
@@ -29,13 +30,8 @@ export interface RoundStart {
   frames?: number[][];
 }
 
-const ERRORS: Record<string, string> = {
-  taken: 'That code is already in use.',
-  not_found: 'No room with that code. Check the letters.',
-  full: 'That room is full (4 players).',
-  bad_code: 'Room codes are 4 letters.',
-  expired: 'That game has moved on without you.',
-};
+/** A refused join, in words (unknown reasons are shown as they are). */
+const errorText = (reason: string) => (['taken', 'not_found', 'full', 'bad_code', 'expired'].includes(reason) ? t(`online.err.${reason}`) : reason);
 
 const PREFS_KEY = 'spaceblast.online';
 
@@ -159,7 +155,7 @@ export class OnlineRoom {
     const seat = savedSeat();
     const rejoin = $('online-rejoin');
     rejoin.hidden = !seat;
-    if (seat) rejoin.textContent = `Rejoin room ${seat.code}`;
+    if (seat) rejoin.textContent = t('online.rejoinRoom', { code: seat.code });
   }
 
   /** An invite link was opened: fill in the code and focus the name. Joins only on Join. */
@@ -174,7 +170,7 @@ export class OnlineRoom {
     this.screen.hidden = false;
     $('online-choose').hidden = true;
     $('online-lobby').hidden = false;
-    $('online-back').textContent = 'Leave room';
+    $('online-back').textContent = t('online.leaveRoom');
     $('online-room').textContent = this.code;
     this.renderLobby(note);
   }
@@ -238,13 +234,13 @@ export class OnlineRoom {
   private async create(): Promise<void> {
     if (this.busy) return;
     this.busy = true;
-    this.setStatus('Creating room…');
+    this.setStatus(t('online.creating'));
     try {
       for (let attempt = 0; attempt < 5; attempt++) {
         const ok = await this.connect(randomCode(), true);
         if (ok !== 'taken') return;
       }
-      this.setStatus('Could not create a room. Try again.', true);
+      this.setStatus(t('online.createFailed'), true);
     } finally {
       this.busy = false;
     }
@@ -254,7 +250,7 @@ export class OnlineRoom {
     if (this.busy) return;
     const code = raw.trim().toUpperCase();
     if (!isRoomCode(code)) {
-      this.setStatus(ERRORS.bad_code, true);
+      this.setStatus(errorText('bad_code'), true);
       return;
     }
     this.busy = true;
@@ -275,9 +271,9 @@ export class OnlineRoom {
     this.setStatus('Rejoining…');
     try {
       const first = await this.net.rejoin(seat);
-      if (first.t === 'error') this.setStatus(ERRORS[first.reason] ?? first.reason, true);
+      if (first.t === 'error') this.setStatus(errorText(first.reason), true);
     } catch {
-      this.setStatus('Could not reach the room server.', true);
+      this.setStatus(t('online.unreachable'), true);
     } finally {
       this.busy = false;
     }
@@ -289,12 +285,12 @@ export class OnlineRoom {
     try {
       const first = await this.net.connect(code, create, this.typedName(), this.prefs.color);
       if (first.t === 'error') {
-        if (first.reason !== 'taken' || !create) this.setStatus(ERRORS[first.reason] ?? first.reason, true);
+        if (first.reason !== 'taken' || !create) this.setStatus(errorText(first.reason), true);
         return first.reason;
       }
       return 'ok';
     } catch {
-      this.setStatus('Could not reach the room server. Online play needs the hosted version of the game (see ONLINE.md).', true);
+      this.setStatus(t('online.unreachableHosted'), true);
       return 'offline';
     }
   }
@@ -369,7 +365,7 @@ export class OnlineRoom {
       const b = document.createElement('button');
       b.type = 'button';
       b.style.background = color;
-      b.setAttribute('aria-label', `Colour ${i + 1}`);
+      b.setAttribute('aria-label', t('online.colour', { n: i + 1 }));
       b.addEventListener('click', () => this.net.send({ t: 'profile', name: this.me()?.name ?? '', color: i }));
       swatches.append(b);
     });
@@ -410,7 +406,7 @@ export class OnlineRoom {
     });
 
     const host = this.isHost;
-    $('settings-label').textContent = host ? 'Match settings' : 'Match settings (the host picks)';
+    $('settings-label').textContent = host ? t('online.matchSettings') : t('online.matchSettingsGuest');
     for (const el of $('set-time').children) {
       const b = el as HTMLButtonElement;
       b.setAttribute('aria-pressed', String(Number(b.dataset.time) === this.settings.time));
@@ -437,8 +433,8 @@ export class OnlineRoom {
     start.hidden = !host;
     start.disabled = this.total < 2;
     const waiting = this.total < 2
-      ? `Share the code, or add a bot. ${this.players.length}/${MAX_PLAYERS} players.`
-      : host ? `${this.total} astronauts ready.` : 'Waiting for the host to start…';
+      ? t('online.shareCode', { n: this.players.length, max: MAX_PLAYERS })
+      : host ? t('online.ready', { n: this.total }) : t('online.waitingHostStart');
     this.setStatus(note || waiting);
   }
 

@@ -1,6 +1,7 @@
 import { leaderboard } from '../services/leaderboardApi';
 import { loadProfile } from '../services/profile';
 import { stageId, type ScoreBreakdown } from '../services/score';
+import { t } from '../utils/i18n';
 
 // A Story clear's score on the end-of-level card, and sending it to the online
 // leaderboard (queued if offline). The rank is added to the card when it comes back.
@@ -9,12 +10,12 @@ const num = (n: number) => n.toLocaleString('en-US');
 
 /** End-of-level score rows: the total (with your earlier best) and the breakdown. */
 export function scoreRows(s: ScoreBreakdown, prevBest: number): [string, string][] {
-  const parts = [`Clear ${num(s.clear)}`, `Martians ${num(s.martians)}`];
-  if (s.time > 0) parts.push(`Time ${num(s.time)}`);
-  parts.push(`Hearts ${num(s.hearts)}`);
+  const parts = [t('score.clear', { n: num(s.clear) }), t('score.martians', { n: num(s.martians) })];
+  if (s.time > 0) parts.push(t('score.time', { n: num(s.time) }));
+  parts.push(t('score.hearts', { n: num(s.hearts) }));
   return [
-    ['Score', prevBest >= s.total ? `${num(s.total)} (best ${num(prevBest)})` : `${num(s.total)}${prevBest > 0 ? ' · new best!' : ''}`],
-    ['Bonus', parts.join(' · ')],
+    [t('summary.score'), prevBest >= s.total ? t('score.withBest', { total: num(s.total), best: num(prevBest) }) : prevBest > 0 ? t('score.newBest', { total: num(s.total) }) : num(s.total)],
+    [t('summary.bonus'), parts.join(' · ')],
   ];
 }
 
@@ -36,7 +37,7 @@ export function sendScore(level: number, score: ScoreBreakdown, heartsLeft: numb
     const row = document.createElement('div');
     const dt = document.createElement('dt');
     const dd = document.createElement('dd');
-    dt.textContent = 'Online rank';
+    dt.textContent = t('summary.onlineRank');
     dd.textContent = `#${reply.rank}`;
     row.append(dt, dd);
     list.append(row);

@@ -1,3 +1,4 @@
+import { t } from '../utils/i18n';
 // The match winner screen: trophy, the champion's name, final standings and
 // confetti. Online, "Back to room" returns everyone to the lobby.
 
@@ -27,10 +28,10 @@ export class Congrats {
 
   show(winner: Standing | null, standings: Standing[], buttons: CongratsButton[]): void {
     const name = $('congrats-name');
-    name.textContent = winner ? (winner.you ? 'You' : winner.name) : 'Nobody';
+    name.textContent = winner ? (winner.you ? t('common.you') : winner.name) : t('congrats.nobody');
     name.style.color = winner ? css(winner.color) : '';
-    $('congrats-line').textContent = winner ? (winner.you ? 'won the match!' : 'wins the match!') : 'The match ended in a draw.';
-    $('congrats-kicker').textContent = winner?.you ? 'Congratulations!' : 'Match over';
+    $('congrats-line').textContent = winner ? (winner.you ? t('congrats.youWon') : t('congrats.wins')) : t('congrats.draw');
+    $('congrats-kicker').textContent = winner?.you ? t('congrats.kicker') : t('congrats.over');
 
     const list = $('congrats-standings');
     list.innerHTML = '';
@@ -41,7 +42,7 @@ export class Congrats {
       dot.style.background = css(s.color);
       const label = document.createElement('span');
       label.className = 'who';
-      label.textContent = `${i + 1}. ${s.name}${s.you && s.name !== 'You' ? ' (you)' : ''}`;
+      label.textContent = `${i + 1}. ${s.name}${s.you && s.name !== t('common.you') ? t('congrats.youTag') : ''}`;
       const wins = document.createElement('span');
       wins.className = 'wins';
       wins.textContent = `${s.wins} ${s.wins === 1 ? 'win' : 'wins'}`;

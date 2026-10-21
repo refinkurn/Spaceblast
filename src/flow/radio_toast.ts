@@ -3,6 +3,7 @@ import type { GameState, SimEvent } from '../sim/state';
 import { SpriteView } from '../view/sprite_renderer';
 import { RADIO, RADIO_POWERUP, type RadioLine } from './radio_lines';
 import './radio_toast.css';
+import { t } from '../utils/i18n';
 
 // Captain Kit's radio toasts in Story Mode (docs/design/radio-juice.md): a
 // one-line pill in the alert lane under the HUD. One at a time, a queue of at
@@ -20,7 +21,7 @@ export class ToastQueue {
   readonly items: RadioLine[] = [];
 
   push(line: RadioLine): void {
-    const dup = this.items.findIndex((l) => l.text === line.text);
+    const dup = this.items.findIndex((l) => l.key === line.key);
     if (dup >= 0) this.items.splice(dup, 1);
     this.items.push(line);
     while (this.items.length > QUEUE_MAX) this.items.shift();
@@ -73,8 +74,8 @@ export class RadioToasts {
   /** Story events (call before story.event, so a power-up's first pick-up still gets its card and no toast). */
   event(e: SimEvent, state: GameState, seenCard: (item: number) => boolean): void {
     const line = toastFor(e, state, 0, seenCard);
-    if (!line || this.said.has(line.text)) return;
-    this.said.add(line.text);
+    if (!line || this.said.has(line.key)) return;
+    this.said.add(line.key);
     this.queue.push(line);
   }
 
@@ -96,7 +97,7 @@ export class RadioToasts {
     if (!line) return;
     this.showing = line;
     this.until = now + SLIDE_MS + SHOW_MS;
-    this.text.textContent = line.text;
+    this.text.textContent = t(line.key);
     this.portrait.show('captain-kit', line.danger ? 'worried' : 'neutral');
     this.portrait.draw(now);
     this.el.hidden = false;

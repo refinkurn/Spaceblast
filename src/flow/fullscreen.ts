@@ -1,3 +1,4 @@
+import { t } from '../utils/i18n';
 // Full screen. Android, iPad and computers can go full screen from a button.
 // iPhone Safari can't (Apple only allows it for videos), but a game added to
 // the Home Screen opens without any browser bars, so there the button shows
@@ -48,7 +49,7 @@ export function setupFullscreen(): void {
     for (const b of buttons) {
       b.hidden = hide;
       b.innerHTML = isFullscreen() ? ICON_EXIT : ICON_ENTER;
-      b.setAttribute('aria-label', isFullscreen() ? 'Exit full screen' : 'Full screen');
+      b.setAttribute('aria-label', isFullscreen() ? t('aria.exitFullScreen') : t('aria.fullScreen'));
       b.title = b.getAttribute('aria-label')!;
     }
   };
