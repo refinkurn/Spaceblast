@@ -27,6 +27,16 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
   Want: node card (title, goal, Kit line, 3-star checklist with earned ticks, best score, ENTER TUNNEL) that goes straight to play; after a clear, back to the map with Bosco walking to the next node; neon warp to the next sector after a boss.
   Done when: checklist matches the star rules; walk and warp play; tests cover checklist text.
   Spec: docs/design/story-map.md (parts 4-5)
+- **Kit radio toasts (Story)** (new src/flow/radio_toast.ts + radio_lines.ts, main.ts wiring, index.html, style.css)
+  Now: Kit only talks in cards, cutscenes and tutorial tips.
+  Want: 1-line Kit pill top-centre, slides in 3 s, queues (max 3), waits for alerts; triggers: gate open, 1 heart left, vest hit, last boss wave, power-up (after its card, once per type per level). Story only; never pauses.
+  Done when: each trigger shows once without overlap; none in Battle/Online; tests cover the queue.
+  Spec: docs/design/radio-juice.md (part 1)
+- **Distance shake + tile highlight** (src/view/camera_rig.ts, game_view.ts, hero_view.ts, settings.ts)
+  Now: every explosion shakes the same, wherever it is; no floor marker under you.
+  Want: shake strength by distance to the local player, damped and gone in 0.25 s; Screen shake on/off setting; glowing square on the local player's tile.
+  Done when: near blasts shake, far ones don't; camera returns exactly; highlight on the right tile; tests cover the strength curve.
+  Spec: docs/design/radio-juice.md (parts 2-3)
 
 ## In progress
 
