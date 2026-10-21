@@ -47,7 +47,7 @@ describe('bot', () => {
       expect(placed).toBeGreaterThan(0);
     }
     expect(selfKnockouts).toBeLessThanOrEqual(2); // nearly always survives 20 x 25 s of play
-  });
+  }, 30000);
 
   it('breaks rocks and wins against an idle opponent most of the time', () => {
     let wins = 0, rocks = 0;
@@ -62,7 +62,7 @@ describe('bot', () => {
     }
     expect(rocks).toBeGreaterThan(40);
     expect(wins).toBeGreaterThanOrEqual(10);
-  });
+  }, 30000); // 20 full rounds: over the 5 s default when every test file runs at once
 
   it('is deterministic for the same seed', () => {
     const play = () => {
