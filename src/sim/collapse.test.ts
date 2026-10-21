@@ -45,6 +45,21 @@ describe('arena collapse', () => {
     expect(s.status).toBe('playing');
   });
 
+  it('an astronaut only grazed by a block is pushed off it, never left inside it', () => {
+    const s = createGame(3, { mode: 'battle', roundTicks: 1 });
+    const p = s.players[0];
+    p.x = 750; // 0.75 tile from tile (0,0): too far to be crushed when it falls first
+    step(s, idle); // clock hits 0
+    step(s, idle); // (0,0) falls
+    expect(s.grid.cells[0]).toBe(Cell.Pillar);
+    expect(p.alive).toBe(true);
+    expect(p.x).toBe(TILE); // fully on (1,0), so it can't walk back into the block
+    // Before the fix it could stand inside the fallen block and survive the whole collapse.
+    const left = { dir: 3 as const, alt: 0 as const, place: false };
+    for (let t = 0; t < 10; t++) step(s, [left, NO_COMMAND]);
+    expect(p.x).toBe(TILE);
+  });
+
   it('the last one standing wins', () => {
     const s = createGame(3, { mode: 'battle', roundTicks: 10 });
     for (let t = 0; t < 12; t++) step(s, idle);

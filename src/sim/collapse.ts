@@ -46,7 +46,17 @@ export function updateCollapse(state: GameState): void {
   state.charges = state.charges.filter((c) => c.tx !== tx || c.ty !== ty);
   state.events.push({ type: 'tile_collapsed', tx, ty });
   for (const p of state.players) {
-    if (p.alive && Math.abs(p.x - tx * TILE) < CRUSH_REACH && Math.abs(p.y - ty * TILE) < CRUSH_REACH) forfeit(state, p);
+    if (!p.alive) continue;
+    const dx = p.x - tx * TILE, dy = p.y - ty * TILE;
+    if (Math.abs(dx) >= TILE || Math.abs(dy) >= TILE) continue;
+    if (Math.abs(dx) < CRUSH_REACH && Math.abs(dy) < CRUSH_REACH) {
+      forfeit(state, p);
+      continue;
+    }
+    // Only grazed by the block: pushed fully onto the tile it was leaving for.
+    // Left there, it could walk back into the block and be safe for good.
+    if (Math.abs(dx) >= CRUSH_REACH) p.x = (tx + Math.sign(dx)) * TILE;
+    if (Math.abs(dy) >= CRUSH_REACH) p.y = (ty + Math.sign(dy)) * TILE;
   }
 }
 

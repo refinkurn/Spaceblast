@@ -33,8 +33,16 @@ interface SkillProfile {
   reactAt: number;
   /** Chance (in %) at each tile centre to stop and dawdle for DAWDLE_TICKS when safe. */
   dawdle: number;
-  /** Places charges to hit astronauts and walks after them. */
-  hunts: boolean;
+  /**
+   * Share of the time (in %) spent hunting astronauts: aiming charges at them
+   * and walking after them. Decided for HUNT_TICKS at a time, so it never flips
+   * from one tick to the next.
+   */
+  hunt: number;
+  /** Heads for its next blasting spot this many ticks before it may place again. */
+  plan: number;
+  /** With nothing to do (e.g. waiting for its own blast), strolls to nearby safe tiles instead of standing still. */
+  wander: boolean;
 }
 
 /**
@@ -42,14 +50,20 @@ interface SkillProfile {
  * tick, which made the bot stop-start and step backwards mid-tile.)
  */
 const DAWDLE_TICKS = 20;
+/** How long one hunting (or not hunting) mood lasts: 2 s. */
+const HUNT_TICKS = 120;
 
 const SKILLS: Record<BotSkill, SkillProfile> = {
-  // Slow to react, rarely bombs, never hunts you: blasts rocks and wanders.
-  easy: { cooldown: [80, 80], reactAt: 75, dawdle: 32, hunts: false },
-  // A fair fight: slower to bomb and a little hesitant.
-  normal: { cooldown: [45, 45], reactAt: 9999, dawdle: 10, hunts: true },
+  // Busy but beginner-friendly: walks, blasts rocks and grabs power-ups most of
+  // the time, comes after you now and then, and is slow to notice blasts, so a
+  // well-placed charge catches it.
+  easy: { cooldown: [40, 20], reactAt: 75, dawdle: 8, hunt: 25, plan: 9999, wander: true },
+  // A fair fight, about 20% softer than it was: notices blasts with 2 s to go
+  // instead of the whole fuse, waits 20% longer between charges, pauses a
+  // little more, and goes for you 80% of the time.
+  normal: { cooldown: [50, 8], reactAt: 120, dawdle: 18, hunt: 80, plan: 10, wander: false },
   // The original battle bot's play with quick charges (also the Renegade Pilot).
-  hard: { cooldown: [6, 14], reactAt: 9999, dawdle: 0, hunts: true },
+  hard: { cooldown: [6, 14], reactAt: 9999, dawdle: 0, hunt: 100, plan: 10, wander: false },
 };
 
 export class Bot {
@@ -59,6 +73,12 @@ export class Bot {
   private wasPlacing = false;
   /** Ticks left in the current dawdle. */
   private pause = 0;
+  /** Current mood (see SkillProfile.hunt) and ticks until it is decided again. */
+  private hunting = true;
+  private huntTimer = 0;
+  /** Easy's stroll target (tile index, -1 for none) and ticks until it picks another. */
+  private strollTo = -1;
+  private strollTimer = 0;
 
   constructor(readonly id: number, seed: number, readonly skill: BotSkill = 'normal') {
     this.rng = { rng: seedRng(seed ^ (0x5bd1e995 * (id + 1))) };
@@ -75,6 +95,12 @@ export class Bot {
     const w = state.grid.w;
     const perTile = Math.ceil(TILE / playerSpeed(me));
     const skill = SKILLS[this.skill];
+    if (--this.huntTimer <= 0) {
+      // Hard always hunts (no roll, so its play is exactly what it was).
+      this.hunting = skill.hunt >= 100 || (skill.hunt > 0 && nextInt(this.rng, 100) < skill.hunt);
+      this.huntTimer = HUNT_TICKS;
+    }
+    const hunts = this.hunting;
     const stay = { ...none, dir: holdDir(me, danger, w, skill.reactAt) };
     // 1) Escape if any tile the body overlaps is threatened (an easy bot only notices late).
     if (overlapped(me).some(([x, y]) => danger[y * w + x] !== SAFE && danger[y * w + x] <= skill.reactAt)) {
@@ -86,7 +112,7 @@ export class Bot {
     // Release the button for a tick after pressing, so the next press counts.
     if (this.wasPlacing) {
       this.wasPlacing = false;
-    } else if (this.cooldown === 0 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, tx, ty, skill.hunts)) {
+    } else if (this.cooldown === 0 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, tx, ty, hunts)) {
       const after = dangerMap(state, { tx, ty, range: me.range });
       const out = search(state, me, after, perTile, (x, y) => after[y * w + x] === SAFE, true);
       // Only if the way out is short enough for this bot's reaction time.
@@ -113,15 +139,40 @@ export class Bot {
       .sort((a, b) => Math.abs(a.x - me.x) + Math.abs(a.y - me.y) - (Math.abs(b.x - me.x) + Math.abs(b.y - me.y)) || a.id - b.id)[0];
     const goal = (x: number, y: number) =>
       itemAt(state, x, y) !== Item.None ||
-      (this.cooldown < 10 && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, x, y, skill.hunts));
+      (this.cooldown < skill.plan && this.ownCharges(state) < me.maxCharges && this.worthPlacing(state, me, x, y, hunts));
     const path = search(state, me, danger, perTile, goal, false);
     if (path && path.length > 0) return { ...none, dir: path.first };
-    if (foe && skill.hunts) {
+    if (foe && hunts) {
       const [fx, fy] = playerTile(foe);
       const chase = search(state, me, danger, perTile, (x, y) => Math.abs(x - fx) + Math.abs(y - fy) <= 1, false);
       if (chase && chase.length > 0) return { ...none, dir: chase.first };
     }
+    if (skill.wander) {
+      const dir = this.stroll(state, me, danger, perTile);
+      if (dir !== Dir.None) return { ...none, dir };
+    }
     return stay;
+  }
+
+  /** Walks to a random safe tile 2-4 steps away, picking a new one once there or after 2 s. */
+  private stroll(state: GameState, me: Player, danger: Int16Array, perTile: number): Dir {
+    const { w, h } = state.grid;
+    const [tx, ty] = playerTile(me);
+    if (--this.strollTimer <= 0 || this.strollTo === ty * w + tx) {
+      this.strollTimer = HUNT_TICKS;
+      const spots: number[] = [];
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const d = Math.abs(x - tx) + Math.abs(y - ty);
+          if (d >= 2 && d <= 4 && danger[y * w + x] === SAFE && canWalk(state, me, x, y)) spots.push(y * w + x);
+        }
+      }
+      this.strollTo = spots.length > 0 ? spots[nextInt(this.rng, spots.length)] : -1;
+    }
+    if (this.strollTo < 0) return Dir.None;
+    const to = this.strollTo;
+    const path = search(state, me, danger, perTile, (x, y) => y * w + x === to, false);
+    return path && path.length > 0 ? path.first : Dir.None;
   }
 
   private ownCharges(state: GameState): number {

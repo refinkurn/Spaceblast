@@ -111,10 +111,12 @@ describe('bot difficulty', () => {
     return { wins, losses };
   }
 
+  // Steps, not cliffs: Normal is a ~20% softer fight than it used to be, so it
+  // beats Easy clearly but no longer crushes it (it was about 23-5 in 30 rounds).
   it('normal beats easy and hard beats normal (bot-vs-bot rounds often end in draws)', () => {
     const ne = duel('normal', 'easy', 12);
-    expect(ne.wins).toBeGreaterThanOrEqual(8);
-    expect(ne.wins).toBeGreaterThan(ne.losses * 3);
+    expect(ne.wins).toBeGreaterThan(ne.losses);
+    expect(ne.losses).toBeGreaterThan(0);
     const hn = duel('hard', 'normal', 12);
     expect(hn.wins).toBeGreaterThan(hn.losses);
   }, 30000);
