@@ -712,7 +712,7 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 @keyframes boom-flash { 0% { background-color: var(--boom, #fff); box-shadow: inset 0 0 0 100vmax var(--boom, #fff); } 100% { box-shadow: inset 0 0 0 100vmax transparent; } }
 /* The character: left side, standing on the dialogue box. */
 /* Full screen height, behind the dialogue box: the character stands at the bottom, its upper body above the box. */
-.cut-sprite { position: absolute; left: max(4px, env(safe-area-inset-left)); top: 0; bottom: 0; width: min(46vw, 120vh); height: 100%; }
+.cut-sprite { position: absolute; left: max(4px, env(safe-area-inset-left)); top: 0; bottom: calc(92px + env(safe-area-inset-bottom)); width: min(46vw, 120vh); height: auto; }
 .cut-sprite[hidden] { display: none; }
 #cutscene.enter .cut-sprite { animation: sprite-in 0.35s cubic-bezier(.2, 1.2, .4, 1); }
 #cutscene.bump .cut-sprite { animation: sprite-bump 0.25s ease-out; }
@@ -720,35 +720,34 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 @keyframes sprite-in { from { transform: translateX(-40%); opacity: 0; } }
 @keyframes sprite-bump { 40% { transform: translateY(-4%); } }
 @keyframes scene-shake { 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, -1px); } }
-/* The dialogue box: name top left, text below, portrait on its left. */
+/* The dialogue banner: slim, full width, pinned to the bottom edge; portrait on its left. */
 .cut-box {
   position: absolute;
-  left: max(12px, env(safe-area-inset-left));
-  right: max(12px, env(safe-area-inset-right));
-  bottom: max(10px, env(safe-area-inset-bottom));
-  min-height: 26%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 84px;
+  box-sizing: border-box;
   display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  padding: 12px 18px;
-  background: #0b0d12f0;
-  border: 2px solid #ffffff55;
-  border-radius: 14px;
-  box-shadow: 0 6px 0 #0006;
+  gap: 12px;
+  align-items: center;
+  padding: 8px max(16px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: #0b0d12d9;
+  border-top: 2px solid #ffffff55;
   transform: translateY(130%);
   transition: transform 0.3s ease;
 }
 #cutscene.in .cut-box { transform: none; }
-.cut-portrait { flex: none; width: 76px; height: 76px; border-radius: 10px; background: #ffffff10; }
-.cut-portrait[hidden] { display: none; }
-.cut-lines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; align-self: stretch; }
-.cut-speaker { font-size: 16px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; min-height: 16px; }
+.cut-portrait { flex: none; width: 64px; height: 64px; border-radius: 10px; background: #ffffff10; }
+.cut-portrait[hidden], #cutscene.narration .cut-portrait { display: none; }
+.cut-lines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; justify-content: center; }
+.cut-speaker { font-size: 13px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; min-height: 13px; }
 #cutscene.narration .cut-speaker { display: none; }
 #cutscene.narration .cut-text { font-style: italic; color: #d5dae4; }
-.cut-text { font-size: clamp(19px, 3vw, 26px); line-height: 1.38; color: #f2f4f8; max-width: 900px; }
-.cut-hint { margin-top: auto; align-self: flex-end; font-size: 12px; color: var(--ink-quiet); opacity: 0; transition: opacity 0.2s; }
+.cut-text { font-size: clamp(16px, 2.4vw, 20px); line-height: 1.3; color: #f2f4f8; max-width: 900px; }
+.cut-hint { align-self: flex-end; font-size: 12px; color: var(--ink-quiet); opacity: 0; transition: opacity 0.2s; }
 #cutscene.ready .cut-hint { opacity: 1; animation: tap-pulse 1.4s ease-in-out infinite; }
-#cut-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-width: 48px; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 999px; z-index: 2; }
+#cut-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-width: 64px; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 999px; z-index: 2; }
 .cut-reveal {
   /* Nintendo-style pop-up: a plain box on the right, clear of the character. */
   position: absolute;
@@ -832,10 +831,6 @@ button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; 
   .story-card p { font-size: 14px; line-height: 1.45; }
   .story-card h2 { font-size: 24px; }
   .hub-levels button { min-height: 44px; }
-  .cut-box { min-height: 28%; padding: 8px 14px; }
-  .cut-portrait { width: 56px; height: 56px; }
-  .cut-speaker { font-size: 14px; }
-  .cut-text { font-size: 18px; }
 }
 @media (max-width: 700px) {
   .ending-card { max-width: 100%; }

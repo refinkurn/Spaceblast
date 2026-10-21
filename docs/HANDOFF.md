@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Story dialogue banner** (src/flow/cutscene.ts, index.html `#cutscene`, style.css)
-  Now: tall dialogue box, 76 px portrait.
-  Want: slim full-width bottom banner (~84 px), 64 px portrait, 12-13 px name, 16 px+ text; standing sprite and Skip stay.
-  Done when: prologue reads well at 740x360 with no overlap; tests and build pass.
-  Spec: docs/design/menu-dialogue.md (part 2)
 - **Pause menu** (src/main.ts `openMenu`/loop, index.html `#hud`, style.css)
   Now: the HUD Menu button quits straight to the main menu; no pause.
   Want: 48 px pause button opens a card (Resume, Restart, Settings, Quit with confirm); pauses via the loop flag; online keeps the leave prompt.
@@ -71,6 +66,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: story dialogue banner: slim full-width bottom banner (min 84 px, grows for a 3rd line), 64 px portrait (hidden on narration), 13 px name, 16-20 px text, sprite sits above it, Skip 64x48; checked at 740x360; CSS tests (vitest now processes style.css); 166 tests pass.
 - 2026-10-21: menu: Story / Versus (Battle vs Bot, Multiplayer) / Settings (How to Play inside) / Credits; Back is first and pinned top-left on every sub-page (bot -> Versus, How to Play -> Settings); online lobby sits in a left panel (min(420px, 46vw)) with Back pinned top-left; checked at 740x360 (no page scroll); 5 new tests, 163 pass. Note: the menu art is not shown behind the lobby (the menu hides when the lobby opens).
 - 2026-10-21: HUD layout: top-left avatar + hearts + power-ups + short goal, top-centre stage chip with clock (boss/battle only), title dropped, hearts shake and flash on life/armor loss (CSS, reduced-motion safe); text logic in `hud_text.ts`; checked at 740x360; 5 new tests, 158 pass.
 - 2026-10-21: compact level card: `1-3` / `1-5 BOSS` title, sector name, goal icon + text, Kit line only, dim backdrop; Bosco reply no longer shown; 5 new tests, 153 pass.

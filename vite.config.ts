@@ -7,5 +7,5 @@ export default defineConfig({
   base: './',
   plugins: [devRelay()],
   build: { target: 'es2022', chunkSizeWarningLimit: 800 },
-  test: { include: ['server/**/*.test.ts', 'src/**/*.test.ts'], environment: 'node' },
+  test: { include: ['server/**/*.test.ts', 'src/**/*.test.ts'], environment: 'node', css: { include: [/style\.css/] } },
 });
