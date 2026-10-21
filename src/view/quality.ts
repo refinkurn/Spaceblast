@@ -12,11 +12,18 @@ export class AdaptiveQuality {
   private sum = 0;
   private count = 0;
   private step: number;
+  private readonly start: number;
 
   /** `deviceRatio`: window.devicePixelRatio. */
   constructor(deviceRatio: number) {
     this.step = STEPS.findIndex((r) => r <= Math.max(1, deviceRatio));
     if (this.step < 0) this.step = STEPS.length - 1;
+    this.start = this.step;
+  }
+
+  /** True once the picture has stepped down: extras like auras and idle sparkles switch off. */
+  get reduced(): boolean {
+    return this.step > this.start;
   }
 
   get pixelRatio(): number {

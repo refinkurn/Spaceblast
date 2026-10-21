@@ -3,7 +3,8 @@ import { AdaptiveQuality } from './quality';
 import { GRID_H, GRID_W } from '../sim/constants';
 import type { GameState, SimEvent } from '../sim/state';
 import type { Prediction } from '../net/predict';
-import { GateView, ItemsView, MartiansView, PortalsView } from './actors_view';
+import { GateView, MartiansView, PortalsView } from './actors_view';
+import { ItemsView } from './items_view';
 import { BoardView } from './board_view';
 import { BossView, CrossPreviewView } from './boss_view';
 import { CameraRig } from './camera_rig';
@@ -150,6 +151,7 @@ export class GameView {
     });
     this.charges.sync(state, predicted?.p.charges);
     this.beams.sync(state);
+    this.items.reduced = this.quality.reduced;
     this.items.sync(state, time);
     this.gate.sync(state, time);
     this.martians.sync(state, this.prevMartians, alpha, time);

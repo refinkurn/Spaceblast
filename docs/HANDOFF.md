@@ -17,11 +17,6 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Power-up pick-up look** (src/view/actors_view.ts `ItemsView`, effects_view.ts)
-  Now: plain coloured shapes (cone, sphere, box, octahedron, torus) bobbing and spinning fast.
-  Want: low-poly item meshes in the new colours inside a glass shell, floor aura, shared idle particles, spawn/collect bursts; slow 30 deg/s spin; aura and particles off at reduced quality.
-  Done when: all 5 items are easy to tell apart in a dev level; tests and build pass.
-  Spec: docs/design/powerup-look.md (part 1)
 - **Vest bubble, speed trail, new power-up icons** (src/view/hero_view.ts, src/flow/hud.ts)
   Now: plain bubble; no speed trail; simple HUD icons.
   Want: pulsing pale bubble while armor > 0; short yellow trail while moving with boots; new SVG icons in HUD and intro cards (pips stay).
@@ -36,6 +31,7 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-21: power-up pick-up look (part 1): five low-poly items in the new colours inside a glass shell, floor aura, 30 deg/s spin and slow bob, shared 120-dot particle pool for idle sparkles and spawn/collect bursts; aura and idle dots off after `AdaptiveQuality` steps down (`reduced`); new `src/view/items_view.ts`, `item_look.ts`, `particles.ts` with tests; seen in a headless browser at 740x360 with no errors (items are small at that size); 217 tests pass.
 - 2026-10-21: invite link + reconnect screen: Invite button beside the room code (share sheet, else copies `?room=CODE`, shows "Link copied"); opening `?room=CODE` goes to Multiplayer with the code filled in and the name focused (joins only on Join, then `room` is removed from the URL); full-screen "Reconnecting to room CODE…" overlay shows/hides with `onReconnecting`, and hides on exit; parsing in `src/flow/invite.ts` with tests; 212 tests pass. Not tried on a phone or with a real dropped connection.
 - 2026-10-21: start countdown 3-2-1-BLAST! (0.6 s steps, offline Story after the level card and Battle rounds; held by the paused flag; skipped when level 1's first coach prompt is pending), red damage vignette (CSS, reduced-motion softer) on life/armor loss, vibration 30 ms on placing a Charge and 80 ms when hurt; logic in `src/flow/countdown.ts`; 209 tests pass. Not checked in a real browser or on a phone.
 - 2026-10-21: Story score + online leaderboard (Refindo, direct): score = clear 2,000 + 500/Martian + time under par x20 + 1,000/heart; new stars (target score, 3 = all hearts under par); no-login device profile + name word filter; POST/GET /api/scores on a Cloudflare Durable Object (caps, 3 s / 300-a-day limits) and in the dev server; offline queue; Leaderboard screen on the level map. Needs `npm run deploy` to go live. Spec: docs/design/leaderboard.md. 199 tests pass.

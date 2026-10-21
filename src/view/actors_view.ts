@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Cell, Item, Kind, LevelEvent, PORTAL_TICKS } from '../sim/constants';
+import { Cell, Kind, LevelEvent, PORTAL_TICKS } from '../sim/constants';
 import { gateOpen } from '../sim/items';
 import type { GameState, Martian } from '../sim/state';
 import { tileToWorld, toWorld } from './coords';
@@ -7,62 +7,6 @@ import { gateFlicker } from './level_view';
 
 // Power-ups, the Warp Gate and Martians. Placeholder shapes, one colour and
 // silhouette per kind, so real models can replace them one by one later.
-
-/** Colour and shape per power-up, also used by the HUD legend. */
-export const ITEM_LOOK: Record<number, { name: string; color: number }> = {
-  [Item.BeamRange]: { name: 'Beam Range+', color: 0xff9a3c },
-  [Item.ExtraCharge]: { name: 'Extra Charge', color: 0x5ad1ff },
-  [Item.JetBoots]: { name: 'Speed Boost', color: 0x7dff8a },
-  [Item.FreezePulse]: { name: 'Freeze Pulse', color: 0xb9a4ff },
-  [Item.OxygenVest]: { name: 'Oxygen Vest', color: 0xffffff },
-};
-
-const ITEM_GEOMETRY: Record<number, THREE.BufferGeometry> = {
-  [Item.BeamRange]: new THREE.ConeGeometry(0.2, 0.42, 16),
-  [Item.ExtraCharge]: new THREE.SphereGeometry(0.2, 16, 12),
-  [Item.JetBoots]: new THREE.BoxGeometry(0.3, 0.3, 0.3),
-  [Item.FreezePulse]: new THREE.OctahedronGeometry(0.25),
-  [Item.OxygenVest]: new THREE.TorusGeometry(0.18, 0.07, 10, 20),
-};
-
-export class ItemsView {
-  readonly group = new THREE.Group();
-  private meshes = new Map<number, THREE.Mesh>();
-  private materials = new Map<number, THREE.Material>();
-
-  sync(state: GameState, time: number): void {
-    const { grid, items } = state;
-    const seen = new Set<number>();
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item === Item.None || grid.cells[i] !== Cell.Empty) continue;
-      const key = i * 8 + item;
-      seen.add(key);
-      let m = this.meshes.get(key);
-      if (!m) {
-        let mat = this.materials.get(item);
-        if (!mat) this.materials.set(item, (mat = new THREE.MeshStandardMaterial({ color: ITEM_LOOK[item].color, emissive: ITEM_LOOK[item].color, emissiveIntensity: 0.45, roughness: 0.4 })));
-        m = new THREE.Mesh(ITEM_GEOMETRY[item], mat);
-        m.castShadow = true;
-        tileToWorld(i % grid.w, Math.floor(i / grid.w), 0, m.position);
-        this.meshes.set(key, m);
-        this.group.add(m);
-      }
-      m.position.y = 0.42 + Math.sin(time * 3 + i) * 0.06;
-      m.rotation.y = time * 1.6 + i;
-    }
-    for (const [key, m] of this.meshes) {
-      if (seen.has(key)) continue;
-      this.group.remove(m);
-      this.meshes.delete(key);
-    }
-  }
-
-  clear(): void {
-    this.meshes.clear();
-    this.group.clear();
-  }
-}
 
 export class GateView {
   readonly group = new THREE.Group();

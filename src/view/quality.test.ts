@@ -29,4 +29,11 @@ describe('adaptive render quality', () => {
     expect(run(q, 5000, 300)).toBeNull();
     expect(q.pixelRatio).toBe(2);
   });
+
+  it('reports reduced only after stepping down', () => {
+    const q = new AdaptiveQuality(2);
+    expect(q.reduced).toBe(false);
+    run(q, 30, 120);
+    expect(q.reduced).toBe(true);
+  });
 });
