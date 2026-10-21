@@ -17,6 +17,16 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
+- **Story map: header, themed track, nodes, Bosco pawn** (new src/flow/story_map.ts + map_layout.ts, story_mode.ts `renderHub`, index.html `#story-hub`, style.css)
+  Now: a grid of 20 level buttons with stars.
+  Want: header (sector title, CORE SIGNAL n/20 gauge, sector stars, Leaderboard, Back); 2D horizontal track, 4 themed sectors, 5 nodes each (boss node last), locked/current/cleared states; Bosco sprite on the current node; scroll up to one sector past the current one.
+  Done when: all 20 nodes show correctly at 740x360; tests cover layout data vs levelSpec.
+  Spec: docs/design/story-map.md (parts 1-3)
+- **Story map: node card, walk + sector warp** (src/flow/story_map.ts, story_mode.ts, screens.ts)
+  Now: tapping a level starts it; the level card shows; "Main menu" after a clear goes to the menu.
+  Want: node card (title, goal, Kit line, 3-star checklist with earned ticks, best score, ENTER TUNNEL) that goes straight to play; after a clear, back to the map with Bosco walking to the next node; neon warp to the next sector after a boss.
+  Done when: checklist matches the star rules; walk and warp play; tests cover checklist text.
+  Spec: docs/design/story-map.md (parts 4-5)
 
 ## In progress
 
