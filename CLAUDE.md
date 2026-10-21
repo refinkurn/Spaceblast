@@ -23,6 +23,8 @@ src/
   audio/   synthesised sound effects and music (Web Audio, no files); driven by sim events
   flow/    menus, HUD, story, online lobby
   services/ score rules, leaderboard client + offline queue, device profile, name filter (docs/design/leaderboard.md)
+  config/  data: locales.json (interface text by key; English now)
+  utils/   i18n.ts: t(key, vars) for interface text; applyDom() fills data-i18n labels in index.html
   main.ts  wiring + fixed 60 Hz loop
 server/    the room server: room.ts (shared: seats, round clock, rejoin), leaderboard.ts (scores API), dev_relay.ts (npm run dev), worker.ts (Cloudflare)
 ```
@@ -44,6 +46,7 @@ server/    the room server: room.ts (shared: seats, round clock, rejoin), leader
 - Mobile first: landscape only, touch controls live in the side gutters, the
   camera keeps the arena between them. Buttons >= 48 px.
 - Keep the bundle small: no new runtime dependency without a reason.
+- Interface text (menus, HUD, buttons, alerts, Kit's radio toasts) goes through t('key') with the words in src/config/locales.json; static labels in index.html carry data-i18n. The story script stays in story.ts / story_scenes.ts / tutorial_script.ts.
 
 ## Workflow
 

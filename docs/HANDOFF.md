@@ -17,34 +17,16 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Ready
 
-- **Story map: header, themed track, nodes, Bosco pawn** (new src/flow/story_map.ts + map_layout.ts, story_mode.ts `renderHub`, index.html `#story-hub`, style.css)
-  Now: a grid of 20 level buttons with stars.
-  Want: header (sector title, CORE SIGNAL n/20 gauge, sector stars, Leaderboard, Back); 2D horizontal track, 4 themed sectors, 5 nodes each (boss node last), locked/current/cleared states; Bosco sprite on the current node; scroll up to one sector past the current one.
-  Done when: all 20 nodes show correctly at 740x360; tests cover layout data vs levelSpec.
-  Spec: docs/design/story-map.md (parts 1-3)
-- **Story map: node card, walk + sector warp** (src/flow/story_map.ts, story_mode.ts, screens.ts)
-  Now: tapping a level starts it; the level card shows; "Main menu" after a clear goes to the menu.
-  Want: node card (title, goal, Kit line, 3-star checklist with earned ticks, best score, ENTER TUNNEL) that goes straight to play; after a clear, back to the map with Bosco walking to the next node; neon warp to the next sector after a boss.
-  Done when: checklist matches the star rules; walk and warp play; tests cover checklist text.
-  Spec: docs/design/story-map.md (parts 4-5)
-- **Kit radio toasts (Story)** (new src/flow/radio_toast.ts + radio_lines.ts, main.ts wiring, index.html, style.css)
-  Now: Kit only talks in cards, cutscenes and tutorial tips.
-  Want: 1-line Kit pill top-centre, slides in 3 s, queues (max 3), waits for alerts; triggers: gate open, 1 heart left, vest hit, last boss wave, power-up (after its card, once per type per level). Story only; never pauses.
-  Done when: each trigger shows once without overlap; none in Battle/Online; tests cover the queue.
-  Spec: docs/design/radio-juice.md (part 1)
-- **Distance shake + tile highlight** (src/view/camera_rig.ts, game_view.ts, hero_view.ts, settings.ts)
-  Now: every explosion shakes the same, wherever it is; no floor marker under you.
-  Want: shake strength by distance to the local player, damped and gone in 0.25 s; Screen shake on/off setting; glowing square on the local player's tile.
-  Done when: near blasts shake, far ones don't; camera returns exactly; highlight on the right tile; tests cover the strength curve.
-  Spec: docs/design/radio-juice.md (parts 2-3)
-- **Leaderboard hardening before real players** (server/leaderboard.ts, server/worker.ts, src/services/profile.ts) — server code: code session, not the nightly run
-  Now: rate limits are per client-sent `device_uuid` only, so random ids bypass them and can fill a stage's top 10 with max scores; the `scores`/`limits` tables grow without bound; score and stars aren't cross-checked against hearts and time; a chunked body without Content-Length is read in full before the size check; the client accepts a looser uuid than the server.
-  Want: an extra per-IP limit (`CF-Connecting-IP`, free) and a row cap per stage; score/stars sanity check against hearts and seconds; size check while streaming; one shared UUID pattern.
-  Done when: tests cover each case; no cost added (free Cloudflare features only).
-
 ## In progress
 
 ## Blocked
+
+- **Design chat: gameplay balance proposal** (from Refindo's "production readiness" brief, 2026-10-22). Not built: it changes rules and canon, so it needs a spec that fits the game first. The brief asked for:
+  - Rock drop table: empty 40%, "dot gem" 30%, extra charge 15%, speed boots 10%, oxygen vest 5%. Today: 1 rock in 6 hides a power-up (about 83% empty); items are Beam Range+, Extra Charge, Speed Boost, Freeze Pulse, Oxygen Vest; there is no gem (it would need a purpose: score? currency?).
+  - Stages 1-1..1-4 with "Roamer"/"Chaser" Martians (1-3: 2 Roamers + 2 Chasers; 1-4: 4 Chasers), par 90/80/75/60 s, low-to-high rock density per stage. Today: Gooplings and Sniffers in sector 1, only sector 4 Martians hunt (canon), par 75 s on every normal level, one rock density (60%), and 1-4 is a normal level before the 1-5 boss.
+  - "gameplay_config.json / stages.json": rules live in typed integer constants in src/sim (deterministic for online play); a JSON file is possible later if the design team wants to edit numbers, as long as it stays integers.
+  Please decide which parts to keep, in canon terms, and queue a spec; rules changes go to the code session (sim-specialist), not the nightly run.
+- **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
 
 - **Story chat: script lines that disagree with the game** (found by the full QA pass on 2026-10-21; please confirm or reword, then queue for `script-integrator`):
   1. src/flow/story_scenes.ts:120-121, :102 and story.ts:27 (sector 3): Martians "march in unison toward the center / not wandering, but marching" and "more organized". Only sector 4 Martians hunt; sector 3 ones wander. Suggest "gathering" or "restless".
@@ -57,6 +39,11 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 ## Done
 
+- 2026-10-22: production brief, part by part (Refindo chose): kept folder names (only leak fixed: GOD_SHIELD moved to sim/constants so view no longer imports flow); interface text moved to src/config/locales.json with t() in src/utils/i18n.ts (227 keys, story script untouched, data-i18n on static labels, key-existence test); light buzz on power-up pick-up; balance proposal and Capacitor queued under Blocked. 260 tests pass.
+- 2026-10-22: leaderboard hardening: score/time/hearts/stars must match the score formula (every genuine clear tested), per-address daily limit (hashed, office-friendly 2,000), 500 rows per stage, daily cleanup of old limits, capped body reading, shared UUID pattern. Free Cloudflare features only. 257 tests pass.
+- 2026-10-22: impact shake by distance (full next to you, none from 7 tiles; damped 18 Hz, gone in 0.25 s, camera returns exactly), Screen shake On/Off (off by default with reduced motion), tile highlight under your tile (snaps, 60 ms slide; online uses the predicted tile). 247 tests pass.
+- 2026-10-22: Kit radio toasts (Story only): gate open, last heart, vest hit, final boss wave, power-ups after their card; queue of 3, waits for alerts/tips/cards/countdown; lines in locales.json (radio.*). 242 tests pass.
+- 2026-10-22: Story map: themed 4-sector overworld (header with Core signal gauge and sector stars; CSS/SVG backdrops; locked/current/cleared nodes; Bosco sprite), node card with 3-star checklist and ENTER / ENTER TUNNEL straight into play, walk to the next node and neon warp after bosses; "Map" after a clear returns there. Checked at 740x360 and 1279x560. 234 tests pass.
 - 2026-10-21: vest bubble, speed trail, new icons (part 2): pulsing pale-cyan bubble (a little brighter per armor point up to 3); yellow 8-segment trail behind a moving hero with boots (longer per level, off when still or at reduced quality, `src/view/speed_trail.ts`); new coloured SVG icons in HUD and intro cards with pips in each power-up's colour; tests for trail, bubble and icon colours; 221 tests pass. Not seen on screen (headless check hit the story crawl).
 - 2026-10-21: power-up pick-up look (part 1): five low-poly items in the new colours inside a glass shell, floor aura, 30 deg/s spin and slow bob, shared 120-dot particle pool for idle sparkles and spawn/collect bursts; aura and idle dots off after `AdaptiveQuality` steps down (`reduced`); new `src/view/items_view.ts`, `item_look.ts`, `particles.ts` with tests; seen in a headless browser at 740x360 with no errors (items are small at that size); 217 tests pass.
 - 2026-10-21: invite link + reconnect screen: Invite button beside the room code (share sheet, else copies `?room=CODE`, shows "Link copied"); opening `?room=CODE` goes to Multiplayer with the code filled in and the name focused (joins only on Join, then `room` is removed from the URL); full-screen "Reconnecting to room CODE…" overlay shows/hides with `onReconnecting`, and hides on exit; parsing in `src/flow/invite.ts` with tests; 212 tests pass. Not tried on a phone or with a real dropped connection.

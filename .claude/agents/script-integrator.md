@@ -12,6 +12,7 @@ Where text lives:
 - Level briefings, Bosco replies, sector names, ending screen: src/flow/story.ts (CONTEXT, REPLIES, SECTORS, ENDING)
 - Enemy cards: src/flow/alien_cards.ts. Power-up cards: src/flow/powerup_cards.ts
 - Tutorial prompts and tips: src/flow/tutorial_script.ts (BEATS, TIPS, BATTLE_TIPS)
+- Kit's radio toasts and all interface wording (HUD, buttons, alerts): src/config/locales.json (English under "en"; toast keys start with radio.). Change values only, never keys.
 
 Rules:
 1. Edit only string values in the files above. Do not touch src/sim/, src/net/, server/ or any logic.
