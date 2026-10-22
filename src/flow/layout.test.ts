@@ -3,7 +3,7 @@ import html from '../../index.html?raw';
 import css from '../style.css?raw';
 
 // Layout rules checked on the markup and styles: the HUD's corner groups,
-// icon + text menu items.
+// icon + text menu items, the level card box.
 
 const rule = (src: string, sel: string) => src.match(new RegExp(`(?:^|\n)${sel.replace(/[.#()]/g, '\\$&')} \\{([^}]*)\\}`))?.[1] ?? '';
 /** The markup of the element with this id, up to its matching closing tag. */
@@ -62,5 +62,14 @@ describe('menu items', () => {
 
   it('every icon the page uses is in the sprite', () => {
     for (const [, name] of html.matchAll(/href="#(i-[\w-]+)"/g)) expect(html).toContain(`<symbol id="${name}"`);
+  });
+});
+
+describe('level card', () => {
+  it('holds every part in one box with a launch icon button', () => {
+    const card = block('level-card');
+    expect(card.match(/class="card-box"/g)).toHaveLength(1);
+    for (const id of ['card-level', 'card-sector', 'card-goal-text', 'card-briefing', 'card-launch', 'card-hint']) expect(card).toContain(`id="${id}"`);
+    expect(block('card-launch')).toContain('href="#i-rocket"');
   });
 });

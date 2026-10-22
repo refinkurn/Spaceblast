@@ -31,8 +31,16 @@ describe('story dialogue banner styles', () => {
 });
 
 describe('level card and end-of-match card styles', () => {
-  it('stacks the level card into one column (it used to spread across the screen in a row)', () => {
-    expect(rule('#level-card')).toContain('flex-direction: column');
+  it('draws the level card as one centred box (its parts used to be separate strips that broke into rows)', () => {
+    const backdrop = rule('#level-card');
+    expect(backdrop).toContain('position: fixed');
+    expect(backdrop).toContain('align-items: center');
+    expect(backdrop).toContain('justify-content: center');
+    const box = rule('.card-box');
+    expect(box).toContain('flex-direction: column');
+    expect(box).toContain('border-radius: 14px');
+    // No part of the card paints its own slab any more.
+    expect(css).not.toMatch(/#level-card \.card-\w+ \{[^}]*background/);
   });
 
   it('keeps the end-of-match buttons on screen: stats scroll inside the card, long values get a full row', () => {
