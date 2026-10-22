@@ -1,0 +1,43 @@
+# Fly.io deploy for the Spaceblast room server: online rooms (/room/CODE) and
+# the leaderboard (/api/scores) in Singapore. The game page stays on Cloudflare.
+# Exactly one machine: rooms live in its memory, so deploy with
+# `npm run deploy:fly` (fly deploy --ha=false). See ONLINE.md.
+
+app = "spaceblast-server"
+primary_region = "sin"
+kill_signal = "SIGTERM"
+kill_timeout = 10
+
+[build]
+
+[env]
+  PORT = "8080"
+  DB_PATH = "/data/leaderboard.db"
+
+# The leaderboard's SQLite file (fly volumes create spaceblast_data --region sin --size 1).
+[mounts]
+  source = "spaceblast_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 800
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/healthz"
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

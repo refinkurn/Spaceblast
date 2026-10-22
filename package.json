@@ -6,14 +6,17 @@
   "scripts": {
     "dev": "vite --host",
     "build": "npm run typecheck && vite build",
+    "build:server": "vite build --ssr server/fly.ts --outDir dist-server",
     "preview": "vite preview --host",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.worker.json",
     "deploy": "npm run build && wrangler deploy",
-    "online": "npm run build && wrangler dev"
+    "online": "npm run build && wrangler dev",
+    "deploy:fly": "fly deploy --ha=false"
   },
   "dependencies": {
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261016.1",
@@ -23,7 +26,6 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.5",
-    "wrangler": "^4.151.1",
-    "ws": "^8.18.3"
+    "wrangler": "^4.151.1"
   }
 }
