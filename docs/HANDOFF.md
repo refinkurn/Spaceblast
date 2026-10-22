@@ -19,12 +19,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
-- **Low-poly astronaut figure + limb swing** (new src/view/astronaut_mesh.ts, hero_view.ts, hero_anim.ts)
-  Now: placeholder astronaut is three spheres; juice (breathe, lean, squash, hurt) already runs on it.
-  Want: low-poly figure (torso, backpack, arms, legs, helmet; corgi head for Bosco, duck head + violet suit for Ducking) and a 4-phase leg/arm run cycle, arm poses for charge drop, hurt and celebrate.
-  Done when: run cycle reads on a phone, 4 players hold 60 fps, existing effects still work; tests cover limb angles.
-  Spec: docs/design/character-animation.md
-
 ## In progress
 
 ## Blocked
@@ -38,6 +32,7 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Done
 
+- 2026-10-22: low-poly astronaut figure + limb swing (src/view/astronaut_mesh.ts, hero_view.ts, hero_anim.ts): torso, backpack with cyan light, arms and legs on pivots, glass helmet around a corgi head (Bosco, online players, bots) or a duck head with a dark violet suit (Ducking, level 20 rival); shared geometry, ~19 meshes, ~0.9 tile tall; run cycle follows real speed (legs +-35, arms +-25 opposite, 80 ms blend), arms forward on a charge drop, up when hurt or celebrating; backpack light off at reduced quality. View only. 373 tests pass. Not seen on a phone or with 4 players online.
 - 2026-10-23: astronaut juice (src/view/hero_anim.ts): idle breathing, run lean, 120 ms charge squash, 200 ms hurt shake + white flash. View only. 363 tests pass.
 - 2026-10-23: power-ups bigger on the grid (x1.6, item fills its shell); Speed Boost is a tilted hoverboard with a bolt and boost flame; Oxygen Vest is a shield on the grid; HUD avatar crop centred on Bosco's face; Story game over and the ending go back to the map instead of the main menu. 359 tests pass.
 - 2026-10-22: Story pacing (Refindo, direct): one new species + one new scenario per sector (S1 Goopling; S2 Sniffer + Blackout; S3 Phaser + Maze Shift, gate drifts from 3-4; S4 Builder + Hunt), matched to each boss. Briefings, sector stories, scene lines and the Sniffer tip moved to fit; the 9 QA script fixes applied; sector 3 art keeps crystals, runes became colony drill rigs; sector ids match the story names. docs/design/level-progression.md, docs/story/canon.md.

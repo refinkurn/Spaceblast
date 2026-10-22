@@ -1,12 +1,13 @@
 import * as THREE from 'three';
-import { DIR_DX, DIR_DY, GOD_SHIELD } from '../sim/constants';
+import { DIR_DX, DIR_DY, GOD_SHIELD, TILE } from '../sim/constants';
 import type { Player } from '../sim/state';
 import { toWorld } from './coords';
 import { GLIDE_SECONDS, GLIDE_SECONDS_YOU, SNAP_DISTANCE, glideFactor } from './smooth';
 import { SpeedTrail, bubbleOpacity } from './speed_trail';
 import { HeroAnimator } from './hero_anim';
+import { DUCK_SUIT, FIGURE_SCALE, buildAstronaut, setHead, type AstronautParts, type HeadKind } from './astronaut_mesh';
 
-/** Placeholder astronaut: a suit sphere, a glass helmet and a "nose" for facing. */
+/** One astronaut: the low-poly figure (astronaut_mesh.ts) plus facing, bob, shield blink, vest bubble and effects. */
 export class HeroView {
   readonly group = new THREE.Group();
   private body = new THREE.Group();
@@ -34,25 +35,19 @@ export class HeroView {
   private markerTime = 0;
   /** Seconds into the victory dance, 0 when not celebrating. */
   private cheering = 0;
-  private suitMaterial: THREE.MeshLambertMaterial;
+  private figure: AstronautParts;
+  private head: HeadKind = 'corgi';
+  private baseColor: number;
   /** Breathing, run lean, charge squash, hurt shake + flash (view/hero_anim.ts). */
   readonly anim = new HeroAnimator();
   /** The squash/lean/shake pivot inside the body, so they don't fight the walk bob and facing. */
   private pose = new THREE.Group();
 
   constructor(color = 0x3a7bff) {
-    this.suitMaterial = new THREE.MeshLambertMaterial({ color });
-    const suit = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 16), this.suitMaterial);
-    suit.position.y = 0.34;
-    suit.castShadow = true;
-    const helmet = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 24, 16),
-      new THREE.MeshPhongMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.55, shininess: 90 }),
-    );
-    helmet.position.set(0, 0.7, 0);
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-    nose.position.set(0, 0.42, -0.32);
-    this.pose.add(suit, helmet, nose);
+    this.baseColor = color;
+    this.figure = buildAstronaut(color, 'corgi');
+    this.figure.root.scale.setScalar(FIGURE_SCALE);
+    this.pose.add(this.figure.root);
     this.body.add(this.pose);
     this.body.rotation.order = 'YXZ'; // face first, then lean
     this.bubble.position.y = 0.42;
@@ -64,7 +59,16 @@ export class HeroView {
 
   /** Suit colour (online players pick theirs). */
   setColor(color: number): void {
-    this.suitMaterial.color.setHex(color);
+    this.baseColor = color;
+    this.figure.suit.color.setHex(this.head === 'duck' ? DUCK_SUIT : color);
+  }
+
+  /** Bosco's corgi head (default) or Ducking's duck head and dark violet suit (level 20 rival). */
+  setHead(kind: HeadKind): void {
+    if (kind === this.head) return;
+    this.head = kind;
+    setHead(this.figure.head, kind);
+    this.setColor(this.baseColor);
   }
 
   /** Victory dance for the round-end cinematic: hops and spins. */
@@ -117,11 +121,19 @@ export class HeroView {
 
     const moving = prev.x !== p.x || prev.y !== p.y;
     this.trail.update(dt, this.group.position, this.cheering === 0 && moving && p.boots > 0 && !this.reduced, p.boots);
-    const a = this.anim.step(dt, moving && this.cheering === 0);
+    this.anim.celebrating = this.cheering > 0;
+    const tiles = moving ? (Math.hypot(p.x - prev.x, p.y - prev.y) / TILE) * 60 : 0;
+    const a = this.anim.step(dt, moving && this.cheering === 0, tiles);
     this.pose.scale.set(a.scaleXZ, a.scaleY, a.scaleXZ);
     this.pose.rotation.x = -a.lean + a.tilt; // the nose is at -z: forward is -z
     this.pose.position.set(a.shake, a.rise, 0);
-    this.suitMaterial.emissive.setScalar(a.flash * 0.8);
+    this.figure.suit.emissive.setScalar(a.flash * 0.8);
+    this.figure.packLight.visible = !this.reduced;
+    const f = this.figure;
+    f.legL.rotation.x = a.legL;
+    f.legR.rotation.x = a.legR;
+    f.armL.rotation.x = a.armL;
+    f.armR.rotation.x = a.armR;
     if (this.cheering > 0) {
       this.cheering += dt;
       this.body.position.y = Math.abs(Math.sin(this.cheering * 6)) * 0.45;

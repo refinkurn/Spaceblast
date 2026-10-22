@@ -100,6 +100,7 @@ export class GameView {
     this.martians.clear();
     this.heroes.forEach((h, i) => {
       h.group.visible = i < state.players.length;
+      h.setHead(state.rival && i === 1 ? 'duck' : 'corgi');
       h.setColor(colors[i] ?? 0xffffff);
       h.setYou(i === local);
       h.celebrate(false);
