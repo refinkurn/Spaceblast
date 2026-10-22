@@ -45,22 +45,27 @@ html, body {
    (installed app, no Fullscreen API) Sound and Pause slid to the left edge, over the avatar and hearts. */
 /* Top-left stats panel ("dashboard"): avatar + hearts, one row per power-up, then the goal, divided by hairlines. */
 .hud-left {
+  /* Panel scale: 1 on tight phones, up to 1.3 where the board leaves room (main.ts sets --hud-scale). */
+  --hs: var(--hud-scale, 1);
   position: absolute;
-  top: max(4px, env(safe-area-inset-top));
-  left: var(--edge-left);
+  /* Inset from the corner, a little more on big screens, instead of on the edge. */
+  top: max(8px, env(safe-area-inset-top), 1.6vh);
+  left: max(var(--edge-left), 2.2vw);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-width: calc(var(--gutter) - 8px);
-  padding: 6px 9px 7px 6px;
-  background: #0b0d12b8;
-  border: 1px solid #ffffff1f;
-  border-radius: 12px;
+  gap: calc(7px * var(--hs));
+  /* As wide as the space beside the board allows (--hud-room, from main.ts), never less than the gutter. */
+  max-width: max(calc(var(--gutter) - 8px), var(--hud-room, 0px));
+  padding: calc(7px * var(--hs)) calc(10px * var(--hs)) calc(8px * var(--hs)) calc(7px * var(--hs));
+  background: #0b0d12c4;
+  border: 1px solid #ffffff24;
+  border-radius: calc(12px * var(--hs));
   box-shadow: 0 4px 14px #0006;
 }
+
 .hud-right { position: absolute; top: max(4px, env(safe-area-inset-top)); right: var(--edge-right); display: flex; gap: 8px; }
-.hud-who { display: flex; align-items: center; gap: 7px; }
-.hud-avatar { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 15px; color: #fff; background: #3a7bff; border: 2px solid #ffffffcc; }
+.hud-who { display: flex; align-items: center; gap: calc(8px * var(--hs)); }
+.hud-avatar { flex: none; width: calc(30px * var(--hs)); height: calc(30px * var(--hs)); border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: calc(15px * var(--hs)); color: #fff; background: #3a7bff; border: 2px solid #ffffffcc; }
 .hud-mid { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .hud-clock { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000a; }
 .hud-clock[hidden] { display: none; }
@@ -71,8 +76,8 @@ html, body {
 
 /* HUD: hearts and oxygen, stage chip, objective, power-up pips. */
 /* Three columns: hearts fill the first row, Oxygen Vest armor (up to 3) the second, never a ragged wrap. */
-.hud-health { display: grid; grid-template-columns: repeat(3, 16px); gap: 3px; align-items: center; }
-.hud-health .icon { width: 16px; height: 16px; }
+.hud-health { display: grid; grid-template-columns: repeat(3, calc(16px * var(--hs))); gap: calc(3px * var(--hs)); align-items: center; }
+.hud-health .icon { width: calc(16px * var(--hs)); height: calc(16px * var(--hs)); }
 .icon { width: 18px; height: 18px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 0; }
 .icon.heart { color: #ff4f6d; }
 .lost .icon.heart { color: #ffffff2a; }
@@ -90,15 +95,15 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .hud-chip.boss { background: #ff4f6d26; border-color: #ff4f6d; color: #ffd0d8; }
-.hud-goal { padding-top: 5px; border-top: 1px solid #ffffff14; color: var(--ink-quiet); font-size: 11px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
+.hud-goal { padding-top: calc(5px * var(--hs)); border-top: 1px solid #ffffff14; color: var(--ink-quiet); font-size: calc(11px * var(--hs)); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
 .hud-goal:empty { display: none; }
 /* One power-up per row (it used to wrap two to a line): icon column, then its pips. */
-.hud-powers { display: flex; flex-direction: column; gap: 5px; padding-top: 6px; border-top: 1px solid #ffffff14; }
-.power { display: flex; gap: 7px; align-items: center; min-height: 16px; color: var(--accent); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.power .icon { flex: none; width: 16px; height: 16px; }
+.hud-powers { display: flex; flex-direction: column; gap: calc(6px * var(--hs)); padding-top: calc(7px * var(--hs)); border-top: 1px solid #ffffff14; }
+.power { display: flex; gap: calc(8px * var(--hs)); align-items: center; min-height: calc(16px * var(--hs)); color: var(--accent); font-size: calc(12px * var(--hs)); font-weight: 700; font-variant-numeric: tabular-nums; }
+.power .icon { flex: none; width: calc(16px * var(--hs)); height: calc(16px * var(--hs)); }
 .power.freeze { color: #b9a4ff; }
-.pips { display: flex; gap: 3px; }
-.pips i { width: 7px; height: 9px; border-radius: 2px; background: #ffffff22; }
+.pips { display: flex; gap: calc(3px * var(--hs)); }
+.pips i { width: calc(7px * var(--hs)); height: calc(9px * var(--hs)); border-radius: 2px; background: #ffffff22; }
 .pips i.on { background: var(--accent); }
 #menu-btn {
   pointer-events: auto;
@@ -510,12 +515,8 @@ body.scene .net-stats { visibility: hidden; }
   background: #14161df2;
 }
 #online[hidden], #online [hidden] { display: none !important; }
-/* The lobby lives in the left panel, the same width as the menu column. */
-#online {
-  justify-content: flex-start;
-  padding-left: max(28px, env(safe-area-inset-left));
-}
-.online-card { width: min(420px, 46vw); min-width: 260px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; padding-top: 52px; }
+/* Centred on screen: the name / code step is one narrow column, the lobby two columns side by side when they fit. */
+.online-card { width: min(640px, 100%); min-width: 260px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; padding-top: 52px; }
 #online-choose { display: flex; flex-direction: column; gap: 12px; align-items: center; width: min(420px, 100%); }
 #online-lobby { display: flex; gap: 24px; width: 100%; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
 .lobby-col { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 260px; flex: 1 1 260px; }
@@ -1091,3 +1092,45 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 /* Screen-change micro-fade (flow/transition.ts): above everything, takes taps only while dark. */
 #fade { position: fixed; inset: 0; z-index: 100; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.1s linear; }
 #fade.on { opacity: 1; pointer-events: auto; }
+
+/* Dashboard buttons: one look for every menu and submenu control (and the in-game corner buttons).
+   Black square panels with a thin edge, like a spaceship console; the screen's main action is "lit"
+   (accent edge, text and a soft inner glow) instead of a solid fill. Proceed buttons carry #i-play,
+   back buttons #i-back (index.html sprite). */
+:root {
+  --dash-bg: #06080cf0;
+  --dash-bg-hover: #0c1a24f2;
+  --dash-edge: #ffffff2e;
+  --dash-radius: 6px;
+  --dash-lit: inset 0 0 0 1px var(--accent), inset 0 0 14px #5ad1ff33;
+}
+.menu-list button:not(.nav-back), .nav-back, .quiet-btn, #settings .segmented button, .sound-btn, #menu-btn,
+#online button:not(.nav-back), .pause-list button, #banner button, #banner button.quiet, #congrats button, #hub-board,
+.map-card-actions button, .lb-pick button, .lb-form button, #ending-btn, #install-ok, .intro-skip, #crawl-skip, #cut-skip, .icon-go {
+  color: var(--ink);
+  background: var(--dash-bg);
+  border: 1px solid var(--dash-edge);
+  border-radius: var(--dash-radius);
+  box-shadow: inset 0 1px 0 #ffffff12;
+}
+.menu-list button:not(.nav-back):hover, .menu-list button:not(.nav-back):focus-visible, .nav-back:hover, .nav-back:focus-visible,
+.quiet-btn:hover, .quiet-btn:focus-visible, #settings .segmented button:hover, .sound-btn:hover, #menu-btn:hover,
+#online button:not(.nav-back):not(:disabled):hover, .pause-list button:hover, .pause-list button:focus-visible, #banner button:hover,
+#congrats button:hover, #hub-board:hover, .map-card-actions button:hover, .lb-pick button:not(:disabled):hover, .lb-form button:hover,
+#ending-btn:hover, #install-ok:hover, .intro-skip:hover, #crawl-skip:hover, #cut-skip:hover {
+  outline: none;
+  background: var(--dash-bg-hover);
+  border-color: var(--accent);
+}
+/* Lit: the main action, and the chosen option of a row. */
+#online button.primary, .pause-list #pause-resume, .pause-list #pause-keep, #banner #banner-btn, #congrats button.primary,
+#map-card-enter, #ending-btn, #install-ok, .icon-go, .menu-list button[aria-current="true"],
+#settings .segmented button[aria-pressed="true"], #online .segmented button[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--dash-bg);
+  border-color: var(--accent);
+  box-shadow: var(--dash-lit);
+}
+.icon-go:hover, .icon-go:focus-visible { outline: none; background: var(--dash-bg-hover); box-shadow: var(--dash-lit), 0 0 0 3px #5ad1ff44; }
+/* Not panels: the colour swatches stay round (their colour is inline). */
+#online .swatches button { border-radius: 50%; border: 2px solid transparent; box-shadow: none; }

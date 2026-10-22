@@ -20,7 +20,6 @@
     <svg class="icon-sprite" aria-hidden="true">
       <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 12H5M11 5l-7 7 7 7"/></symbol>
       <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></symbol>
-      <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 2.5c3.2 2.4 4.6 6 4.2 10.5l-2 3h-4.4l-2-3C7.4 8.5 8.8 4.9 12 2.5z"/><circle cx="12" cy="9" r="1.8"/><path d="M7.9 12.4L5 15v3.5l3.6-2M16.1 12.4L19 15v3.5l-3.6-2M10.5 19.5l1.5 2.5 1.5-2.5"/></symbol>
       <symbol id="i-story" viewBox="0 0 24 24"><path d="M3 5.5c2.7-1.5 5.7-1.5 9 .5 3.3-2 6.3-2 9-.5V19c-2.7-1.5-5.7-1.5-9 .5-3.3-2-6.3-2-9-.5zM12 6v13.5"/></symbol>
       <symbol id="i-versus" viewBox="0 0 24 24"><path d="M4 4l11 11M12.5 17.5l5-5M16 16l4 4M20 4L9 15M6.5 12.5l5 5M8 16l-4 4"/></symbol>
       <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
@@ -62,16 +61,16 @@
       <div class="pause-box" role="dialog" aria-labelledby="pause-title">
         <div id="pause-main" class="pause-list">
           <h2 id="pause-title" data-i18n="html.pause-title">PAUSED</h2>
-          <button id="pause-resume" type="button" data-i18n="html.pause-resume">Resume</button>
+          <button id="pause-resume" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.pause-resume">Resume</span></button>
           <button id="pause-restart" type="button" data-i18n="html.pause-restart">Restart level</button>
           <button id="pause-settings" type="button" data-i18n="html.pause-settings">Settings</button>
-          <button id="pause-quit" type="button" data-i18n="html.pause-quit">Quit to menu</button>
+          <button id="pause-quit" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg><span data-i18n="html.pause-quit">Quit to menu</span></button>
         </div>
         <div id="pause-confirm" class="pause-list" hidden>
           <h2>Quit?</h2>
           <p>Progress on this level is lost.</p>
-          <button id="pause-quit-yes" type="button" data-i18n="html.pause-quit-yes">Quit</button>
-          <button id="pause-keep" type="button" data-i18n="html.pause-keep">Keep playing</button>
+          <button id="pause-quit-yes" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg><span data-i18n="html.pause-quit-yes">Quit</span></button>
+          <button id="pause-keep" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.pause-keep">Keep playing</span></button>
         </div>
       </div>
     </div>
@@ -110,7 +109,7 @@
         <div id="banner-tip" class="banner-tip" hidden></div>
         <div class="actions">
           <button id="banner-btn" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span class="go-label"></span></button>
-          <button id="banner-menu" class="quiet" type="button" data-i18n="html.banner-menu">Main menu</button>
+          <button id="banner-menu" class="quiet go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg><span data-i18n="html.banner-menu">Main menu</span></button>
         </div>
       </div>
     </div>
@@ -129,7 +128,7 @@
         <div id="card-sector" class="card-sector"></div>
         <div class="card-goal"><span id="card-goal-icon" class="card-goal-icon" aria-hidden="true"></span><span id="card-goal-text"></span></div>
         <div id="card-briefing" class="card-briefing"></div>
-        <button id="card-launch" class="icon-go" type="button" data-i18n-aria="aria.start-level" data-i18n-title="aria.start-level"><svg class="ui-icon" aria-hidden="true"><use href="#i-rocket"/></svg></button>
+        <button id="card-launch" class="icon-go" type="button" data-i18n-aria="aria.start-level" data-i18n-title="aria.start-level"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg></button>
         <div id="card-hint" class="card-hint"></div>
       </div>
     </div>
@@ -141,7 +140,7 @@
         <p id="intro-speaker" class="intro-speaker"></p>
         <p class="intro-tip"><strong id="intro-label"></strong> <span id="intro-hint"></span></p>
         <p id="intro-tap" class="intro-tap"></p>
-        <button id="intro-skip" class="intro-skip" type="button" hidden data-i18n="html.intro-skip">Skip</button>
+        <button id="intro-skip" class="intro-skip go-btn" type="button" hidden><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.intro-skip">Skip</span></button>
       </div>
     </div>
     <div id="menu">
@@ -250,11 +249,11 @@
           <label class="online-name">Your name
             <input id="online-name" maxlength="12" autocomplete="nickname" spellcheck="false" placeholder="Astronaut" />
           </label>
-          <button id="online-rejoin" type="button" class="primary" hidden data-i18n="html.online-rejoin">Rejoin</button>
-          <button id="online-create" type="button" class="primary" data-i18n="html.online-create">Create room</button>
+          <button id="online-rejoin" type="button" class="primary go-btn" hidden><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-rejoin">Rejoin</span></button>
+          <button id="online-create" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-create">Create room</span></button>
           <div class="online-join">
             <input id="online-code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Room code" />
-            <button id="online-join" type="button" data-i18n="html.online-join">Join</button>
+            <button id="online-join" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-join">Join</span></button>
           </div>
         </div>
         <div id="online-lobby" hidden>
@@ -296,7 +295,7 @@
                 </div>
               </div>
             </div>
-            <button id="online-start" type="button" class="primary" data-i18n="html.online-start">Start match</button>
+            <button id="online-start" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-start">Start match</span></button>
           </div>
         </div>
         <div id="online-status" class="online-status"></div>
@@ -311,13 +310,13 @@
     </div>
     <div id="crawl" hidden>
       <div class="crawl-stage"><div id="crawl-text" class="crawl-text"></div></div>
-      <button id="crawl-skip" type="button" data-i18n="html.crawl-skip">Skip ›</button>
+      <button id="crawl-skip" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.crawl-skip">Skip</span></button>
     </div>
     <div id="cutscene" hidden>
       <div class="cut-bg"></div>
       <canvas id="cut-sprite" class="cut-sprite" aria-hidden="true"></canvas>
       <div id="cut-reveal" class="cut-reveal" hidden></div>
-      <button id="cut-skip" type="button" data-i18n="html.cut-skip">Skip ›</button>
+      <button id="cut-skip" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.cut-skip">Skip</span></button>
       <div class="cut-box">
         <canvas id="cut-portrait" class="cut-portrait" aria-hidden="true"></canvas>
         <div class="cut-lines">
@@ -386,7 +385,7 @@
         <h2>The Biscuit is going home.</h2>
         <ul id="ending-stats"></ul>
         <p id="ending-text"></p>
-        <button id="ending-btn" type="button" class="primary" data-i18n="html.ending-btn">Back to menu</button>
+        <button id="ending-btn" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg><span data-i18n="html.ending-btn">Back to menu</span></button>
       </div>
     </div>
     <div id="install" hidden>

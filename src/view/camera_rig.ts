@@ -49,6 +49,11 @@ export class CameraRig {
   private zoomGoal = 1;
   private focused = false;
 
+  /** The board's screen rectangle (CSS px, outer wall included) after the last fit. */
+  board = { left: 0, right: 0, top: 0, bottom: 0 };
+  /** The board's left outline on screen (CSS px): far corner (top) and near corner (bottom), outer wall included. */
+  leftEdge = { topX: 0, topY: 0, bottomX: 0, bottomY: 0 };
+
   /** Free area in CSS pixels: the camera keeps the board inside it. */
   fit(viewW: number, viewH: number, left: number, right: number, top: number, bottom: number): void {
     const cam = this.camera;
@@ -108,6 +113,33 @@ export class CameraRig {
       aim = aim.clone().add(new THREE.Vector3(-offX * unitsPerNdcX, 0, offY * unitsPerNdcY));
     }
     place(dist);
+    // Where the whole board, outer wall included, lands on screen (CSS px): the HUD keeps clear of it.
+    const wallW = GRID_W / 2 + 1, wallD = GRID_H / 2 + 1;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [0, 1]) {
+      p.set(sx * wallW, y, sz * wallD).project(cam);
+      x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x);
+      y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+    }
+    this.board = {
+      left: ((x0 + 1) / 2) * viewW,
+      right: ((x1 + 1) / 2) * viewW,
+      top: ((1 - y1) / 2) * viewH,
+      bottom: ((1 - y0) / 2) * viewH,
+    };
+    // In perspective the board is a trapezoid: its left outline runs from the far corner (high on
+    // screen, further right) to the near corner (low, further left). The HUD panel sits up high.
+    const corner = (sz: number) => {
+      let x = Infinity, y = sz < 0 ? Infinity : -Infinity;
+      for (const h of [0, 1]) {
+        p.set(-wallW, h, sz * wallD).project(cam);
+        x = Math.min(x, p.x);
+        y = sz < 0 ? Math.min(y, -p.y) : Math.max(y, -p.y);
+      }
+      return { x: ((x + 1) / 2) * viewW, y: ((y + 1) / 2) * viewH };
+    };
+    const far = corner(-1), near = corner(1);
+    this.leftEdge = { topX: far.x, topY: far.y, bottomX: near.x, bottomY: near.y };
     this.base.copy(cam.position);
     this.aim.copy(aim);
     this.dist = dist;

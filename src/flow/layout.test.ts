@@ -41,8 +41,9 @@ describe('HUD corners', () => {
 
   it('keeps the power-ups in the top-left column, inside the left gutter', () => {
     const left = rule(css, '.hud-left');
-    expect(left).toContain('left: var(--edge-left)');
-    expect(left).toContain('max-width: calc(var(--gutter) - 8px)');
+    // Inset from the corner, never narrower than the gutter, wider where the board leaves room.
+    expect(left).toContain('left: max(var(--edge-left), 2.2vw)');
+    expect(left).toContain('max-width: max(calc(var(--gutter) - 8px), var(--hud-room, 0px))');
     expect(html.match(/<div class="hud-left">[\s\S]*?id="hud-goal"/)![0]).toContain('id="hud-powers"');
   });
 
@@ -108,11 +109,11 @@ describe('menu items', () => {
 });
 
 describe('level card', () => {
-  it('holds every part in one box with a launch icon button', () => {
+  it('holds every part in one box with the proceed icon button', () => {
     const card = block('level-card');
     expect(card.match(/class="card-box"/g)).toHaveLength(1);
     for (const id of ['card-level', 'card-sector', 'card-goal-text', 'card-briefing', 'card-launch', 'card-hint']) expect(card).toContain(`id="${id}"`);
-    expect(block('card-launch')).toContain('href="#i-rocket"');
+    expect(block('card-launch')).toContain('href="#i-play"');
   });
 });
 
@@ -126,7 +127,51 @@ describe('pause card', () => {
 describe('stats panel', () => {
   it('stacks one power-up per row and keeps hearts on a 3-column grid', () => {
     expect(rule(css, '.hud-powers')).toContain('flex-direction: column');
-    expect(rule(css, '.hud-health')).toContain('grid-template-columns: repeat(3, 16px)');
-    expect(rule(css, '.hud-left')).toContain('border-radius: 12px');
+    expect(rule(css, '.hud-health')).toContain('grid-template-columns: repeat(3, calc(16px * var(--hs)))');
+    // Every size in the panel follows the one scale.
+    for (const sel of ['.hud-avatar', '.power .icon', '.pips i']) expect(rule(css, sel)).toContain('var(--hs)');
+    expect(rule(css, '.hud-left')).toContain('border-radius: calc(12px * var(--hs))');
+  });
+});
+
+describe('proceed and back icons', () => {
+  const PROCEED = ['story-btn', 'card-launch', 'banner-btn', 'map-card-enter', 'pause-resume', 'pause-keep', 'online-rejoin', 'online-create', 'online-join', 'online-start', 'crawl-skip', 'cut-skip', 'intro-skip'];
+  const BACK = ['banner-menu', 'pause-quit', 'pause-quit-yes', 'ending-btn', 'settings-done', 'online-back', 'hub-back', 'map-card-back', 'lb-back'];
+
+  it('every proceed button uses #i-play and every back button #i-back, nothing else', () => {
+    for (const id of PROCEED) {
+      const b = block(id);
+      expect(b, id).toContain('href="#i-play"');
+      expect(b, id).not.toContain('href="#i-back"');
+    }
+    for (const id of BACK) {
+      const b = block(id);
+      expect(b, id).toContain('href="#i-back"');
+      expect(b, id).not.toContain('href="#i-play"');
+    }
+    expect(html).not.toContain('i-rocket');
+  });
+
+  it('keeps labels in a <span data-i18n> so the startup translation pass keeps the icon', () => {
+    for (const id of [...PROCEED, ...BACK]) expect(block(id).match(/^<button[^>]*>/)![0], id).not.toMatch(/ data-i18n="/);
+  });
+});
+
+describe('dashboard buttons', () => {
+  it('menu, submenu and pause buttons share one black square panel; the main action is lit, not filled', () => {
+    const dash = css.slice(css.indexOf('/* Dashboard buttons'));
+    for (const sel of ['.menu-list button:not(.nav-back)', '.nav-back', '.quiet-btn', '#online button:not(.nav-back)', '.pause-list button', '.icon-go']) expect(dash).toContain(sel);
+    expect(dash).toContain('background: var(--dash-bg)');
+    expect(dash).toContain('border-radius: var(--dash-radius)');
+    expect(css).toMatch(/--dash-bg: #0[0-9a-f]{5}/);
+    expect(dash).toContain('box-shadow: var(--dash-lit)');
+  });
+});
+
+describe('online screen', () => {
+  it('is centred, not pinned to a left panel', () => {
+    expect(css).not.toContain('justify-content: flex-start;\n  padding-left: max(28px');
+    expect(rule(css, '#online')).toContain('justify-content: center');
+    expect(css).toMatch(/\.online-card \{ width: min\(640px, 100%\)/);
   });
 });

@@ -162,7 +162,7 @@ export class OnlineRoom {
     const seat = savedSeat();
     const rejoin = $('online-rejoin');
     rejoin.hidden = !seat;
-    if (seat) rejoin.textContent = t('online.rejoinRoom', { code: seat.code });
+    if (seat) rejoin.querySelector('span')!.textContent = t('online.rejoinRoom', { code: seat.code });
   }
 
   /** An invite link was opened: fill in the code and focus the name. Joins only on Join. */

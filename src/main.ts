@@ -4,7 +4,7 @@ import { Cutscene } from './flow/cutscene';
 import { Congrats, type Standing } from './flow/congrats';
 import { DevPanel } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
-import { Hud } from './flow/hud';
+import { boardLeftAt, Hud, HUD_MAX_SCALE, HUD_PANEL_H, hudScale } from './flow/hud';
 import { haptics } from './flow/haptics';
 import { parseRoomParam } from './flow/invite';
 import { Countdown } from './flow/countdown';
@@ -528,6 +528,8 @@ function beginStoryPlay() {
 }
 
 /** The notch / home-bar insets (env(safe-area-inset-*)), read off a hidden probe. */
+/** The HUD's top-left stats panel, sized in layout() from the room beside the board. */
+const hudPanel = document.querySelector('.hud-left') as HTMLElement;
 const safeProbe = document.createElement('div');
 safeProbe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
 document.body.append(safeProbe);
@@ -556,6 +558,12 @@ function layout(remeasure = false) {
   document.documentElement.style.setProperty('--gutter', `${gutter}px`);
   document.documentElement.style.setProperty('--hud', `${hudHeight}px`);
   view.layout(w, h, gutter + insets.left, gutter + insets.right, hudHeight + insets.top);
+  // Stats panel: as big (up to 1.3x) and wide as the space between its left edge and the board allows,
+  // measured where the board's slanted left edge is at the bottom of a full-size panel.
+  const panelBottom = hudPanel.offsetTop + HUD_PANEL_H * HUD_MAX_SCALE;
+  const room = Math.round(boardLeftAt(view.rig.leftEdge, panelBottom) - hudPanel.offsetLeft - 10);
+  document.documentElement.style.setProperty('--hud-scale', String(hudScale(room)));
+  document.documentElement.style.setProperty('--hud-room', `${Math.max(0, room)}px`);
 }
 const relayout = () => layout(true);
 window.addEventListener('resize', relayout);

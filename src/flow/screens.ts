@@ -113,7 +113,7 @@ export class Screens {
 
   /** The end-of-match card: big title, Bosco's pose, a summary and two buttons. `menuLabel` renames the second one (it always goes to the menu). */
   showBanner(title: string, text: string, button: string, onClick: () => void, menuLabel = t('banner.mainMenu'), tip = '', extra: BannerExtra = {}): void {
-    $('banner-menu').textContent = menuLabel;
+    $('banner-menu').querySelector('span')!.textContent = menuLabel;
     this.menuOverride = extra.onMenu ?? null;
     $('banner-tip').textContent = tip ? `Tip: ${tip}` : '';
     $('banner-tip').hidden = !tip;

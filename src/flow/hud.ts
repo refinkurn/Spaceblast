@@ -24,6 +24,27 @@ export const POWER_ICONS: Record<string, string> = {
   freeze: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7" stroke="#b9a4ff" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="2.4" fill="#ffffff" stroke="none"/></svg>',
 };
 
+/** Stats panel width at scale 1 (avatar, three hearts, padding), CSS px. */
+export const HUD_PANEL_W = 110;
+/** Largest panel scale: 30% bigger than the base size. */
+export const HUD_MAX_SCALE = 1.3;
+
+/** Stats panel height at scale 1 with everything shown (avatar row, three power-ups, goal), CSS px. */
+export const HUD_PANEL_H = 150;
+
+/** Where the board's left outline is at screen height `y` (CSS px), from its far (top) and near (bottom) corners. */
+export function boardLeftAt(edge: { topX: number; topY: number; bottomX: number; bottomY: number }, y: number): number {
+  const span = edge.bottomY - edge.topY;
+  if (span <= 0) return Math.min(edge.topX, edge.bottomX);
+  const t = Math.min(1, Math.max(0, (y - edge.topY) / span));
+  return edge.topX + (edge.bottomX - edge.topX) * t;
+}
+
+/** Panel scale for `room` px of free width between the panel's left edge and the board: 1 to 1.3. */
+export function hudScale(room: number): number {
+  return Math.round(Math.min(HUD_MAX_SCALE, Math.max(1, room / HUD_PANEL_W)) * 100) / 100;
+}
+
 function pips(label: string, key: string, value: number, max: number): string {
   const dots = Array.from({ length: max }, (_, i) => `<i class="${i < value ? 'on' : ''}"></i>`).join('');
   return `<span class="power ${key}" title="${label} ${value}/${max}" aria-label="${label} ${value} of ${max}">${POWER_ICONS[key]}<span class="pips">${dots}</span></span>`;

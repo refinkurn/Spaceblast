@@ -55,8 +55,10 @@ export class Congrats {
     for (const b of buttons) {
       const el = document.createElement('button');
       el.type = 'button';
-      el.textContent = b.label;
-      el.className = b.primary ? 'primary' : 'quiet';
+      // The game's one proceed icon on the main button (Play again, Back to room), the back icon on the other.
+      el.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="#${b.primary ? 'i-play' : 'i-back'}"/></svg><span></span>`;
+      el.querySelector('span')!.textContent = b.label;
+      el.className = `${b.primary ? 'primary' : 'quiet'} go-btn`;
       el.addEventListener('click', () => b.onClick());
       actions.append(el);
     }
