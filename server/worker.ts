@@ -62,15 +62,15 @@ export class RoomObject implements DurableObject {
     const peer: Peer = { send: (d) => server.send(d), close: (c, r) => server.close(c, r) };
     const slot = this.room.connect(peer, requestFromUrl(new URL(request.url)));
     if (slot !== null) {
-      server.addEventListener('message', (e) => {
-        this.room.message(slot, typeof e.data === 'string' ? e.data : '');
+      // A bug in one handler must never break the room for everyone: log it and carry on.
+      const guard = (what: string, fn: () => void) => {
+        try { fn(); } catch (e) { console.error(`room ${what}:`, e); }
         this.clock();
-      });
-      server.addEventListener('close', (e) => {
-        this.room.closed(slot, peer, e.code);
-        this.clock();
-      });
-      server.addEventListener('error', () => this.room.closed(slot, peer, 1006));
+      };
+      server.addEventListener('message', (e) => guard('message', () => this.room.message(slot, typeof e.data === 'string' ? e.data : '')));
+      server.addEventListener('close', (e) => guard('close', () => this.room.closed(slot, peer, e.code)));
+      // Counted as a drop (seat kept); if the deliberate close still follows, Room.closed frees the seat.
+      server.addEventListener('error', () => guard('error', () => this.room.closed(slot, peer, 1006)));
     }
     this.clock();
     return new Response(null, { status: 101, webSocket: client });
@@ -80,7 +80,7 @@ export class RoomObject implements DurableObject {
   private clock(): void {
     if (this.timer || !this.room.busy) return;
     this.timer = setInterval(() => {
-      this.room.pump();
+      try { this.room.pump(); } catch (e) { console.error('room pump:', e); }
       if (!this.room.busy && this.timer) {
         clearInterval(this.timer);
         this.timer = null;

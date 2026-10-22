@@ -67,6 +67,8 @@ interface Seat {
   token: string;
   /** When the connection dropped (seat kept for REJOIN_MS). */
   droppedAt: number;
+  /** The connection that dropped: its late deliberate close (after an error) still frees the seat. */
+  dropped: Peer | null;
   lastMsg: number;
   bucket: { tokens: number; at: number };
 }
@@ -95,6 +97,11 @@ function newToken(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/** Closes a connection that may already be dead (closing one can throw): the seat bookkeeping after it must still run. */
+function hangUp(peer: Peer, code: number, reason: string): void {
+  try { peer.close(code, reason); } catch { /* already gone */ }
+}
+
 export class Room {
   private seats = new Map<number, Seat>();
   private settings: RoomSettings = { ...DEFAULT_SETTINGS };
@@ -110,7 +117,9 @@ export class Room {
 
   /** True while the room needs pump() calls (a round clock or a seat waiting for its player). */
   get busy(): boolean {
-    return !!this.round?.active || [...this.seats.values()].some((s) => !s.peer);
+    if (this.round?.active) return true;
+    for (const s of this.seats.values()) if (!s.peer) return true;
+    return false;
   }
 
   /** Seats a peer (new or reconnecting). Returns its slot, or null after sending an error. */
@@ -128,7 +137,7 @@ export class Room {
       if (seat.peer) {
         const old = seat.peer;
         seat.peer = null;
-        try { old.close(CLOSE_RETRY, 'replaced'); } catch { /* already gone */ }
+        hangUp(old, CLOSE_RETRY, 'replaced');
       }
       return this.reattach(req.rejoin, seat, peer, now);
     }
@@ -139,23 +148,34 @@ export class Room {
     while (this.seats.has(slot)) slot++;
     const profile: Profile = { slot, name: cleanName(req.name, slot), color: this.freeColor(req.color ?? -1) };
     this.broadcast({ t: 'profile', player: profile });
-    this.seats.set(slot, { peer, profile, token: newToken(), droppedAt: 0, lastMsg: now, bucket: { tokens: BURST, at: now } });
+    this.seats.set(slot, { peer, profile, token: newToken(), droppedAt: 0, dropped: null, lastMsg: now, bucket: { tokens: BURST, at: now } });
     if (this.host < 0) this.host = slot;
     this.clampBots();
     this.welcome(slot);
     return slot;
   }
 
-  /** The peer's connection closed. A deliberate leave frees the seat; a drop keeps it for REJOIN_MS. */
+  /**
+   * The peer's connection closed (or errored). A deliberate leave frees the seat;
+   * a drop keeps it for REJOIN_MS. A leave that comes after the same connection
+   * was already counted as a drop (an error event, then the close) still frees it.
+   */
   closed(slot: number, peer: Peer, code: number, now = Date.now()): void {
     const seat = this.seats.get(slot);
-    if (!seat || seat.peer !== peer) return; // an old connection of a seat that already rejoined
+    if (!seat) return;
+    if (seat.peer !== peer) {
+      // An old connection of a seat that already rejoined is ignored.
+      if (!seat.peer && seat.dropped === peer && code === CLOSE_LEAVE) this.remove(slot);
+      return;
+    }
     if (code === CLOSE_LEAVE) {
       this.remove(slot);
       return;
     }
     seat.peer = null;
+    seat.dropped = peer;
     seat.droppedAt = now;
+    // A drop never stops the clock: the player may rejoin and needs the frames to finish.
     this.broadcast({ t: 'away', slot, away: true });
   }
 
@@ -163,7 +183,7 @@ export class Room {
     const seat = this.seats.get(slot);
     if (!seat?.peer) return;
     if (!this.take(seat, now)) {
-      seat.peer.close(CLOSE_FLOOD, 'flood');
+      hangUp(seat.peer, CLOSE_FLOOD, 'flood');
       this.remove(slot);
       return;
     }
@@ -201,9 +221,7 @@ export class Room {
       case 'over':
         if (this.round && msg.r === this.round.r) {
           this.round.over.add(slot);
-          // Everyone still connected has finished: stop the clock.
-          const still = this.round.players.filter((p, i) => !this.round!.left[i] && this.seats.get(p.slot)?.peer);
-          if (still.every((p) => this.round!.over.has(p.slot))) this.round.active = false;
+          this.checkOver();
         }
         break;
       case 'hash':
@@ -217,7 +235,7 @@ export class Room {
     for (const [slot, seat] of this.seats) {
       if (!seat.peer && now - seat.droppedAt > REJOIN_MS) this.remove(slot);
       else if (seat.peer && now - seat.lastMsg > SILENT_MS) {
-        seat.peer.close(CLOSE_AWAY, 'away');
+        hangUp(seat.peer, CLOSE_AWAY, 'away');
         this.remove(slot);
       }
     }
@@ -234,7 +252,15 @@ export class Room {
     for (let t = first; t < due; t++) batch.push(this.frame(round, t));
     round.sent = due;
     round.frames.push(...batch);
-    for (const p of round.players) this.sendTo(p.slot, { t: 'f', r: round.r, tick: first, c: batch });
+    this.sendEach(round.players.map((p) => p.slot), { t: 'f', r: round.r, tick: first, c: batch });
+  }
+
+  /** Everyone still connected has finished the round: stop the clock. Only an 'over' or a seat freed for good asks. */
+  private checkOver(): void {
+    const round = this.round;
+    if (!round?.active || round.over.size === 0) return;
+    const still = round.players.filter((p, i) => !round.left[i] && this.seats.get(p.slot)?.peer);
+    if (still.length > 0 && still.every((p) => round.over.has(p.slot))) round.active = false;
   }
 
   /** Everyone's command for tick t. */
@@ -243,7 +269,9 @@ export class Room {
       if (round.left[i]) return FRAME_LEFT;
       const pending = round.pending[i];
       const mine = pending.get(t);
-      for (const k of pending.keys()) if (k <= t) pending.delete(k);
+      // Ticks are framed in order and inputs only land on ticks not yet framed,
+      // so t is the only key that can be due: no need to scan the whole map.
+      pending.delete(t);
       if (mine !== undefined) {
         round.last[i] = mine;
         return mine;
@@ -286,6 +314,7 @@ export class Room {
   private reattach(slot: number, seat: Seat, peer: Peer, now: number): number {
     seat.peer = peer;
     seat.droppedAt = 0;
+    seat.dropped = null;
     seat.lastMsg = now;
     seat.bucket = { tokens: BURST, at: now };
     this.welcome(slot);
@@ -311,9 +340,17 @@ export class Room {
     if (this.host === slot) this.host = this.empty ? -1 : Math.min(...this.seats.keys());
     const round = this.round;
     const i = round ? round.players.findIndex((p) => p.slot === slot) : -1;
-    if (round && i >= 0) round.left[i] = true;
+    if (round && i >= 0) {
+      round.left[i] = true;
+      round.pending[i].clear();
+    }
     this.broadcast({ t: 'left', slot, host: this.host });
-    if (this.empty) this.round = null;
+    if (this.empty) {
+      this.round = null;
+      return;
+    }
+    // The last unfinished round player is gone for good: stop the clock.
+    this.checkOver();
   }
 
   /** Takes one message from the peer's flood-guard bucket; false when it is empty. */
@@ -352,7 +389,18 @@ export class Room {
     try { this.seats.get(slot)?.peer?.send(JSON.stringify(msg)); } catch { /* closing */ }
   }
 
+  /** Encodes `msg` once and sends the same text to every listed seat that is connected. */
+  private sendEach(slots: Iterable<number>, msg: ServerMsg, except = -1): void {
+    let data: string | null = null;
+    for (const slot of slots) {
+      const peer = slot === except ? null : this.seats.get(slot)?.peer;
+      if (!peer) continue;
+      data ??= JSON.stringify(msg);
+      try { peer.send(data); } catch { /* closing */ }
+    }
+  }
+
   private broadcast(msg: ServerMsg, except = -1): void {
-    for (const slot of this.seats.keys()) if (slot !== except) this.sendTo(slot, msg);
+    this.sendEach(this.seats.keys(), msg, except);
   }
 }
