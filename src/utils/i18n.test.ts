@@ -24,7 +24,7 @@ describe('i18n', () => {
       for (const m of text.matchAll(/\b(?:t|tr)\('([a-zA-Z0-9_.-]+)'/g)) used.add(m[1]);
     }
     expect(used.size).toBeGreaterThan(100);
-    for (const m of html.matchAll(/data-i18n(?:-aria)?="([^"]+)"/g)) used.add(m[1]);
+    for (const m of html.matchAll(/data-i18n(?:-aria|-title)?="([^"]+)"/g)) used.add(m[1]);
     // Keys built at run time.
     for (const r of ['taken', 'not_found', 'full', 'bad_code', 'expired']) used.add(`online.err.${r}`);
     for (const k of ['sound.all', 'sound.sfx', 'sound.off', 'radio.gateOpen', 'radio.lastHeart', 'radio.vestHit', 'radio.lastWave',

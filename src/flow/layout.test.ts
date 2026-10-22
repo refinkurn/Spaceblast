@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import html from '../../index.html?raw';
 import css from '../style.css?raw';
+import locales from '../config/locales.json';
+
+const en = (locales as Record<string, Record<string, string>>).en;
 import mapCss from './story_map.css?raw';
 
 // Layout rules checked on the markup and styles: the HUD's corner groups,
@@ -57,7 +60,9 @@ describe('Back buttons', () => {
     // 5 menu sub-pages (Settings is one of them) + online + map + map card + leaderboard.
     expect(all.length).toBe(9);
     for (const [tag, inner] of all) {
-      expect(tag).toContain('aria-label="Back"');
+      // The label comes from a locale key that reads "Back" (aria-label is filled at startup).
+      const key = tag.match(/data-i18n-aria="([^"]+)"/)?.[1];
+      expect(key && en[key]).toBe('Back');
       expect(inner).toContain('href="#i-back"');
       expect(inner.replace(/<[^>]*>/g, '').trim()).toBe('');
     }
@@ -92,7 +97,7 @@ describe('menu items', () => {
       expect(b).toMatch(/<svg class="ui-icon"[^>]*><use href="#i-\w+"\/><\/svg><span[^>]*>[^<]+<\/span>/);
     }
     for (const level of ['easy', 'normal', 'hard']) {
-      expect(html).toMatch(new RegExp(`data-level="${level}"><svg class="ui-icon"[^>]*><use href="#i-${level}"/></svg><span>`));
+      expect(html).toMatch(new RegExp(`data-level="${level}"><svg class="ui-icon"[^>]*><use href="#i-${level}"/></svg><span data-i18n="menu\\.${level}">`));
     }
     expect(rule(css, '.menu-list button:not(.nav-back)')).toContain('min-height: 48px');
   });
