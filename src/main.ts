@@ -7,6 +7,7 @@ import { setupFullscreen } from './flow/fullscreen';
 import { boardLeftAt, Hud, HUD_MAX_SCALE, HUD_PANEL_H, hudScale } from './flow/hud';
 import { haptics } from './flow/haptics';
 import { parseRoomParam } from './flow/invite';
+import { registerOfflineCache } from './flow/offline';
 import { Countdown } from './flow/countdown';
 import { RadioToasts } from './flow/radio_toast';
 import { PauseMenu } from './flow/pause';
@@ -669,6 +670,8 @@ view.renderer.setAnimationLoop((now: number) => {
     score: [score.of('p0'), score.of('p1')], local: localId, online: { mine, best },
   });
 });
+
+registerOfflineCache();
 
 // Dev-only console hooks for debugging (`spaceblast.state`, `spaceblast.startLevel(n)`)
 // in the browser console. Stripped from production builds.

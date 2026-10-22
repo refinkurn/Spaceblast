@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": { "lib": ["ES2022"], "types": ["node"] },
   "include": [
-    "vite.config.ts", "server/dev_relay.ts", "server/node_host.ts", "server/node_host.test.ts", "server/node_sqlite.ts", "server/node_sqlite.test.ts",
+    "vite.config.ts", "server/dev_relay.ts", "server/offline_cache.ts", "server/offline_cache.test.ts", "server/node_host.ts", "server/node_host.test.ts", "server/node_sqlite.ts", "server/node_sqlite.test.ts",
     "server/fly.ts", "server/room.ts", "server/room.test.ts", "server/leaderboard.ts", "server/leaderboard_store.ts", "server/leaderboard.test.ts"
   ]
 }

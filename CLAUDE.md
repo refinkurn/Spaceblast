@@ -28,7 +28,7 @@ src/
   config/  data: locales.json (interface text by key; English now)
   utils/   i18n.ts: t(key, vars) for interface text; applyDom() fills data-i18n labels in index.html
   main.ts  wiring + fixed 60 Hz loop
-server/    the room server: room.ts (shared: seats, round clock, rejoin), leaderboard.ts (scores API), node_host.ts (Node hosting for dev + Fly), node_sqlite.ts, dev_relay.ts (npm run dev), fly.ts (Fly.io; Dockerfile, fly.toml, npm run build:server), worker.ts (Cloudflare)
+server/    the room server: room.ts (shared: seats, round clock, rejoin), leaderboard.ts (scores API), node_host.ts (Node hosting for dev + Fly), node_sqlite.ts, dev_relay.ts (npm run dev), fly.ts (Fly.io; Dockerfile, fly.toml, npm run build:server), worker.ts (Cloudflare), offline_cache.ts (build step: writes sw.js so the installed game opens offline; registered by src/flow/offline.ts)
 ```
 
 - Online play runs on the room server's clock: it sends every player's packed
