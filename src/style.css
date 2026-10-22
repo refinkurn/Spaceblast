@@ -1211,6 +1211,13 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 /* Colours: one row of five, swipe sideways for the rest (snaps to each swatch; the faded edge hints there is more). */
 .swatches { display: flex; gap: 8px; width: calc(5 * 48px + 4 * 8px); max-width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; touch-action: pan-x; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px 0; -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent); mask-image: linear-gradient(90deg, #000 86%, transparent); }
 .swatches::-webkit-scrollbar { display: none; }
+/* With a mouse: a thin bar shows there is more, and a grab cursor (flow/drag_scroll.ts drags it). */
+@media (pointer: fine) {
+  .swatches { scrollbar-width: thin; scrollbar-color: #ffffff40 transparent; padding-bottom: 6px; cursor: grab; }
+  .swatches::-webkit-scrollbar { display: block; height: 4px; }
+  .swatches::-webkit-scrollbar-thumb { background: #ffffff40; border-radius: 2px; }
+  .swatches.dragging { cursor: grabbing; scroll-snap-type: none; }
+}
 #online .swatches button { flex: none; width: 48px; scroll-snap-align: start; }
 
 /* Narrow or short screens: a little tighter, still one screen. */

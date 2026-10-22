@@ -11,7 +11,6 @@ import { CameraRig, blastShake } from './camera_rig';
 import { toWorld } from './coords';
 import { BeamsView, ChargesView, DebrisView } from './effects_view';
 import { HeroView } from './hero_view';
-import { TileHighlight } from './tile_highlight';
 import { LightingView, ShiftPreviewView } from './level_view';
 
 // The whole 3D scene: renderer, lights, camera and every view. It draws a
@@ -42,9 +41,8 @@ export class GameView {
   private prevPlayers: { x: number; y: number }[] = [];
   private prevMartians = new Map<number, { x: number; y: number }>();
   private colors: number[] = [];
-  /** The player this screen belongs to: shakes are measured from them, and their tile is highlighted. */
+  /** The player this screen belongs to: shakes are measured from them. */
   private you = 0;
-  private highlight = new TileHighlight();
 
   /** Render resolution, lowered automatically on slow phones (phones start at 1.5x at most). */
   private quality = new AdaptiveQuality(PHONE ? Math.min(window.devicePixelRatio || 1, 1.5) : window.devicePixelRatio || 1);
@@ -69,7 +67,6 @@ export class GameView {
     scene.add(this.board.group, this.charges.group, this.beams.group, this.debris.group, this.items.group, this.gate.group);
     scene.add(this.martians.group, this.portals.group, this.boss.group, this.crossPreview.group, this.shiftPreview.group);
     for (const h of this.heroes) scene.add(h.group);
-    scene.add(this.highlight.mesh);
     this.lighting = new LightingView([sky, sun], scene, scene.background as THREE.Color);
   }
 
@@ -77,7 +74,6 @@ export class GameView {
   build(state: GameState, colors: number[], local: number): void {
     this.colors = colors;
     this.you = local >= 0 ? local : 0;
-    this.highlight.setColor(colors[this.you] ?? 0xffffff);
     this.board.build(state);
     this.charges.clear();
     this.items.clear();
@@ -159,7 +155,10 @@ export class GameView {
    */
   render(state: GameState, alpha: number, dt: number, time: number, predicted: { id: number; p: Prediction } | null = null): void {
     state.players.forEach((p, i) => {
-      if (predicted?.id === i) this.heroes[i].update(predicted.p.prev, predicted.p.cur, alpha, dt);
+      // Your predicted astronaut: the prediction already moves one tick per screen frame, so it is drawn at
+      // its tick (alpha 1). The frame-pacing alpha belongs to the server's frames; mixing it in pulled the
+      // astronaut back by up to a step at random, frame to frame (the stutter on every tile).
+      if (predicted?.id === i) this.heroes[i].update(predicted.p.prev, predicted.p.cur, 1, dt);
       else this.heroes[i].update(this.prevPlayers[i] ?? p, p, alpha, dt);
     });
     this.charges.sync(state, predicted?.p.charges);
@@ -174,8 +173,6 @@ export class GameView {
     this.crossPreview.sync(state, time);
     this.shiftPreview.sync(state, time);
     this.lighting.sync(state, state.players.map((_, i) => this.heroes[i].group), dt);
-    // Online the local astronaut is drawn from the prediction: mark the tile it is drawn on.
-    this.highlight.update(predicted?.id === this.you ? predicted.p.cur : state.players[this.you] ?? null, dt);
     this.board.update(dt);
     this.debris.update(dt);
     this.rig.update(dt);

@@ -4,6 +4,7 @@ import {
   CODE_LETTERS, DEFAULT_SETTINGS, MAX_PLAYERS, PLAYER_COLORS, isRoomCode,
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
+import { dragScroll } from './drag_scroll';
 import { shareInvite } from './invite';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
 import { botLevelOptions, matchOptions, scenarioFlags, scenarioOf, scenarioOptions, timeOptions, type Scenario } from './online_options';
@@ -383,6 +384,8 @@ export class OnlineRoom {
       b.addEventListener('click', () => this.net.send({ t: 'profile', name: this.me()?.name ?? '', color: i }));
       swatches.append(b);
     });
+    // Mouse: wheel and drag scroll the colour strip sideways (a finger swipes it natively).
+    dragScroll(swatches);
     // Match options: one ‹ value › selector each (the host steps; guests see the host's pick).
     this.steppers = {
       time: new Stepper($('set-time'), timeOptions(), (time) => this.changeSettings({ time }), t('lobby.opt.time')),
