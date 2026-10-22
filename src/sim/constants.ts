@@ -141,15 +141,18 @@ export const BOSS_TILE: readonly [number, number] = [6, 5];
 export const BOSS_SPOUT = 3;
 /** Every boss fires 3 waves; each wait is half the one before it. */
 export const BOSS_WAVES = 3;
-/** First wait per boss, in seconds; later bosses start faster. */
+/**
+ * First wait per boss, in seconds; later bosses start faster. No wait is over
+ * 50 s, so even the first boss keeps up the pressure.
+ */
 export const BOSS_FIRST_WAIT_SECONDS: Record<number, number> = {
-  [BossKind.GooplingHive]: 60,
-  [BossKind.DarknessHive]: 48,
-  [BossKind.MazeMaster]: 40,
+  [BossKind.GooplingHive]: 44,
+  [BossKind.DarknessHive]: 40,
+  [BossKind.MazeMaster]: 36,
 };
 /**
  * Seconds to wait after each wave (the boss dies when the last one runs out):
- * halving each time, e.g. 60 -> 30 -> 15.
+ * halving each time, e.g. 44 -> 22 -> 11.
  */
 export const BOSS_WAVES_SECONDS: Record<number, readonly number[]> = Object.fromEntries(
   Object.entries(BOSS_FIRST_WAIT_SECONDS).map(([kind, first]) => [

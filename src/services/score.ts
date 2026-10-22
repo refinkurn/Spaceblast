@@ -83,6 +83,8 @@ export function maxScore(level: number): number {
  * time bonus for these seconds + a whole number of Martians (within the
  * maxScore allowance), and the stars must be what starsFor gives. The client
  * reports at least 5 s, so a reported 5 also allows the bonus of a faster clear.
+ * 1 vs 2 stars only depends on the score target, which moves when a level's
+ * roster is retuned, so a row queued offline before an update may carry either.
  */
 export function scoreConsistent(level: number, total: number, seconds: number, heartsLeft: number, stars: number): boolean {
   const spec = levelSpec(level);
@@ -92,9 +94,13 @@ export function scoreConsistent(level: number, total: number, seconds: number, h
   for (let s = seconds; s >= fastest; s--) {
     const time = par === null ? 0 : Math.max(0, (par - s) * SCORE.second);
     const kills = (total - SCORE.clear - heartsLeft * SCORE.heart - time) / SCORE.martian;
-    if (Number.isInteger(kills) && kills >= 0 && kills <= maxKills && stars === starsFor(level, total, heartsLeft, s)) return true;
+    if (Number.isInteger(kills) && kills >= 0 && kills <= maxKills && starsMatch(stars, starsFor(level, total, heartsLeft, s))) return true;
   }
   return false;
+}
+
+function starsMatch(sent: number, expected: number): boolean {
+  return sent === expected || (sent < 3 && expected < 3);
 }
 
 /** Leaderboard id for a level: sector-level, e.g. level 8 = "stage_2_3". */

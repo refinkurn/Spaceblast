@@ -58,7 +58,7 @@ describe('story map text', () => {
   });
 
   it('names the goal with the Martian count, or the boss / duel goal', () => {
-    expect(nodeGoal(1)).toBe('Find the Warp Gate · 3 Martians');
+    expect(nodeGoal(1)).toBe('Find the Warp Gate · 2 Martians');
     expect(nodeGoal(5)).toBe('Survive 3 waves');
     expect(nodeGoal(20)).toBe('Stun Ducking');
   });

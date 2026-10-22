@@ -94,4 +94,12 @@ describe('server plausibility check', () => {
     expect(scoreConsistent(3, s.total, 50, 3, s.stars)).toBe(false);
     expect(scoreConsistent(3, s.total, 40, 2, s.stars)).toBe(false);
   });
+
+  it('accepts 1 or 2 stars from a row queued before a score-target change, never a wrong 3', () => {
+    const s = scoreFor({ level: 3, martians: 2, ticks: 50 * 60, heartsLeft: 2 });
+    expect(scoreConsistent(3, s.total, 50, 2, 3 - s.stars)).toBe(true);
+    expect(scoreConsistent(3, s.total, 50, 2, 3)).toBe(false);
+    const best = scoreFor({ level: 3, martians: 2, ticks: 40 * 60, heartsLeft: 3 });
+    expect(scoreConsistent(3, best.total, 40, 3, 2)).toBe(false);
+  });
 });

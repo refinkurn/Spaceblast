@@ -3,9 +3,9 @@ import {
   BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, Cell, Dir, EVENT_GAP_MAX_TICKS, EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS,
   FIRST_EVENT_TICKS, GATE_WAIT_TICKS, GRID_W, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, TILE,
 } from './constants';
-import type { PlayerCommand } from './command';
+import { NO_COMMAND, type PlayerCommand } from './command';
 import { NO_EVENTS, levelRules, type LevelRules } from './levels';
-import { step } from './sim';
+import { hashState, step } from './sim';
 import { createGame, playerTile, type GameState, type SimEvent } from './state';
 
 const idle: PlayerCommand = { dir: Dir.None, alt: Dir.None, place: false };
@@ -28,14 +28,36 @@ function run(g: GameState, ticks: number): SimEvent[] {
 }
 
 describe('level rules', () => {
-  it('follows the sector plan', () => {
-    expect(levelRules(3)).toEqual(NO_EVENTS); // Sector 1: no hazards
-    expect(levelRules(6)).toEqual({ ...NO_EVENTS, mazeShift: true });
-    expect(levelRules(7)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true }); // Sector 2: Blackouts
-    expect(levelRules(12)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, gateWander: true, frequentEvents: true });
-    expect(levelRules(17)).toEqual({ mazeShift: true, blackout: true, gateWander: true, frequentEvents: true, aggressive: true });
+  it("follows the story: each hazard arrives where Kit's briefing announces it", () => {
+    for (const n of [1, 2, 3, 4]) expect(levelRules(n)).toEqual(NO_EVENTS); // Sector 1: no hazards
+    expect(levelRules(6)).toEqual({ ...NO_EVENTS, mazeShift: true }); // the walls start to move
+    expect(levelRules(7)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, blackoutFirst: true }); // "A blackout is next."
+    expect(levelRules(9)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true });
+    expect(levelRules(11)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, frequentEvents: true }); // the cavern reshapes itself
+    expect(levelRules(12).gateWander).toBe(false);
+    expect(levelRules(13)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, frequentEvents: true, gateWander: true }); // "don't count on the way back"
+    expect(levelRules(16)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, gateWander: true, frequentEvents: true, aggressive: true }); // "not random anymore"
     for (const boss of [5, 10, 15]) expect(levelRules(boss)).toEqual(NO_EVENTS); // the boss drives its own hazards
     expect(levelRules(20)).toEqual({ ...NO_EVENTS, mazeShift: true }); // the duel's grid keeps shifting
+  });
+
+  it('hashes blackoutFirst, so peers with different rules see a desync', () => {
+    const a = createGame(1, { rules: levelRules(8), martians: 0 });
+    const b = createGame(1, { rules: { ...levelRules(8), blackoutFirst: true }, martians: 0 });
+    expect(hashState(a)).not.toBe(hashState(b));
+  });
+
+  it("level 7 keeps Kit's promise: its first event is a Blackout, on every seed", () => {
+    for (let seed = 1; seed <= 12; seed++) {
+      const g = createGame(seed, { rules: levelRules(7), martians: 0 });
+      let first: LevelEvent | null = null;
+      for (let t = 0; t < 30 * 60 && first === null; t++) {
+        step(g, [NO_COMMAND]);
+        const w = g.events.find((e) => e.type === 'event_warning');
+        if (w && w.type === 'event_warning') first = w.event;
+      }
+      expect(first).toBe(LevelEvent.Blackout);
+    }
   });
 
   it('spaces events 12-18 s apart in sectors 3-4', () => {

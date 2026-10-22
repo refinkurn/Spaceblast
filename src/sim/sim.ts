@@ -62,7 +62,7 @@ export function hashState(state: GameState): number {
   mix(state.freeze);
   for (const v of [state.event, state.eventWarning, state.eventActive, state.nextEvent, state.gateWait]) mix(v);
   const r = state.rules;
-  for (const v of [r.mazeShift, r.gateWander, r.blackout, r.frequentEvents, r.aggressive, state.rival]) mix(v ? 1 : 0);
+  for (const v of [r.mazeShift, r.gateWander, r.blackout, r.frequentEvents, r.aggressive, r.blackoutFirst, state.rival]) mix(v ? 1 : 0);
   if (state.boss) for (const v of [state.boss.kind, state.boss.tile, state.boss.wave, state.boss.timer, state.boss.alive ? 1 : 0]) mix(v);
   for (const v of state.beamRock) mix(v);
   for (const i of state.shiftRemove) mix(i);

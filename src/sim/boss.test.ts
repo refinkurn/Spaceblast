@@ -43,37 +43,37 @@ describe('boss levels', () => {
     expect(g.martians).toHaveLength(0);
   });
 
-  it('Goopling Hive: 3 waves of 3 Gooplings, 60 s -> 30 s -> 15 s', () => {
+  it('Goopling Hive: 3 waves of 3 Gooplings, 44 s -> 22 s -> 11 s', () => {
     const g = bossLevel(5);
     const evs = run(g, 3 * 60 * SEC);
     const w = EVENT_WARNING_TICKS + 1;
-    expect(waveTicks(evs)).toEqual([w, w + 60 * SEC, w + 90 * SEC]);
+    expect(waveTicks(evs)).toEqual([w, w + 44 * SEC, w + 66 * SEC]);
     expect(g.martians.length).toBe(BOSS_WAVES * BOSS_SPOUT);
     const dead = evs.find((x) => x.e.type === 'boss_defeated');
-    expect(dead?.t).toBe(w + 105 * SEC);
+    expect(dead?.t).toBe(w + 77 * SEC);
     expect(g.status).toBe('cleared');
   });
 
-  it('Darkness Hive: Gooplings plus a Blackout each wave, 48 s -> 24 s -> 12 s', () => {
+  it('Darkness Hive: Gooplings plus a Blackout each wave, 40 s -> 20 s -> 10 s', () => {
     const g = bossLevel(10);
     const evs = run(g, 3 * 60 * SEC);
     const w = EVENT_WARNING_TICKS + 1;
-    expect(waveTicks(evs)).toEqual([w, w + 48 * SEC, w + 72 * SEC]);
+    expect(waveTicks(evs)).toEqual([w, w + 40 * SEC, w + 60 * SEC]);
     const blackouts = evs.filter((x) => x.e.type === 'blackout_start').map((x) => x.t);
     expect(blackouts).toHaveLength(3);
     // Each Blackout lands with its wave.
     for (const [i, t] of waveTicks(evs).entries()) expect(Math.abs(blackouts[i] - t)).toBeLessThanOrEqual(1);
-    expect(evs.find((x) => x.e.type === 'boss_defeated')?.t).toBe(w + 84 * SEC);
+    expect(evs.find((x) => x.e.type === 'boss_defeated')?.t).toBe(w + 70 * SEC);
   });
 
-  it('Maze Master: Maze Shift, a cross blast and Gooplings each wave, 40 -> 20 -> 10 s', () => {
+  it('Maze Master: Maze Shift, a cross blast and Gooplings each wave, 36 -> 18 -> 9 s', () => {
     const g = bossLevel(15);
     const evs = run(g, 3 * 60 * SEC);
     const w = EVENT_WARNING_TICKS + 1;
-    expect(waveTicks(evs)).toEqual([w, w + 40 * SEC, w + 60 * SEC]);
+    expect(waveTicks(evs)).toEqual([w, w + 36 * SEC, w + 54 * SEC]);
     expect(evs.filter((x) => x.e.type === 'boss_cross')).toHaveLength(3);
     expect(evs.filter((x) => x.e.type === 'maze_shift')).toHaveLength(3);
-    expect(evs.find((x) => x.e.type === 'boss_defeated')?.t).toBe(w + 70 * SEC);
+    expect(evs.find((x) => x.e.type === 'boss_defeated')?.t).toBe(w + 63 * SEC);
   });
 
   it('cross blast covers the whole row and column, and the boss Gooplings are immune to it', () => {
@@ -111,10 +111,13 @@ describe('boss levels', () => {
     expect(g.grid.cells[by * GRID_W + bx]).toBe(Cell.Pillar);
   });
 
-  it('every boss has 3 waves, each wait half the one before', () => {
-    expect(bossIntervals(BossKind.GooplingHive)).toEqual([60, 30, 15].map((s) => s * SEC));
-    expect(bossIntervals(BossKind.DarknessHive)).toEqual([48, 24, 12].map((s) => s * SEC));
-    expect(bossIntervals(BossKind.MazeMaster)).toEqual([40, 20, 10].map((s) => s * SEC));
+  it('every boss has 3 waves, each wait half the one before, and no wait over 50 s', () => {
+    expect(bossIntervals(BossKind.GooplingHive)).toEqual([44, 22, 11].map((s) => s * SEC));
+    expect(bossIntervals(BossKind.DarknessHive)).toEqual([40, 20, 10].map((s) => s * SEC));
+    expect(bossIntervals(BossKind.MazeMaster)).toEqual([36, 18, 9].map((s) => s * SEC));
+    for (const kind of [BossKind.GooplingHive, BossKind.DarknessHive, BossKind.MazeMaster]) {
+      for (const wait of bossIntervals(kind)) expect(wait).toBeLessThanOrEqual(50 * SEC);
+    }
     for (const k of [BossKind.GooplingHive, BossKind.DarknessHive, BossKind.MazeMaster]) {
       const w = bossIntervals(k);
       expect(w).toHaveLength(BOSS_WAVES);

@@ -30,7 +30,7 @@ function add(g: GameState, kind: Kind, tx: number, ty: number, extra: Partial<Ma
 
 describe('level roster', () => {
   it('follows the sector plan: Gooplings and Sniffers, then Phasers and Builders', () => {
-    expect(levelRoster(1)).toEqual([Kind.Goopling, Kind.Goopling, Kind.Goopling]);
+    expect(levelRoster(1)).toEqual([Kind.Goopling, Kind.Goopling]); // the tutorial level: two slow Gooplings
     expect(levelRoster(2)).not.toContain(Kind.Sniffer);
     expect(levelRoster(3)).toContain(Kind.Sniffer); // Sector 1 introduces Sniffers
     expect(levelRoster(4).some((k) => k === Kind.Phaser || k === Kind.Builder)).toBe(false);
@@ -40,8 +40,8 @@ describe('level roster', () => {
     for (let level = 1; level <= LEVEL_COUNT; level++) {
       if (level % 5 === 0) continue;
       const roster = levelRoster(level);
-      expect(roster.length).toBeGreaterThanOrEqual(3);
-      expect(roster.length).toBeLessThanOrEqual(8);
+      expect(roster.length).toBeGreaterThanOrEqual(2);
+      expect(roster.length).toBeLessThanOrEqual(9);
       expect(levelSpec(level).sector).toBe(sectorOf(level));
     }
   });
@@ -160,4 +160,30 @@ it('replays a mixed roster deterministically', () => {
     return hashState(g);
   };
   expect(play()).toBe(play());
+});
+
+describe('story progression', () => {
+  it('every level spawns its whole roster, far from the start, on any map', () => {
+    for (let level = 1; level <= LEVEL_COUNT; level++) {
+      const spec = levelSpec(level);
+      if (spec.roster.length === 0) continue;
+      for (let seed = 1; seed <= 25; seed++) {
+        const g = createGame(seed * 7919 + level, { roster: spec.roster, rules: spec.rules });
+        expect(g.martians.map((m) => m.kind), `level ${level}, seed ${seed}`).toEqual(spec.roster);
+      }
+    }
+  });
+
+  it('grows steadily: never fewer Martians than the level before within a sector, one new kind at a time', () => {
+    const seen = new Set<number>();
+    for (let level = 1; level <= LEVEL_COUNT; level++) {
+      const roster = levelRoster(level);
+      if (roster.length === 0) continue;
+      const prev = levelRoster(level - 1);
+      if (level % 5 !== 1 && prev.length > 0) expect(roster.length, `level ${level}`).toBeGreaterThanOrEqual(prev.length);
+      const fresh = new Set(roster.filter((k) => !seen.has(k)));
+      expect(fresh.size, `level ${level} introduces ${[...fresh]}`).toBeLessThanOrEqual(1);
+      roster.forEach((k) => seen.add(k));
+    }
+  });
 });

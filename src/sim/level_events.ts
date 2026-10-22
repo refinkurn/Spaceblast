@@ -1,5 +1,5 @@
 import {
-  BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, COLLAPSE_WARNING_TICKS, Cell, EVENT_GAP_FAST_MAX_TICKS, EVENT_GAP_FAST_MIN_TICKS, EVENT_GAP_MAX_TICKS,
+  BLACKOUT_MAX_TICKS, BLACKOUT_MIN_TICKS, COLLAPSE_WARNING_TICKS, FIRST_EVENT_TICKS, Cell, EVENT_GAP_FAST_MAX_TICKS, EVENT_GAP_FAST_MIN_TICKS, EVENT_GAP_MAX_TICKS,
   EVENT_GAP_MIN_TICKS, EVENT_WARNING_TICKS, GATE_WAIT_TICKS, Item, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, SPAWNS, TILE,
 } from './constants';
 import { nextInt } from './rng';
@@ -49,7 +49,10 @@ function announce(state: GameState): void {
     return;
   }
   let kind: LevelEvent = maze ? LevelEvent.MazeShift : LevelEvent.Blackout;
-  if (maze && blackout) kind = nextInt(state, 2) === 0 ? LevelEvent.MazeShift : LevelEvent.Blackout;
+  // Kit promised a Blackout on this level: the first event keeps that promise.
+  const first = state.tick <= FIRST_EVENT_TICKS;
+  if (blackout && rules.blackoutFirst && first) kind = LevelEvent.Blackout;
+  else if (maze && blackout) kind = nextInt(state, 2) === 0 ? LevelEvent.MazeShift : LevelEvent.Blackout;
   warn(state, kind);
 }
 
