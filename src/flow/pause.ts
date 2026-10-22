@@ -21,14 +21,16 @@ export class PauseMenu {
 
   constructor(actions: PauseActions) {
     $('pause-resume').addEventListener('click', () => this.close());
-    this.restartBtn.addEventListener('click', () => { this.close(); actions.restart(); });
+    // Restart and Quit close the card themselves, under their fade to black: closing it here
+    // would let the game run unpaused until the screen goes dark.
+    this.restartBtn.addEventListener('click', () => actions.restart());
     $('pause-settings').addEventListener('click', () => {
       this.card.hidden = true;
       actions.settings(() => { this.card.hidden = false; $('pause-resume').focus(); });
     });
     $('pause-quit').addEventListener('click', () => this.showConfirm(true));
     $('pause-keep').addEventListener('click', () => this.showConfirm(false));
-    $('pause-quit-yes').addEventListener('click', () => { this.close(); actions.quit(); });
+    $('pause-quit-yes').addEventListener('click', () => actions.quit());
   }
 
   /** True while the card (or the Settings page opened from it) is up: the game holds. */

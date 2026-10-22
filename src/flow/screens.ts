@@ -8,6 +8,7 @@ import { GOAL_ICONS } from './goal_icons';
 import type { BannerExtra } from './summary';
 import type { LevelCardText } from './story';
 import { t } from '../utils/i18n';
+import { fadeThrough } from './transition';
 
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
@@ -55,16 +56,21 @@ export class Screens {
     return !$('story').hidden;
   }
 
-  /** Full-screen story card; the game waits until the button is pressed. */
+  /** Full-screen story card; the game waits until the (icon) button is pressed, then fades into what follows. */
   showStory(kicker: string, title: string, text: string, button: string, onContinue: () => void): void {
     $('story-kicker').textContent = kicker;
     $('story-title').textContent = title;
     $('story-text').textContent = text;
     const btn = $<HTMLButtonElement>('story-btn');
-    btn.textContent = button;
+    btn.setAttribute('aria-label', button);
+    btn.title = button;
     btn.onclick = () => {
-      $('story').hidden = true;
-      onContinue();
+      // Once only: a second tap during the fade must not start the scene twice.
+      btn.onclick = null;
+      fadeThrough(() => {
+        $('story').hidden = true;
+        onContinue();
+      });
     };
     $('story').hidden = false;
     btn.focus();
@@ -119,7 +125,7 @@ export class Screens {
     summary.innerHTML = rows.map(([k, v]) => `<div${v.length > 22 ? ' class="wide"' : ''}><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
     summary.hidden = rows.length === 0;
     this.sprite.show(extra.pose ? 'astropaw' : null, extra.pose ?? 'neutral');
-    this.primary.textContent = button;
+    this.primary.querySelector('.go-label')!.textContent = button;
     this.onPrimary = onClick;
     this.banner.hidden = false;
     this.animate();

@@ -4,6 +4,10 @@
   --ink: #e8ecf5;
   --ink-quiet: #9aa3b5;
   --accent: #5ad1ff;
+  /* Screen-corner spots shared by Back (top-left) and the sound / pause group (top-right), clear of notches. */
+  --edge-top: max(8px, env(safe-area-inset-top));
+  --edge-left: max(12px, env(safe-area-inset-left));
+  --edge-right: max(12px, env(safe-area-inset-right));
 }
 
 * { box-sizing: border-box; }
@@ -30,24 +34,22 @@ html, body {
   left: 0;
   right: 0;
   height: var(--hud);
-  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
-  display: flex;
-  /* Top-aligned: the 48 px buttons are taller than the bar and, centred, poked off the top edge. */
-  align-items: flex-start;
-  gap: 16px;
+  /* Above the touch-control gutters, so the corner buttons' lower edge (below the bar) still takes taps. */
+  z-index: 2;
   font-size: 14px;
   background: linear-gradient(#0009, #0000);
   pointer-events: none;
 }
-#hud { gap: 8px; }
-/* Left column, centre chip + clock, right buttons. Only the top-left column hangs below the bar, inside the left gutter. */
-.hud-left { position: absolute; top: 4px; left: max(12px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 3px; max-width: calc(var(--gutter) - 8px); }
+/* Three anchored groups: top-left column (avatar, hearts, power-ups, goal), centre chip + clock, top-right buttons.
+   The buttons used to be loose flex items pushed right by #full-btn's auto margin: with full screen hidden
+   (installed app, no Fullscreen API) Sound and Pause slid to the left edge, over the avatar and hearts. */
+.hud-left { position: absolute; top: max(4px, env(safe-area-inset-top)); left: var(--edge-left); display: flex; flex-direction: column; gap: 3px; max-width: calc(var(--gutter) - 8px); }
+.hud-right { position: absolute; top: max(4px, env(safe-area-inset-top)); right: var(--edge-right); display: flex; gap: 8px; }
 .hud-who { display: flex; align-items: center; gap: 6px; }
 .hud-avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; color: #fff; background: #3a7bff; border: 2px solid #ffffffcc; }
 .hud-mid { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .hud-clock { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000a; }
 .hud-clock[hidden] { display: none; }
-#full-btn { margin-left: auto; }
 .hud-health { flex-wrap: wrap; }
 .hud-health.hurt { animation: hurt-flash 0.4s ease-out; }
 .hud-health.hurt .icon.heart, .hud-health.hurt .icon.oxygen { filter: drop-shadow(0 0 4px #ff2d4d) brightness(1.6); }
@@ -206,44 +208,55 @@ body.scene .net-stats { visibility: hidden; }
 .story-card h2 { margin: 0; font-size: clamp(26px, 5vw, 40px); letter-spacing: 0.06em; color: var(--ink); text-wrap: balance; }
 .story-card p { margin: 0; font-size: 16px; line-height: 1.55; color: #c9d0de; }
 .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
-#story-btn {
-  margin-top: 8px;
-  min-height: 48px;
-  padding: 0 28px;
-  font: 700 16px system-ui, sans-serif;
-  color: #0e1118;
-  background: var(--accent);
-  border: 0;
-  border-radius: 12px;
-}
+#story-btn { margin-top: 8px; }
+/* Level card: one centred box on a dim backdrop. It used to be five separate strips (each with its own
+   background, side borders and corner radii) that only looked like a card when they lined up exactly:
+   they spread across the screen in a row, and later showed seams as only some strips animated in. */
 #level-card {
   position: fixed;
   inset: 0;
   z-index: 6;
   display: flex;
-  /* One card: its parts stack. Without this they lined up side by side across the screen. */
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: #0009;
+  cursor: pointer;
+}
+#level-card[hidden] { display: none; }
+.card-box {
+  width: min(340px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 20px 12px;
   color: var(--ink);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-align: center;
-  cursor: pointer;
+  background: #0e1118eb;
+  border: 1px solid #ffffff33;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px #000a;
+  animation: card-in 0.25s ease-out;
 }
-#level-card[hidden] { display: none; }
-#level-card > * { width: min(320px, 80vw); }
-#level-card .card-level { font-size: clamp(36px, 9vh, 56px); line-height: 1; padding-top: 14px; background: #0e1118eb; border: 1px solid #ffffff33; border-bottom: 0; border-radius: 14px 14px 0 0; animation: card-in 0.25s ease-out; }
-#level-card .card-sector { font-size: clamp(14px, 3vh, 18px); padding: 6px 0 8px; background: #0e1118eb; border-inline: 1px solid #ffffff33; animation: card-in 0.25s ease-out; }
-#level-card .card-goal { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; padding: 6px 0; background: #0e1118eb; border-inline: 1px solid #ffffff33; color: var(--accent); }
-#level-card .card-goal-icon { display: inline-flex; }
-#level-card .card-briefing { font-size: 14px; font-weight: 600; font-style: italic; letter-spacing: 0.01em; line-height: 1.3; padding: 4px 16px 6px; background: #0e1118eb; border-inline: 1px solid #ffffff33; box-sizing: border-box; }
-#level-card .card-briefing:empty { display: none; }
-#level-card .card-hint { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; padding: 6px 0 12px; background: #0e1118eb; border: 1px solid #ffffff33; border-top: 0; border-radius: 0 0 14px 14px; opacity: 0.85; animation: tap-pulse 1.4s ease-in-out infinite; }
+.card-box .card-level { font-size: clamp(36px, 9vh, 56px); line-height: 1; }
+.card-box .card-sector { font-size: clamp(14px, 3vh, 18px); }
+.card-box .card-goal { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; color: var(--accent); }
+.card-box .card-goal-icon { display: inline-flex; }
+.card-box .card-briefing { font-size: 14px; font-weight: 600; font-style: italic; letter-spacing: 0.01em; line-height: 1.3; }
+.card-box .card-briefing:empty { display: none; }
+.card-box .icon-go { margin-top: 4px; }
+.card-box .card-hint { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-quiet); animation: tap-pulse 1.4s ease-in-out infinite; }
 @keyframes card-in { from { opacity: 0; transform: translateY(6px); } }
-@media (prefers-reduced-motion: reduce) { #level-card > * { animation: none !important; } }
+@media (max-height: 380px) {
+  .card-box { gap: 4px; padding: 10px 16px 8px; }
+  .card-box .icon-go { width: 52px; height: 52px; margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .card-box, .card-box .card-hint { animation: none; } }
 /* Alien and power-up cards (Pokédex style); the game waits until tapped. */
 #intro-card { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; padding: 12px 16px; background: #0006; cursor: pointer; }
 #intro-card[hidden] { display: none; }
@@ -372,11 +385,16 @@ body.scene .net-stats { visibility: hidden; }
 #menu h2 { margin: 0 0 2px; font-size: 22px; letter-spacing: 0.06em; }
 .menu-page { min-height: 0; display: flex; flex-direction: column; gap: 6px; }
 .menu-page[hidden] { display: none; }
-/* Sub-pages: Back is the first item, a 48 px button pinned at the top-left of the panel. */
-.menu-page .menu-back { align-self: flex-start; min-width: 96px; margin-bottom: 4px; }
-.menu-list button, .menu-back {
+/* Sub-pages: Back (first in each page, for keyboard order) is the shared .nav-back in the screen's top-left
+   corner, so the page starts below it. */
+#menu.sub { padding-top: calc(var(--edge-top) + 56px); }
+/* Menu items: icon + label, 48 px tall. */
+.menu-list button:not(.nav-back) {
   min-height: 48px;
-  padding: 0 18px;
+  padding: 0 18px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-align: left;
   font: 700 18px system-ui, sans-serif;
   color: var(--ink);
@@ -384,9 +402,9 @@ body.scene .net-stats { visibility: hidden; }
   border: 1px solid #ffffff26;
   border-radius: 12px;
 }
-.menu-list button:hover, .menu-list button:focus-visible, .menu-back:hover, .menu-back:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); }
-.menu-list button:focus-visible::before, .menu-back:focus-visible::before { content: '▸ '; color: var(--accent); }
-.menu-list button[aria-current="true"]::after { content: ' ✓'; color: var(--accent); }
+.menu-list button:not(.nav-back) .ui-icon { width: 24px; height: 24px; color: var(--accent); }
+.menu-list button:not(.nav-back):hover, .menu-list button:not(.nav-back):focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.menu-list button[aria-current="true"]::after { content: '✓'; margin-left: auto; color: var(--accent); }
 .menu-scroll { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
 .menu-text .menu-scroll { font-size: 15px; line-height: 1.45; color: #c9d0de; }
 .menu-text h3 { margin: 6px 0 0; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
@@ -481,11 +499,10 @@ body.scene .net-stats { visibility: hidden; }
   padding-left: max(28px, env(safe-area-inset-left));
 }
 .online-card { width: min(420px, 46vw); min-width: 260px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; padding-top: 52px; }
-#online button#online-back { position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(28px, env(safe-area-inset-left)); min-height: 48px; min-width: 96px; z-index: 1; }
 #online-choose { display: flex; flex-direction: column; gap: 12px; align-items: center; width: min(420px, 100%); }
 #online-lobby { display: flex; gap: 24px; width: 100%; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
 .lobby-col { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 260px; flex: 1 1 260px; }
-#online button {
+#online button:not(.nav-back) {
   min-height: 48px;
   padding: 0 22px;
   font: 600 16px system-ui, sans-serif;
@@ -570,7 +587,7 @@ body.scene .net-stats { visibility: hidden; }
   border-radius: 8px;
 }
 .sound-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.menu-corner { position: absolute; top: 12px; right: max(12px, env(safe-area-inset-right)); display: flex; gap: 8px; }
+.menu-corner { position: absolute; top: var(--edge-top); right: var(--edge-right); display: flex; gap: 8px; }
 /* 48 px touch targets, the same size as the Pause button next to them. */
 .menu-corner .sound-btn, #hud .sound-btn { min-width: 48px; min-height: 48px; }
 
@@ -895,7 +912,8 @@ button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; 
 body.scene #coach { visibility: hidden; }
 .banner-tip { font-size: 13px; color: var(--ink-quiet); font-style: italic; }
 .banner-tip[hidden] { display: none; }
-.quiet-btn { min-height: 48px; padding: 0 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
+.quiet-btn { min-height: 48px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
+.quiet-btn .ui-icon { width: 20px; height: 20px; color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .coach.pop { animation: none; } }
 /* Menu key art (src/assets/menu/menu.json) replaces the plain backdrop. */
 #menu.art { background-color: #14161d; }
@@ -935,9 +953,6 @@ body.scene #coach { visibility: hidden; }
 #crawl.still .crawl-stage { perspective: none; display: flex; align-items: center; justify-content: center; }
 #crawl.still .crawl-text { position: static; margin: 0; font-size: 18px; }
 #crawl-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-width: 48px; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 999px; z-index: 2; }
-/* The top-bar buttons look 32 px tall but take a 44 x 48 px tap (CLAUDE.md: >= 48 px targets). */
-#hud button { position: relative; }
-#hud button::after { content: ''; position: absolute; inset: -6px -5px; }
 /* Very short screens (iPhone SE 1st gen, 320 px): the menu column scrolls instead of cutting off. */
 @media (max-height: 360px) {
   #menu { padding-top: 8px; padding-bottom: 8px; }
@@ -1007,4 +1022,52 @@ body.scene #coach { visibility: hidden; }
 .power.charges .pips i.on { background: #00ffff; }
 .power.range .pips i.on { background: #ff5500; }
 .power.speed .pips i.on { background: #ffe600; }
-#lb-back { align-self: center; min-height: 48px; padding: 0 28px; font: 500 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; border-radius: 10px; }
+/* Leaderboard: room above the card for the corner Back. */
+#leaderboard { padding-top: calc(var(--edge-top) + 56px); }
+
+/* Shared line icons (index.html's sprite). */
+.icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ui-icon { flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Back: one icon button in the same top-left screen spot on every menu page, the online screens, the Story map,
+   its node card and the leaderboard (CLAUDE.md: 48 px targets). */
+.nav-back {
+  position: fixed;
+  top: var(--edge-top);
+  left: var(--edge-left);
+  z-index: 5;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: #0e1118cc;
+  border: 1px solid #ffffff40;
+  border-radius: 12px;
+}
+.nav-back:hover, .nav-back:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); }
+
+/* Proceed: a round accent button with a play / launch icon (Story card Begin, level card launch). */
+.icon-go {
+  flex: none;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: #0e1118;
+  background: var(--accent);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #5ad1ff33;
+}
+.icon-go .ui-icon { width: 28px; height: 28px; }
+.icon-go:hover, .icon-go:focus-visible { outline: none; box-shadow: 0 0 0 4px #5ad1ff77; }
+/* Proceed buttons with a label (Next level, Retry, Enter): play icon before the words. */
+.go-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.go-btn .ui-icon { width: 18px; height: 18px; }
+
+/* Screen-change micro-fade (flow/transition.ts): above everything, takes taps only while dark. */
+#fade { position: fixed; inset: 0; z-index: 100; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.1s linear; }
+#fade.on { opacity: 1; pointer-events: auto; }

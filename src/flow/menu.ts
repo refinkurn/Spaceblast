@@ -170,9 +170,9 @@ export class Menu {
     if (this.isOpen && this.hero.character) requestAnimationFrame(() => this.hero.draw());
   }
 
-  /** The buttons and sliders of the open page, top to bottom. */
+  /** The buttons and sliders of the open page, top to bottom (Back included: it is fixed, so offsetParent can't tell if it shows). */
   private choices(): HTMLElement[] {
-    return [...$(PAGES[this.page]).querySelectorAll<HTMLElement>('button, input')].filter((b) => b.offsetParent !== null);
+    return [...$(PAGES[this.page]).querySelectorAll<HTMLElement>('button, input')].filter((b) => b.getClientRects().length > 0);
   }
 
   private key(e: KeyboardEvent): void {

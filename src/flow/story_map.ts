@@ -269,7 +269,7 @@ export class StoryMap {
       list.append(li);
     }
     $('map-card-best').textContent = bestLine(this.progress.bestScore(level));
-    $('map-card-enter').textContent = enterLabel(level);
+    $('map-card-enter').querySelector('.go-label')!.textContent = enterLabel(level);
     this.card.hidden = false;
     $('map-card-enter').focus();
   }
@@ -280,10 +280,11 @@ export class StoryMap {
     this.nodes.get(this.cardLevel)?.focus();
   }
 
+  /** The map stays up under the fade to black (Story play() hides it); the card closes now, so a second press can't enter twice. */
   private enter(): void {
-    const level = this.cardLevel;
-    this.hide();
-    this.onEnter(level);
+    if (this.card.hidden) return;
+    this.card.hidden = true;
+    this.onEnter(this.cardLevel);
   }
 
   private key(e: KeyboardEvent): void {
