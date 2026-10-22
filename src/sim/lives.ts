@@ -93,7 +93,8 @@ export function updateLives(state: GameState): void {
  * clock runs out the arena collapses (collapse.ts) until someone wins.
  */
 function battleOutcome(state: GameState): void {
-  if (state.timeLeft > 0) state.timeLeft--;
+  // The round clock starts after the start hold (state.ts holdLeft; this tick is already counted).
+  if (state.timeLeft > 0 && state.tick > state.startHold) state.timeLeft--;
   const standing = state.players.filter((p) => p.alive);
   if (standing.length > 1) return;
   state.status = 'round_over';

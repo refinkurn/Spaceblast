@@ -28,10 +28,10 @@ import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
 import type { PlayerCommand } from './sim/command';
-import { GOD_SHIELD, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS } from './sim/constants';
+import { GOD_SHIELD, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS, TICK_RATE } from './sim/constants';
 import { levelSpec } from './sim/levels';
 import { hashState, step } from './sim/sim';
-import { createGame, playerTile, type GameState, type SimEvent } from './sim/state';
+import { createGame, holdLeft, playerTile, type GameState, type SimEvent } from './sim/state';
 import { GameView } from './view/game_view';
 import { applyDom, t } from './utils/i18n';
 
@@ -642,6 +642,10 @@ view.renderer.setAnimationLoop((now: number) => {
   // During the cinematic the view shows its replay (or the final moment).
   cutscene.update(seconds);
   if (!overlay && !pause.open && !upright) countdown.update(seconds);
+  // Online the sim holds the round's start (sim/state.ts holdLeft) and the count
+  // follows its tick, so every phone shows the same step. It never pauses: frames keep flowing.
+  const counting = mode === 'online' && !!net && state.status === 'playing' && holdLeft(state) > 0;
+  countdown.follow(counting && !overlay && !screens.bannerOpen && !cine.active ? state.tick / TICK_RATE : null);
   // Scenes hide the HUD and touch controls.
   document.body.classList.toggle('scene', cutscene.active || cine.active || story.endingOpen);
   const alpha = cine.active ? cine.update(seconds) : paused ? 1 : acc / TICK_MS;

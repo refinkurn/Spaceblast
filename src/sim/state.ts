@@ -126,6 +126,11 @@ export interface GameOptions {
   rival?: boolean;
   /** Battle: ticks before the arena starts to collapse (default ROUND_TICKS). */
   roundTicks?: number;
+  /**
+   * Ticks the round is held at the start (online rounds: START_HOLD_TICKS).
+   * Default 0: offline modes hold the game on the client instead.
+   */
+  startHold?: number;
 }
 
 export interface GameState {
@@ -133,6 +138,8 @@ export interface GameState {
   seed: number;
   rng: number;
   mode: Mode;
+  /** Ticks 1..startHold are the start hold: only leaving counts, no clock runs (0 = none). */
+  startHold: number;
   status: Status;
   /** Battle: id of the round winner, or -1 for a draw. */
   winner: number;
@@ -190,6 +197,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     seed,
     rng: seedRng(seed),
     mode,
+    startHold: Math.max(0, Math.trunc(options.startHold ?? 0)),
     status: 'playing',
     winner: -1,
     timeLeft: battle ? (options.roundTicks ?? ROUND_TICKS) : 0,
@@ -261,4 +269,9 @@ export function warpToSpawn(p: Player): void {
 /** Tile a position currently stands on (nearest centre). */
 export function playerTile(p: { x: number; y: number }): [number, number] {
   return [Math.round(p.x / TILE), Math.round(p.y / TILE)];
+}
+
+/** Ticks of the start hold still to run (0 once the round is live). */
+export function holdLeft(state: GameState): number {
+  return Math.max(0, state.startHold - state.tick);
 }

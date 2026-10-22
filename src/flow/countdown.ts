@@ -1,7 +1,9 @@
 import { t } from '../utils/i18n';
-// The 3-2-1-BLAST! count before offline Story levels and Battle rounds. It runs on
-// real time and holds the game through the `paused` flag in main.ts; it never
-// touches the sim. Online rounds start on the room server's clock, so no countdown there.
+// The 3-2-1-BLAST! count before Story levels and Battle rounds. Offline it runs
+// on real time and holds the game through the `paused` flag in main.ts; it
+// never touches the sim. Online rounds can't pause (they run on the room
+// server's clock), so the sim holds the start itself (START_HOLD_TICKS) and
+// follow() shows the count from the sim's tick: every phone shows the same step.
 
 /** Seconds each step stays on screen. */
 export const STEP_SECONDS = 0.6;
@@ -19,7 +21,7 @@ export class Countdown {
   private el = document.getElementById('countdown') as HTMLElement;
   private elapsed = 0;
   private shown: string | null = null;
-  /** True while the count is on screen: the game is held. */
+  /** True while the offline count is on screen: the game is held. */
   active = false;
 
   start(): void {
@@ -30,8 +32,7 @@ export class Countdown {
 
   cancel(): void {
     this.active = false;
-    this.shown = null;
-    this.el.hidden = true;
+    this.hide();
   }
 
   /** Call every frame with the real seconds since the last one. */
@@ -41,9 +42,29 @@ export class Countdown {
     this.render();
   }
 
+  /**
+   * Online: shows the count `elapsed` seconds into the sim's start hold, or
+   * hides it for null. It never sets `active`, so the game is never held here.
+   */
+  follow(elapsed: number | null): void {
+    if (this.active) return; // an offline count owns the overlay
+    const label = elapsed === null ? null : countdownLabel(elapsed);
+    if (label === null) this.hide();
+    else this.show(label);
+  }
+
   private render(): void {
     const label = countdownLabel(this.elapsed);
     if (label === null) return this.cancel();
+    this.show(label);
+  }
+
+  private hide(): void {
+    this.shown = null;
+    this.el.hidden = true;
+  }
+
+  private show(label: string): void {
     if (label === this.shown) return;
     this.shown = label;
     this.el.textContent = label;

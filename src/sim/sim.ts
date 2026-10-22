@@ -7,12 +7,15 @@ import { updateLevelEvents } from './level_events';
 import { forfeit, updateLives, updateOutcome } from './lives';
 import { updateMartians } from './martians';
 import { movePlayer } from './movement';
-import type { GameState } from './state';
+import { holdLeft, type GameState } from './state';
 
 /** Advances the game by exactly one tick. `commands[i]` belongs to player i. */
 export function step(state: GameState, commands: readonly PlayerCommand[]): void {
   state.events = [];
   if (state.status !== 'playing') return;
+  // Start hold (online 3-2-1-BLAST!): the tick counts, but only leaving does
+  // anything; no clock, fuse or event moves, so the round starts after it.
+  const held = holdLeft(state) > 0;
   state.tick++;
   const gateWasOpen = gateOpen(state);
 
@@ -23,10 +26,15 @@ export function step(state: GameState, commands: readonly PlayerCommand[]): void
       forfeit(state, p);
       continue;
     }
+    if (held) continue;
     tryPlace(state, p, cmd.place);
     movePlayer((tx, ty) => canWalk(state, p, tx, ty), p, cmd, playerSpeed(p));
     updatePassable(state, p);
     pickUpItems(state, p);
+  }
+  if (held) {
+    updateOutcome(state); // someone left during the count: the round may already be decided
+    return;
   }
   tickCharges(state);
   updateMartians(state);
@@ -54,6 +62,7 @@ export function hashState(state: GameState): number {
   mix(state.rng);
   mix(['playing', 'cleared', 'game_over', 'round_over'].indexOf(state.status));
   mix(state.mode === 'battle' ? 1 : 0);
+  mix(state.startHold);
   mix(state.winner);
   mix(state.timeLeft);
   mix(state.collapseTicks);

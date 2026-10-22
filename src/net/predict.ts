@@ -1,6 +1,6 @@
 import { NO_COMMAND } from '../sim/command';
 import { step } from '../sim/sim';
-import type { Charge, GameState, Player } from '../sim/state';
+import { holdLeft, type Charge, type GameState, type Player } from '../sim/state';
 import { FAR_BEHIND, type FrameSync } from './frames';
 
 // Online, the shared game only moves on the server's frames, and your own
@@ -56,6 +56,9 @@ export class Predictor {
     // Move at most a tick per frame (big jumps, e.g. after a reconnect, at once).
     this.lead = Math.abs(want - this.lead) > 10 ? want : this.lead + Math.sign(want - this.lead);
     if (this.lead < 1) return null;
+    // The whole look-ahead is still inside the start hold: step() would ignore
+    // every press, so the confirmed astronaut is already the answer.
+    if (holdLeft(state) >= this.lead) return null;
 
     const g = structuredClone(state);
     g.events = [];

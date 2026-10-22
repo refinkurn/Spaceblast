@@ -2,6 +2,7 @@ import { Bot } from '../input/bot';
 import { FrameSync } from '../net/frames';
 import { PLAYER_COLORS, WINS_NEEDED, type Profile, type RoomSettings } from '../net/protocol';
 import type { PlayerCommand } from '../sim/command';
+import { START_HOLD_TICKS } from '../sim/constants';
 import { NO_EVENTS } from '../sim/levels';
 import type { GameOptions, GameState } from '../sim/state';
 import { botColorsFor, type RoundStart } from './online';
@@ -70,6 +71,8 @@ export class OnlineRound {
       mode: 'battle',
       players: this.players,
       roundTicks: time * 60,
+      // The 3-2-1-BLAST! count runs in the sim online (frames keep flowing), not as a client pause.
+      startHold: START_HOLD_TICKS,
       rules: { ...NO_EVENTS, mazeShift: maze, blackout },
     };
   }

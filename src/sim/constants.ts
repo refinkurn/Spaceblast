@@ -105,6 +105,12 @@ export const ROUND_SECONDS: readonly number[] = [60, 90, 120, 150, 180];
 export const COLLAPSE_EVERY = 12;
 /** The collapse is announced 3 s ahead. */
 export const COLLAPSE_WARNING_TICKS = 180;
+/**
+ * Online rounds open with this hold, the 3-2-1-BLAST! count (4 steps of 0.6 s,
+ * as in flow/countdown.ts) played by the sim so every phone agrees: nobody
+ * moves or places, and the round clock and events start once it is over.
+ */
+export const START_HOLD_TICKS = 144;
 
 // --- Level events (survival) ------------------------------------------------------
 // Which levels have which events lives in levels.ts.
