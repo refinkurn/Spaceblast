@@ -47,6 +47,13 @@ function savePrefs(name: string, color: number): void {
   try { localStorage.setItem(PREFS_KEY, JSON.stringify({ name, color })); } catch { /* private mode */ }
 }
 
+/** The Back icon button says what it does: "Back" on the join screen, "Leave room" in the lobby. */
+function backLabel(label: string): void {
+  const back = $('online-back');
+  back.setAttribute('aria-label', label);
+  back.title = label;
+}
+
 const timeLabel = (s: number) => (s < 120 ? `${s}s` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
 
 export class OnlineRoom {
@@ -149,7 +156,7 @@ export class OnlineRoom {
     this.screen.hidden = false;
     $('online-choose').hidden = false;
     $('online-lobby').hidden = true;
-    $('online-back').textContent = 'Back';
+    backLabel(t('html.online-back'));
     this.setStatus('');
     // After a page reload mid-match: offer to get back into the seat.
     const seat = savedSeat();
@@ -170,7 +177,7 @@ export class OnlineRoom {
     this.screen.hidden = false;
     $('online-choose').hidden = true;
     $('online-lobby').hidden = false;
-    $('online-back').textContent = t('online.leaveRoom');
+    backLabel(t('online.leaveRoom'));
     $('online-room').textContent = this.code;
     this.renderLobby(note);
   }

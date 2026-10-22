@@ -18,6 +18,8 @@
   <body>
     <!-- UI icons (24 px line icons), used with <svg class="ui-icon"><use href="#i-…"/></svg>. -->
     <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 12H5M11 5l-7 7 7 7"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></symbol>
       <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 2.5c3.2 2.4 4.6 6 4.2 10.5l-2 3h-4.4l-2-3C7.4 8.5 8.8 4.9 12 2.5z"/><circle cx="12" cy="9" r="1.8"/><path d="M7.9 12.4L5 15v3.5l3.6-2M16.1 12.4L19 15v3.5l-3.6-2M10.5 19.5l1.5 2.5 1.5-2.5"/></symbol>
       <symbol id="i-story" viewBox="0 0 24 24"><path d="M3 5.5c2.7-1.5 5.7-1.5 9 .5 3.3-2 6.3-2 9-.5V19c-2.7-1.5-5.7-1.5-9 .5-3.3-2-6.3-2-9-.5zM12 6v13.5"/></symbol>
       <symbol id="i-versus" viewBox="0 0 24 24"><path d="M4 4l11 11M12.5 17.5l5-5M16 16l4 4M20 4L9 15M6.5 12.5l5 5M8 16l-4 4"/></symbol>
@@ -107,7 +109,7 @@
         <dl id="banner-summary" class="banner-summary" hidden></dl>
         <div id="banner-tip" class="banner-tip" hidden></div>
         <div class="actions">
-          <button id="banner-btn" type="button"></button>
+          <button id="banner-btn" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span class="go-label"></span></button>
           <button id="banner-menu" class="quiet" type="button" data-i18n="html.banner-menu">Main menu</button>
         </div>
       </div>
@@ -117,7 +119,7 @@
         <div id="story-kicker" class="kicker"></div>
         <h2 id="story-title"></h2>
         <p id="story-text"></p>
-        <button id="story-btn" type="button" data-i18n="html.story-btn">Begin</button>
+        <button id="story-btn" class="icon-go" type="button" aria-label="Begin" title="Begin" data-i18n-aria="html.story-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg></button>
       </div>
     </div>
     <!-- One centred card on a dim backdrop; a tap anywhere (or the launch button, or Enter) starts the level. -->
@@ -157,20 +159,20 @@
           <button id="menu-credits" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-credits"/></svg><span data-i18n="html.menu-credits">Credits</span></button>
         </nav>
         <nav id="menu-versus-page" class="menu-page menu-list" aria-label="Versus" hidden>
-          <button type="button" class="menu-back">Back</button>
+          <button type="button" class="menu-back nav-back" aria-label="Back" title="Back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
           <h2>Versus</h2>
           <button id="mode-battle" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-bot"/></svg><span data-i18n="html.mode-battle">Battle vs Bot</span></button>
           <button id="mode-online" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-online"/></svg><span data-i18n="html.mode-online">Multiplayer</span></button>
         </nav>
         <nav id="menu-bot" class="menu-page menu-list" aria-label="Battle vs Bot" hidden>
-          <button type="button" class="menu-back">Back</button>
+          <button type="button" class="menu-back nav-back" aria-label="Back" title="Back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
           <h2>Battle vs Bot</h2>
           <button type="button" data-level="easy"><svg class="ui-icon" aria-hidden="true"><use href="#i-easy"/></svg><span>Easy</span></button>
           <button type="button" data-level="normal"><svg class="ui-icon" aria-hidden="true"><use href="#i-normal"/></svg><span>Normal</span></button>
           <button type="button" data-level="hard"><svg class="ui-icon" aria-hidden="true"><use href="#i-hard"/></svg><span>Hard</span></button>
         </nav>
         <div id="settings" class="menu-page" hidden>
-          <button id="settings-done" type="button" class="menu-back" data-i18n="html.settings-done">Back</button>
+          <button id="settings-done" type="button" class="menu-back nav-back" aria-label="Back" title="Back" data-i18n-aria="html.settings-done"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
           <h2>Settings</h2>
           <div class="menu-scroll">
             <label class="setting-line">Music
@@ -222,12 +224,12 @@
           </div>
         </div>
         <div id="menu-howto-page" class="menu-page menu-text" hidden>
-          <button type="button" class="menu-back">Back</button>
+          <button type="button" class="menu-back nav-back" aria-label="Back" title="Back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
           <h2>How to Play</h2>
           <div id="howto-body" class="menu-scroll"></div>
         </div>
         <div id="menu-credits-page" class="menu-page menu-text" hidden>
-          <button type="button" class="menu-back">Back</button>
+          <button type="button" class="menu-back nav-back" aria-label="Back" title="Back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
           <h2>Credits</h2>
           <div class="menu-scroll">
             <p><strong>Spaceblast</strong> by Refindo</p>
@@ -298,7 +300,7 @@
           </div>
         </div>
         <div id="online-status" class="online-status"></div>
-        <button id="online-back" type="button" class="quiet" data-i18n="html.online-back">Back</button>
+        <button id="online-back" type="button" class="nav-back" aria-label="Back" title="Back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
       </div>
     </div>
     <div id="start-screen">
@@ -328,6 +330,7 @@
     </div>
     <div id="story-hub" hidden>
       <div class="map-head">
+        <button id="hub-back" type="button" class="nav-back" aria-label="Back" title="Back" data-i18n-aria="html.hub-back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
         <div id="map-title" class="map-title"></div>
         <div id="map-signal" class="map-signal">
           <svg class="map-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
@@ -337,12 +340,13 @@
         <div class="map-right">
           <span id="map-stars" class="map-stars"></span>
           <button id="hub-board" type="button" data-i18n="html.hub-board">Leaderboard</button>
-          <button id="hub-back" type="button" class="quiet" data-i18n="html.hub-back">Back</button>
         </div>
       </div>
       <div id="map-track" class="map-track"></div>
       <div id="map-warp" class="map-warp" hidden></div>
       <div id="map-card" class="map-card-backdrop" hidden>
+        <!-- Outside the card (which animates with a transform) so it stays pinned to the screen corner. -->
+        <button id="map-card-back" type="button" class="nav-back" aria-label="Back" title="Back" data-i18n-aria="html.map-card-back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
         <div class="map-card" role="dialog" aria-labelledby="map-card-title">
           <div id="map-card-title" class="map-card-title"></div>
           <div id="map-card-sector" class="map-card-sector"></div>
@@ -351,8 +355,7 @@
           <ul id="map-card-stars" class="map-checklist"></ul>
           <div id="map-card-best" class="map-card-best"></div>
           <div class="map-card-actions">
-            <button id="map-card-back" type="button" class="quiet" data-i18n="html.map-card-back">Back</button>
-            <button id="map-card-enter" type="button" class="primary"></button>
+            <button id="map-card-enter" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span class="go-label"></span></button>
           </div>
         </div>
       </div>
@@ -374,7 +377,7 @@
           <button type="submit">Save</button>
         </form>
         <p id="lb-name-note" class="lb-status"></p>
-        <button id="lb-back" type="button" class="quiet" data-i18n="html.lb-back">Back</button>
+        <button id="lb-back" type="button" class="nav-back" aria-label="Back" title="Back" data-i18n-aria="html.lb-back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
       </div>
     </div>
     <div id="ending" hidden>

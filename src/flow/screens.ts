@@ -61,7 +61,8 @@ export class Screens {
     $('story-title').textContent = title;
     $('story-text').textContent = text;
     const btn = $<HTMLButtonElement>('story-btn');
-    btn.textContent = button;
+    btn.setAttribute('aria-label', button);
+    btn.title = button;
     btn.onclick = () => {
       $('story').hidden = true;
       onContinue();
@@ -119,7 +120,7 @@ export class Screens {
     summary.innerHTML = rows.map(([k, v]) => `<div${v.length > 22 ? ' class="wide"' : ''}><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
     summary.hidden = rows.length === 0;
     this.sprite.show(extra.pose ? 'astropaw' : null, extra.pose ?? 'neutral');
-    this.primary.textContent = button;
+    this.primary.querySelector('.go-label')!.textContent = button;
     this.onPrimary = onClick;
     this.banner.hidden = false;
     this.animate();

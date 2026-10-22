@@ -269,7 +269,7 @@ export class StoryMap {
       list.append(li);
     }
     $('map-card-best').textContent = bestLine(this.progress.bestScore(level));
-    $('map-card-enter').textContent = enterLabel(level);
+    $('map-card-enter').querySelector('.go-label')!.textContent = enterLabel(level);
     this.card.hidden = false;
     $('map-card-enter').focus();
   }

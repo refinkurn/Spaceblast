@@ -4,7 +4,7 @@
   --ink: #e8ecf5;
   --ink-quiet: #9aa3b5;
   --accent: #5ad1ff;
-  /* Screen-corner spots for the corner buttons (HUD sound / pause group, menu corner), clear of notches. */
+  /* Screen-corner spots shared by Back (top-left) and the sound / pause group (top-right), clear of notches. */
   --edge-top: max(8px, env(safe-area-inset-top));
   --edge-left: max(12px, env(safe-area-inset-left));
   --edge-right: max(12px, env(safe-area-inset-right));
@@ -208,16 +208,7 @@ body.scene .net-stats { visibility: hidden; }
 .story-card h2 { margin: 0; font-size: clamp(26px, 5vw, 40px); letter-spacing: 0.06em; color: var(--ink); text-wrap: balance; }
 .story-card p { margin: 0; font-size: 16px; line-height: 1.55; color: #c9d0de; }
 .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
-#story-btn {
-  margin-top: 8px;
-  min-height: 48px;
-  padding: 0 28px;
-  font: 700 16px system-ui, sans-serif;
-  color: #0e1118;
-  background: var(--accent);
-  border: 0;
-  border-radius: 12px;
-}
+#story-btn { margin-top: 8px; }
 /* Level card: one centred box on a dim backdrop. It used to be five separate strips (each with its own
    background, side borders and corner radii) that only looked like a card when they lined up exactly:
    they spread across the screen in a row, and later showed seams as only some strips animated in. */
@@ -394,10 +385,11 @@ body.scene .net-stats { visibility: hidden; }
 #menu h2 { margin: 0 0 2px; font-size: 22px; letter-spacing: 0.06em; }
 .menu-page { min-height: 0; display: flex; flex-direction: column; gap: 6px; }
 .menu-page[hidden] { display: none; }
-/* Sub-pages: Back is the first item, a 48 px button pinned at the top-left of the panel. */
-.menu-page .menu-back { align-self: flex-start; min-width: 96px; margin-bottom: 4px; }
+/* Sub-pages: Back (first in each page, for keyboard order) is the shared .nav-back in the screen's top-left
+   corner, so the page starts below it. */
+#menu.sub { padding-top: calc(var(--edge-top) + 56px); }
 /* Menu items: icon + label, 48 px tall. */
-.menu-list button, .menu-back {
+.menu-list button:not(.nav-back) {
   min-height: 48px;
   padding: 0 18px 0 14px;
   display: flex;
@@ -410,8 +402,8 @@ body.scene .net-stats { visibility: hidden; }
   border: 1px solid #ffffff26;
   border-radius: 12px;
 }
-.menu-list button .ui-icon { width: 24px; height: 24px; color: var(--accent); }
-.menu-list button:hover, .menu-list button:focus-visible, .menu-back:hover, .menu-back:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.menu-list button:not(.nav-back) .ui-icon { width: 24px; height: 24px; color: var(--accent); }
+.menu-list button:not(.nav-back):hover, .menu-list button:not(.nav-back):focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 .menu-list button[aria-current="true"]::after { content: '✓'; margin-left: auto; color: var(--accent); }
 .menu-scroll { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
 .menu-text .menu-scroll { font-size: 15px; line-height: 1.45; color: #c9d0de; }
@@ -507,11 +499,10 @@ body.scene .net-stats { visibility: hidden; }
   padding-left: max(28px, env(safe-area-inset-left));
 }
 .online-card { width: min(420px, 46vw); min-width: 260px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; padding-top: 52px; }
-#online button#online-back { position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(28px, env(safe-area-inset-left)); min-height: 48px; min-width: 96px; z-index: 1; }
 #online-choose { display: flex; flex-direction: column; gap: 12px; align-items: center; width: min(420px, 100%); }
 #online-lobby { display: flex; gap: 24px; width: 100%; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
 .lobby-col { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 260px; flex: 1 1 260px; }
-#online button {
+#online button:not(.nav-back) {
   min-height: 48px;
   padding: 0 22px;
   font: 600 16px system-ui, sans-serif;
@@ -1031,12 +1022,33 @@ body.scene #coach { visibility: hidden; }
 .power.charges .pips i.on { background: #00ffff; }
 .power.range .pips i.on { background: #ff5500; }
 .power.speed .pips i.on { background: #ffe600; }
-#lb-back { align-self: center; min-height: 48px; padding: 0 28px; font: 500 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; border-radius: 10px; }
+/* Leaderboard: room above the card for the corner Back. */
+#leaderboard { padding-top: calc(var(--edge-top) + 56px); }
+
 /* Shared line icons (index.html's sprite). */
 .icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 .ui-icon { flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* Proceed: a round accent button with a launch icon (level card). */
+/* Back: one icon button in the same top-left screen spot on every menu page, the online screens, the Story map,
+   its node card and the leaderboard (CLAUDE.md: 48 px targets). */
+.nav-back {
+  position: fixed;
+  top: var(--edge-top);
+  left: var(--edge-left);
+  z-index: 5;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: #0e1118cc;
+  border: 1px solid #ffffff40;
+  border-radius: 12px;
+}
+.nav-back:hover, .nav-back:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); }
+
+/* Proceed: a round accent button with a play / launch icon (Story card Begin, level card launch). */
 .icon-go {
   flex: none;
   width: 60px;
@@ -1052,3 +1064,6 @@ body.scene #coach { visibility: hidden; }
 }
 .icon-go .ui-icon { width: 28px; height: 28px; }
 .icon-go:hover, .icon-go:focus-visible { outline: none; box-shadow: 0 0 0 4px #5ad1ff77; }
+/* Proceed buttons with a label (Next level, Retry, Enter): play icon before the words. */
+.go-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.go-btn .ui-icon { width: 18px; height: 18px; }

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import html from '../../index.html?raw';
 import css from '../style.css?raw';
+import mapCss from './story_map.css?raw';
 
 // Layout rules checked on the markup and styles: the HUD's corner groups,
-// icon + text menu items, the level card box.
+// one Back spot for every screen, icon + text menu items, the level card box.
 
 const rule = (src: string, sel: string) => src.match(new RegExp(`(?:^|\n)${sel.replace(/[.#()]/g, '\\$&')} \\{([^}]*)\\}`))?.[1] ?? '';
 /** The markup of the element with this id, up to its matching closing tag. */
@@ -48,6 +49,42 @@ describe('HUD corners', () => {
   });
 });
 
+describe('Back buttons', () => {
+  const BACKS = ['settings-done', 'online-back', 'hub-back', 'map-card-back', 'lb-back'];
+
+  it('every Back is the same icon button (no text label) with an accessible name', () => {
+    const all = [...html.matchAll(/<button[^>]*class="[^"]*\bnav-back\b[^"]*"[^>]*>([\s\S]*?)<\/button>/g)];
+    // 5 menu sub-pages (Settings is one of them) + online + map + map card + leaderboard.
+    expect(all.length).toBe(9);
+    for (const [tag, inner] of all) {
+      expect(tag).toContain('aria-label="Back"');
+      expect(inner).toContain('href="#i-back"');
+      expect(inner.replace(/<[^>]*>/g, '').trim()).toBe('');
+    }
+    for (const id of BACKS) expect(block(id)).toContain('nav-back');
+  });
+
+  it('is pinned to one top-left screen spot, 48 px', () => {
+    const back = rule(css, '.nav-back');
+    expect(back).toContain('position: fixed');
+    expect(back).toContain('top: var(--edge-top)');
+    expect(back).toContain('left: var(--edge-left)');
+    expect(back).toContain('width: 48px');
+    expect(back).toContain('height: 48px');
+  });
+
+  it('no screen moves its Back somewhere else', () => {
+    expect(mapCss).toContain('.map-head'); // story_map.css really loaded (vite.config test.css.include)
+    for (const id of BACKS) {
+      expect(css).not.toMatch(new RegExp(`#${id}[^{]*\\{[^}]*position`));
+      expect(mapCss).not.toMatch(new RegExp(`#${id}\\b`));
+    }
+    // The map card's Back sits outside the card, whose entry animation would carry a fixed child with it.
+    const card = html.match(/<div class="map-card" [\s\S]*?<\/ul>/)![0];
+    expect(card).not.toContain('map-card-back');
+  });
+});
+
 describe('menu items', () => {
   it('pair an icon with a text label and stay 48 px tall', () => {
     for (const id of ['mode-survival', 'menu-versus', 'menu-settings', 'menu-credits', 'mode-battle', 'mode-online']) {
@@ -57,7 +94,7 @@ describe('menu items', () => {
     for (const level of ['easy', 'normal', 'hard']) {
       expect(html).toMatch(new RegExp(`data-level="${level}"><svg class="ui-icon"[^>]*><use href="#i-${level}"/></svg><span>`));
     }
-    expect(rule(css, '.menu-list button, .menu-back')).toContain('min-height: 48px');
+    expect(rule(css, '.menu-list button:not(.nav-back)')).toContain('min-height: 48px');
   });
 
   it('every icon the page uses is in the sprite', () => {

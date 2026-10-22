@@ -10,8 +10,9 @@
 /* Header: sector title · Core signal · stars, Leaderboard, Back. */
 .map-head {
   flex: none; display: flex; align-items: center; gap: 12px;
-  padding: max(4px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 4px max(12px, env(safe-area-inset-left));
-  min-height: 56px; box-sizing: border-box;
+  /* Left: room for the corner Back (.nav-back, pinned like on every other screen). */
+  padding: max(4px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 4px calc(var(--edge-left) + 60px);
+  min-height: 64px; box-sizing: border-box;
   background: linear-gradient(#0b0d12, #0b0d12d0);
   border-bottom: 1px solid #ffffff1a;
 }
@@ -27,11 +28,11 @@
 .map-signal.done .map-signal-label { color: #ffd23f; }
 .map-right { flex: 1 1 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .map-stars { font: 700 14px system-ui, sans-serif; color: #ffd23f; white-space: nowrap; }
-#hub-board, #hub-back { min-height: 48px; min-width: 48px; padding: 0 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 12px; }
+#hub-board { min-height: 48px; min-width: 48px; padding: 0 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 12px; }
 @media (max-width: 760px) {
   .map-title { font-size: 12px; }
   .map-stars { font-size: 13px; }
-  #hub-board, #hub-back { padding: 0 10px; font-size: 13px; }
+  #hub-board { padding: 0 10px; font-size: 13px; }
 }
 
 /* The track: all shown sectors side by side, one screen each. */
@@ -144,9 +145,9 @@
 .map-card-actions { display: flex; gap: 8px; margin-top: 4px; }
 .map-card-actions button { flex: 1; min-height: 48px; font: 700 15px system-ui, sans-serif; border-radius: 10px; }
 #map-card-enter { color: #0e1118; background: var(--accent); border: 0; letter-spacing: 0.06em; }
-#map-card-back { color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; }
 @media (max-height: 420px) {
-  .map-head { min-height: 52px; }
+  /* Still tall enough for the 48 px corner Back (top 8 px). */
+  .map-head { min-height: 60px; }
   .map-card { gap: 4px; padding: 8px 14px 10px; }
   .map-card-title { font-size: 28px; }
   .map-checklist { font-size: 13px; gap: 1px; }
