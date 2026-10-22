@@ -3,14 +3,14 @@ import { BossKind, Kind } from './constants';
 // Survival ("story mode"): 20 levels in 4 sectors of 5. The 5th level of
 // each sector is a boss: survival waves on 5, 10 and 15, a duel on 20.
 //
-// The table below follows the story (docs/design/level-progression.md): one
-// new idea per level, introduced by Kit's briefing for that level, and the
-// Martian count rising steadily inside each sector.
+// The table below follows the story pacing: each sector brings exactly one
+// new Martian species and one new scenario (hazard), introduced by Kit's
+// briefing, with the Martian count rising steadily inside each sector.
 //
-//   Sector 1  Outpost Surface   (1-5)   learn the basics: Gooplings, then Sniffers; no hazards
-//   Sector 2  Deep Shafts       (6-10)  Phasers, Maze Shift, a Blackout, Builders
-//   Sector 3  Tectonic Core     (11-15) the cavern reshapes itself: frequent events, then a wandering gate
-//   Sector 4  Rogue Facility    (16-20) Ducking's army hunts you, every hazard
+//   Sector 1  Outpost Surface   (1-5)   new: Gooplings; no scenario, no hazards
+//   Sector 2  Deep Shafts       (6-10)  new: Sniffers (6), Blackout (7)
+//   Sector 3  Tectonic Core     (11-15) new: Phasers + Maze Shift (11); Blackout returns (13), gate drifts (14)
+//   Sector 4  Rogue Facility    (16-20) new: Builders + the Hunt (16); then every hazard together
 
 export const LEVEL_COUNT = 20;
 
@@ -42,39 +42,40 @@ export interface LevelSpec {
 const { Goopling: G, Sniffer: S, Phaser: P, Builder: B } = Kind;
 
 const MAZE: Partial<LevelRules> = { mazeShift: true };
-const DARK: Partial<LevelRules> = { mazeShift: true, blackout: true };
+const DARK: Partial<LevelRules> = { blackout: true };
 const CORE: Partial<LevelRules> = { mazeShift: true, blackout: true, frequentEvents: true };
 const DRIFT: Partial<LevelRules> = { ...CORE, gateWander: true };
+const STALK: Partial<LevelRules> = { mazeShift: true, blackout: true, aggressive: true };
 const HUNT: Partial<LevelRules> = { ...DRIFT, aggressive: true };
 
 /**
  * Per level: the Martians (boss levels bring their own) and the hazards.
- * The comment is what Kit's briefing (story.ts CONTEXT) promises there.
+ * The comment is the level's intent (Kit's briefing in story.ts matches it).
  */
 const LEVELS: { roster: Kind[]; rules?: Partial<LevelRules> }[] = [
-  // Sector 1: Outpost Surface. On the surface, learning the basics. No hazards.
-  { roster: [G, G] }, //                         1  "Clear a path through the rocks." Tutorial: two slow Gooplings.
-  { roster: [G, G, G] }, //                      2  "Small creatures. Keep your distance."
-  { roster: [G, G, S] }, //                      3  "Sniffers dodge your blasts." The first Sniffer.
-  { roster: [G, G, S, S] }, //                   4  "Watch the creatures." Everything sector 1 has, together.
+  // Sector 1: Outpost Surface. Gooplings only, no hazards: learn the basics.
+  { roster: [G, G] }, //                         1  tutorial: two slow Gooplings
+  { roster: [G, G, G] }, //                      2  more Gooplings
+  { roster: [G, G, G, G] }, //                   3  a crowd of Gooplings
+  { roster: [G, G, G, G, G] }, //                4  the sector's peak
   { roster: [] }, //                             5  Goopling Hive
-  // Sector 2: Deep Shafts. Underground, maintained, organized.
-  { roster: [G, G, S, P], rules: MAZE }, //      6  "Watch for Phasers." Walls start to move.
-  { roster: [G, S, P, P], rules: { ...DARK, blackoutFirst: true } }, // 7  "Those walls moved on purpose... A blackout is next."
-  { roster: [G, S, P, B], rules: DARK }, //      8  "Builders can block your path." The first Builder.
-  { roster: [G, G, S, P, P, B], rules: DARK }, // 9  "Expect heavier resistance." The sector's peak.
+  // Sector 2: Deep Shafts. New: Sniffers, then Blackouts (the only hazard here).
+  { roster: [G, G, S] }, //                      6  first Sniffer; no hazards yet
+  { roster: [G, G, S, S], rules: { ...DARK, blackoutFirst: true } }, // 7  first Blackout (Kit warns: it comes first)
+  { roster: [G, G, S, S, S], rules: DARK }, //   8  Blackouts, more Sniffers
+  { roster: [G, G, G, S, S, S], rules: DARK }, // 9  the sector's peak
   { roster: [] }, //                             10 Darkness Hive
-  // Sector 3: Tectonic Core. The cavern reshapes itself, faster and faster.
-  { roster: [G, S, P, P, P, B], rules: CORE }, //   11 "More Phasers ahead." Events come twice as often.
-  { roster: [G, S, P, P, B, B], rules: CORE }, //   12 "Builders are reinforcing the passages."
-  { roster: [G, G, S, S, P, P, B], rules: DRIFT }, // 13 "Don't count on the way back staying open." The gate starts to wander.
-  { roster: [G, S, S, P, P, B, B], rules: DRIFT }, // 14 "We're close to the center."
+  // Sector 3: Tectonic Core. New: Phasers and Maze Shift; then old hazards return.
+  { roster: [G, S, S, P], rules: MAZE }, //      11 first Phaser, first Maze Shift
+  { roster: [G, S, S, P, P], rules: MAZE }, //   12 more Phasers, walls keep moving
+  { roster: [G, G, S, S, P, P], rules: CORE }, //   13 Blackout returns, events twice as often
+  { roster: [G, S, S, P, P, P], rules: DRIFT }, //  14 the gate starts to wander
   { roster: [] }, //                             15 Maze Master
-  // Sector 4: Rogue Facility. Ducking's army: Martians hunt you, every hazard.
-  { roster: [G, G, S, S, P, P, B], rules: HUNT }, //       16 "These attacks aren't random anymore."
-  { roster: [G, S, S, P, P, B, B], rules: HUNT }, //       17 "Someone knows we're here."
-  { roster: [G, G, S, S, P, P, B, B], rules: HUNT }, //    18 "The control room should be close."
-  { roster: [G, S, S, S, P, P, P, B, B], rules: HUNT }, // 19 "Last stretch." The hardest level.
+  // Sector 4: Rogue Facility. New: Builders and the Hunt; then every hazard.
+  { roster: [G, G, S, P, B], rules: STALK }, //            16 first Builder, Martians start hunting
+  { roster: [G, S, S, P, P, B, B], rules: HUNT }, //       17 full Hunt: every hazard
+  { roster: [G, G, S, S, P, P, B, B], rules: HUNT }, //    18 full Hunt
+  { roster: [G, S, S, S, P, P, P, B, B], rules: HUNT }, // 19 the hardest level
   { roster: [], rules: MAZE }, //                20 the duel with Ducking: Maze Shift only
 ];
 

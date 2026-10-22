@@ -29,13 +29,16 @@ function add(g: GameState, kind: Kind, tx: number, ty: number, extra: Partial<Ma
 }
 
 describe('level roster', () => {
-  it('follows the sector plan: Gooplings and Sniffers, then Phasers and Builders', () => {
+  it('follows the sector plan: one new species per sector (Goopling 1, Sniffer 6, Phaser 11, Builder 16)', () => {
     expect(levelRoster(1)).toEqual([Kind.Goopling, Kind.Goopling]); // the tutorial level: two slow Gooplings
-    expect(levelRoster(2)).not.toContain(Kind.Sniffer);
-    expect(levelRoster(3)).toContain(Kind.Sniffer); // Sector 1 introduces Sniffers
-    expect(levelRoster(4).some((k) => k === Kind.Phaser || k === Kind.Builder)).toBe(false);
-    expect(levelRoster(6)).toContain(Kind.Phaser); // Sector 2 introduces Phasers...
-    expect(levelRoster(8)).toContain(Kind.Builder); // ...and Builders
+    const firstLevel = (kind: Kind) => {
+      for (let n = 1; n <= LEVEL_COUNT; n++) if (levelRoster(n).includes(kind)) return n;
+      return -1;
+    };
+    expect(firstLevel(Kind.Goopling)).toBe(1);
+    expect(firstLevel(Kind.Sniffer)).toBe(6);
+    expect(firstLevel(Kind.Phaser)).toBe(11);
+    expect(firstLevel(Kind.Builder)).toBe(16);
     for (const boss of [5, 10, 15, 20]) expect(levelRoster(boss)).toEqual([]); // bosses bring their own
     for (let level = 1; level <= LEVEL_COUNT; level++) {
       if (level % 5 === 0) continue;

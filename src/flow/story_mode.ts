@@ -210,7 +210,7 @@ export class StoryMode {
     const state = this.host.state;
     const level = this.level;
     const spec = levelSpec(level);
-    // The Renegade Pilot counts as a boss too.
+    // The Ducking duel counts as a boss too.
     if (spec.rival) this.progress.add({ bosses: 1 });
     const lost = Math.min(this.livesLost, START_LIVES);
     const martians = state.martians.filter((m) => !m.alive).length;
@@ -247,7 +247,7 @@ export class StoryMode {
   private gameOver(): void {
     this.progress.save();
     const level = this.level;
-    this.screens.showBanner(t('banner.defeated'), t('story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.mainMenu'), randomTip(),
+    this.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.mainMenu'), randomTip(),
       { pose: 'defeated', summary: storySummary(this.host.state, Math.min(this.livesLost, START_LIVES), 0) });
   }
 

@@ -41,7 +41,7 @@ export const BEATS: Beat[] = [
   { id: 'powerup', level: 1, trigger: 'item_picked', done: 'timer', prompt: 'Power-up! Check the pips at the top.' },
   { id: 'martian', level: 1, trigger: 'martian_near', done: 'timer', prompt: 'Martians bite when they touch you. Keep your distance.' },
   { id: 'gate', level: 1, trigger: 'gate_opened', done: 'level_clear', prompt: 'The Warp Gate is open. Step on it to clear the level.' },
-  { id: 'sniffer', level: 3, trigger: 'martian_near', kind: Kind.Sniffer, done: 'timer', prompt: "Sniffers dodge blasts. Corner them." },
+  { id: 'sniffer', level: 6, trigger: 'martian_near', kind: Kind.Sniffer, done: 'timer', prompt: "Sniffers dodge blasts. Corner them." },
 ];
 
 /** What [MOVE] and [CHARGE] say, per kind of control. */
@@ -59,7 +59,7 @@ export const TIPS: string[] = [
   'A level only ends when you step on the Warp Gate.',
   'A charge that hits you costs a life. An Oxygen Vest saves you once.',
   'A blast destroys any power-up on its tiles, so grab it before the blast reaches it.',
-  "Freeze is the emergency button: use it when you're surrounded.",
+  'Freeze Pulse works the moment you grab it. Grab it when Martians are close.',
   'A Martian that walks into a blast is defeated. Use that.',
   'Freeze stops every Martian for 3 seconds. It is the best time to walk past a crowd.',
   "Bosses can't be destroyed. Survive the waves.",

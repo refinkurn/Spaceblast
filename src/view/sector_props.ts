@@ -91,9 +91,15 @@ function prop(kind: PropKind, look: ArenaLook, i: number): THREE.Group {
       }
       break;
     }
-    case 'rune_slab': {
-      // An alien monolith with a glowing emerald rune.
-      g.add(box(0.7, 2.2, 0.35, lambert(0x1f0a46), 0, 1.1), box(0.12, 1.2, 0.04, glow(0x10B981), 0, 1.2, 0.19), box(0.4, 0.1, 0.04, glow(0x10B981), 0, 1.5, 0.19));
+    case 'drill_rig': {
+      // An old colony drill rig, left where the miners stopped: a frame, a bit
+      // sunk in the rock, and a crystal it was cutting.
+      const steel = lambert(0x3a2a5c);
+      g.add(box(0.12, 2.0, 0.12, steel, -0.45, 1.0), box(0.12, 2.0, 0.12, steel, 0.45, 1.0), box(1.05, 0.14, 0.14, steel, 0, 2.0), box(0.18, 1.3, 0.18, lambert(0x6b5a7a), 0, 1.15));
+      const bit = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.4, 6), glow(0x10B981));
+      bit.position.y = 0.32;
+      bit.rotation.x = Math.PI;
+      g.add(bit);
       break;
     }
     case 'vat': {

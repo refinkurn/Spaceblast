@@ -20,11 +20,11 @@ export const SECTORS: SectorStory[] = [
   },
   {
     name: 'Deep Shafts',
-    story: 'Shafts centuries old, yet swept and lit. Somebody is maintaining them. The creatures here are more organized.',
+    story: 'Shafts centuries old, yet swept and lit. Somebody is maintaining them. But the power down here is failing.',
   },
   {
     name: 'Tectonic Core',
-    story: 'The heart of Mars. The cavern reshapes itself, and the Martians march in unison toward its center.',
+    story: 'The heart of Mars: a crystal cavern that reshapes itself. Something down here is moving the walls.',
   },
   {
     name: 'Rogue Facility',
@@ -34,7 +34,7 @@ export const SECTORS: SectorStory[] = [
 
 /** The ending screen's text (the FINAL TEXT of the script). */
 export const ENDING =
-  'Mars returned to silence. The hives scattered. And one hunter would face justice among the stars. But today, the Astropaws were safe. Today, they were going home.';
+  'Mars returned to silence. The Martians went back to the wild. And one hunter would face justice among the stars. But today, the Astropaws were safe. Today, they were going home.';
 
 /**
  * One line per level, shown on the level card under the sector. Empty on the
@@ -43,21 +43,21 @@ export const ENDING =
 export const CONTEXT: string[] = [
   'Clear a path through the rocks. We need those power cores to get home.',
   'Movement ahead. Small creatures. Keep your distance.',
-  'Sniffers dodge your blasts. Trap them in a corridor.',
-  'Watch the creatures. Stay alert.',
+  'More Gooplings. Lure them into your blasts.',
+  'The whole herd is out. Stay alert.',
   '', // level 5: the boss / duel scene instead
-  "Watch for Phasers. An empty corridor doesn't mean you're alone.",
-  'Those walls moved on purpose. Someone is rearranging this place. A blackout is next.',
-  "Builders can block your path. Don't let them trap you.",
-  "We're getting closer to the core. Expect heavier resistance.",
+  'New readings: Sniffers. They dodge your blasts, so trap them in a corridor.',
+  'The power down here is failing. When the lights go, trust your memory.',
+  "Sniffers hunt by smell. The dark doesn't slow them down.",
+  'Blackouts come more often now. Something big is close.',
   '', // level 10: the boss / duel scene instead
-  'More Phasers ahead. Stay alert.',
-  'Builders are reinforcing the passages. Watch your route.',
-  "The maze is shifting. Don't count on the way back staying open.",
-  "We're close to the center. Stay focused.",
+  "Phasers ahead. An empty corridor doesn't mean you're alone. And these walls move.",
+  'Those walls moved on purpose. Someone is rearranging this place.',
+  'Shifts and blackouts together now. The cavern changes faster here.',
+  "The gate drifts with the walls. Don't count on the way back staying open.",
   '', // level 15: the boss / duel scene instead
-  "These attacks aren't random anymore. Stay sharp.",
-  "Someone knows we're here. Keep moving.",
+  "Builders, fortifying the base. And the Martians are hunting you now.",
+  "These attacks aren't random anymore. Someone knows we're here.",
   'The control room should be close. No detours.',
   'Last stretch, Bosco. Bring those cores home.',
   '', // level 20: the boss / duel scene instead
@@ -73,7 +73,7 @@ export const BOSS_NAMES: Record<number, string> = {
 export const REPLIES: Record<number, string> = {
   3: 'Great. Even the wildlife has a better sense of direction than I do.',
   7: 'So the mine is haunted and has a landlord. Cool.',
-  8: 'Now the wildlife has a construction crew. Do they have permits?',
+  16: 'Now the wildlife has a construction crew. Do they have permits?',
 };
 
 export type GoalIcon = 'gate' | 'shield' | 'duel';

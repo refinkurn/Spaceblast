@@ -235,6 +235,7 @@
     "sound.sfx": "Sound: effects only",
     "story.begin": "Begin",
     "story.gameOver": "The Martians got you on level {n}. Your progress is saved.",
+    "story.gameOverDuel": "Ducking got the better of you this time. Your progress is saved.",
     "story.levelClear": "Level {n} clear!",
     "story.martians": "{n} Martians",
     "story.next": "Next: level {n}, {goal}.",

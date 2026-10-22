@@ -21,7 +21,7 @@ Decided by Refindo, 2026-10-21. When a line in `src/flow/` disagrees with this f
 2. Kit says don't. Bosco goes. A herd of Martians launches from the surface, sticks to the ship like octopuses and wrecks the engine. The ship crashes.
 3. The engine is fixable. The cores are gone (taken by the herd on Ducking's orders). Kit sends Bosco after them. Radiation is safe. Follow the Warp Gates down.
 4. Hives (levels 5, 10) can't be damaged. They go unstable and rupture after three waves, which opens a warp line below. The Maze Master (level 15) is the same: outlast it.
-5. Sector 2: the shafts are centuries old but freshly maintained. Level 7: someone is rearranging the walls on purpose.
+5. Sector 2: the shafts are centuries old but freshly maintained, and their power is failing (blackouts; Sniffers first appear). Sector 3: a crystal cavern at the heart of Mars, with old colony drill rigs; the walls start moving (Phasers first appear), and level 12 says someone is rearranging them on purpose. Sector 4: Builders fortify Ducking's base and his signal makes the Martians hunt.
 6. Level 15: the colony records show the containment failure. The Council buried it. Ducking's voice reveals his biotech, his weapon (for civilized minds, whole worlds) and the lure: five years of distress calls.
 7. Sector 4: a graveyard of old colony and Council ships, and a few that are not old. What happened to those crews is **left open on purpose**.
 8. Level 20: the duel. Bosco stuns Ducking. The cores are recovered.
@@ -32,3 +32,5 @@ Decided by Refindo, 2026-10-21. When a line in `src/flow/` disagrees with this f
 - Kit never appears beside Bosco in the field.
 - No "Division", no humans, no "locals" (the Martians are wildlife).
 - Briefings fit two lines (about 20 words). Cutscene lines stay short.
+- Pacing: one new Martian species and one new scenario per sector (docs/design/level-progression.md). A line may only mention a species or hazard the player has met by then.
+- No ancient civilisation: Mars ruins are mining-colony ruins (drill rigs, shafts), never runes or temples.

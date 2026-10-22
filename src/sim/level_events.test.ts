@@ -4,7 +4,7 @@ import {
   FIRST_EVENT_TICKS, GATE_WAIT_TICKS, GRID_W, LevelEvent, SHIFT_MAX_ROCKS, SHIFT_MIN_ROCKS, TILE,
 } from './constants';
 import { NO_COMMAND, type PlayerCommand } from './command';
-import { NO_EVENTS, levelRules, type LevelRules } from './levels';
+import { LEVEL_COUNT, NO_EVENTS, levelRules, type LevelRules } from './levels';
 import { hashState, step } from './sim';
 import { createGame, playerTile, type GameState, type SimEvent } from './state';
 
@@ -30,15 +30,42 @@ function run(g: GameState, ticks: number): SimEvent[] {
 describe('level rules', () => {
   it("follows the story: each hazard arrives where Kit's briefing announces it", () => {
     for (const n of [1, 2, 3, 4]) expect(levelRules(n)).toEqual(NO_EVENTS); // Sector 1: no hazards
-    expect(levelRules(6)).toEqual({ ...NO_EVENTS, mazeShift: true }); // the walls start to move
-    expect(levelRules(7)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, blackoutFirst: true }); // "A blackout is next."
-    expect(levelRules(9)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true });
-    expect(levelRules(11)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, frequentEvents: true }); // the cavern reshapes itself
-    expect(levelRules(12).gateWander).toBe(false);
-    expect(levelRules(13)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, frequentEvents: true, gateWander: true }); // "don't count on the way back"
-    expect(levelRules(16)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, gateWander: true, frequentEvents: true, aggressive: true }); // "not random anymore"
+    expect(levelRules(6)).toEqual(NO_EVENTS); // first Sniffer, no hazard yet
+    expect(levelRules(7)).toEqual({ ...NO_EVENTS, blackout: true, blackoutFirst: true }); // first Blackout
+    for (const n of [8, 9]) expect(levelRules(n)).toEqual({ ...NO_EVENTS, blackout: true });
+    for (const n of [11, 12]) expect(levelRules(n)).toEqual({ ...NO_EVENTS, mazeShift: true }); // first Maze Shift
+    expect(levelRules(13)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, frequentEvents: true });
+    expect(levelRules(14)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, frequentEvents: true, gateWander: true });
+    expect(levelRules(16)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, aggressive: true }); // the Hunt begins
+    for (const n of [17, 18, 19]) expect(levelRules(n)).toEqual({ ...NO_EVENTS, mazeShift: true, blackout: true, gateWander: true, frequentEvents: true, aggressive: true });
     for (const boss of [5, 10, 15]) expect(levelRules(boss)).toEqual(NO_EVENTS); // the boss drives its own hazards
     expect(levelRules(20)).toEqual({ ...NO_EVENTS, mazeShift: true }); // the duel's grid keeps shifting
+  });
+
+  it('introduces one new scenario per sector: Blackout 7, Maze Shift 11, wandering gate 14, Hunt 16', () => {
+    const first = (on: (r: LevelRules) => boolean) => {
+      for (let n = 1; n <= LEVEL_COUNT; n++) if (on(levelRules(n))) return n;
+      return -1;
+    };
+    expect(first((r) => r.blackout)).toBe(7);
+    expect(first((r) => r.mazeShift)).toBe(11);
+    expect(first((r) => r.gateWander)).toBe(14);
+    expect(first((r) => r.aggressive)).toBe(16);
+    expect(first((r) => r.frequentEvents)).toBe(13);
+  });
+
+  it('Blackout-only levels (7-9) schedule Blackouts and never a Maze Shift, with warnings', () => {
+    for (const n of [7, 8, 9]) {
+      for (const seed of [1, 5, 9]) {
+        const g = level(levelRules(n), seed);
+        const all = run(g, 60 * 60 * 3); // three minutes
+        const warnings = all.filter((e) => e.type === 'event_warning');
+        expect(warnings.length, `level ${n} seed ${seed}`).toBeGreaterThan(1);
+        for (const w of warnings) if (w.type === 'event_warning') expect(w.event).toBe(LevelEvent.Blackout);
+        expect(all.some((e) => e.type === 'maze_shift')).toBe(false);
+        expect(all.filter((e) => e.type === 'blackout_start').length).toBeGreaterThan(1);
+      }
+    }
   });
 
   it('hashes blackoutFirst, so peers with different rules see a desync', () => {
@@ -61,7 +88,7 @@ describe('level rules', () => {
   });
 
   it('spaces events 12-18 s apart in sectors 3-4', () => {
-    const g = level(levelRules(12));
+    const g = level(levelRules(13));
     g.rules = { ...g.rules, blackout: false, gateWander: false };
     run(g, FIRST_EVENT_TICKS + EVENT_WARNING_TICKS);
     expect(g.nextEvent).toBeGreaterThanOrEqual(12 * 60);

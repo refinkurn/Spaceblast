@@ -5,7 +5,7 @@ import SECTORS from '../config/sectors.json';
 // props). Looks only: names and story text stay in flow/story.ts, rules in
 // sim/levels.ts. Battle and online rounds use sector 1.
 
-export type PropKind = 'landing_gear' | 'solar_panel' | 'dust_rock' | 'gantry' | 'floodlight' | 'hazard_plank' | 'crystal' | 'rune_slab' | 'vat' | 'alarm_bar';
+export type PropKind = 'landing_gear' | 'solar_panel' | 'dust_rock' | 'gantry' | 'floodlight' | 'hazard_plank' | 'crystal' | 'drill_rig' | 'vat' | 'alarm_bar';
 
 export interface ArenaLook {
   background: number;

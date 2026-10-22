@@ -12,7 +12,7 @@ export const KIT = { speaker: 'Captain Kit (radio)', color: '#ffd23f', character
 const BOSCO = { speaker: 'Bosco', color: '#5ad1ff', character: 'astropaw' };
 /** The mechanic; stays at the crash site and rebuilds the Biscuit. */
 export const CAPYBARA = { speaker: 'Capybara', color: '#c9a27a', character: 'capybara' };
-/** The Renegade Pilot: a rogue Astropaw who lures ships to Mars for their cores. Captured at the end. */
+/** Ducking: a wanted genius biotech scientist who lures ships to Mars for their cores. Captured at the end. */
 const DUCKING = { speaker: 'Ducking', color: '#ff6a3d', character: 'ducking' };
 // Voices without a sprite.
 const SHIP_AI = { speaker: 'Ship AI', color: '#9fe8ff' };
@@ -95,16 +95,16 @@ export const INTRO_SCENES: Record<number, Shot[]> = {
     { focus: 'hero', ...KIT, pose: 'worried', text: "Bosco, these shafts are centuries old. But look at them." },
     { focus: 'hero', ...BOSCO, pose: 'neutral', text: "Very clean for an abandoned mine." },
     { focus: 'hero', ...KIT, pose: 'determined', text: "Too clean. Somebody is maintaining them. Recently." },
-    { focus: 'arena', text: "A shape moves in the darkness ahead. Too fast to identify." },
+    { focus: 'arena', text: "Something sniffs the air in the dim shaft ahead, then darts out of sight." },
     { focus: 'hero', ...BOSCO, pose: 'surprised', text: "What was that?" },
-    { focus: 'hero', ...KIT, pose: 'worried', text: "Unknown. New enemy type, possibly. Don't engage if you can avoid it." },
+    { focus: 'hero', ...KIT, pose: 'worried', text: "New species. Sniffers, I think. They smell you before they see you." },
     { focus: 'hero', ...BOSCO, pose: 'neutral', text: "Getting fond of empty rocks and simple Gooplings about now." },
-    { focus: 'hero', ...KIT, pose: 'determined', text: "Focus. The deeper we go, the more organized these creatures become. Someone—or something—is directing them." },
+    { focus: 'hero', ...KIT, pose: 'determined', text: "Focus. And watch the lamps. The power down here is failing." },
   ],
 
   10: [
     { focus: 'arena', fade: true, text: "The chamber plunges into darkness. Only Bosco's suit glow illuminates the space." },
-    { focus: 'hero', ...BOSCO, pose: 'surprised', text: "The lights just went out." },
+    { focus: 'hero', ...BOSCO, pose: 'surprised', text: "The lights are dying for good." },
     { focus: 'hero', ...KIT, pose: 'worried', text: "I'm reading a massive energy spike. Something's waking up." },
     { focus: 'boss', shake: true, reveal: "DARKNESS HIVE", pose: 'idle', text: "The hive appears—darker than the first, crackling with electrical energy. It's twice the size." },
     { focus: 'hero', ...BOSCO, pose: 'determined', text: "This one's different. Bigger. Angrier." },
@@ -112,12 +112,12 @@ export const INTRO_SCENES: Record<number, Shot[]> = {
     { focus: 'boss', shake: true, pose: 'attacking', text: "The hive unleashes a wave of creatures." },
   ],
   11: [
-    { focus: 'arena', fade: true, reveal: "SECTOR 3 · TECTONIC CORE", text: "Bosco enters a massive cavern—a subterranean sea of rock and molten light. The walls pulse with geothermal energy." },
+    { focus: 'arena', fade: true, reveal: "SECTOR 3 · TECTONIC CORE", text: "Bosco enters a massive cavern at the heart of Mars. Crystals as tall as ships glow in the rock, and old colony drill rigs stand where the miners left them." },
     { focus: 'hero', ...BOSCO, pose: 'surprised', text: "This is the planet's core. We're in the heart of Mars." },
     { focus: 'arena', shake: true, text: "The cavern moves. Walls rebuild. A maze forms and reforms in real time." },
-    { focus: 'hero', ...BOSCO, pose: 'neutral', text: "Same moving walls. Bigger room." },
-    { focus: 'hero', ...KIT, pose: 'worried', text: "And a stronger hand behind them. Look at the creatures." },
-    { focus: 'arena', text: "Dozens of Martians move through the cavern in unison—not wandering, but marching. Organized. Directed toward the cavern's center." },
+    { focus: 'hero', ...BOSCO, pose: 'neutral', text: "The walls… are moving. Walls shouldn't move." },
+    { focus: 'hero', ...KIT, pose: 'worried', text: "Rock doesn't do that on its own. Look at the creatures." },
+    { focus: 'arena', text: "Dozens of Martians gather in the cavern, restless, drifting toward its center." },
     { focus: 'hero', ...BOSCO, pose: 'determined', text: "They're all moving toward the same point." },
     { focus: 'hero', ...KIT, pose: 'worried', text: "The source. Whatever controls them is down here, and it's stronger than the hives you've already faced. Be careful." },
   ],
@@ -177,7 +177,7 @@ export const OUTRO_SCENES: Record<number, Shot[]> = {
   10: [
     { focus: 'boss', shake: true, boom: 0x8c7bff, reveal: "DARKNESS LIFTED", pose: 'defeated', text: "The hive ruptures. The chamber's lights flicker back on, and another warp line glows beneath it." },
     { focus: 'hero', ...BOSCO, pose: 'hurt', text: "Two down." },
-    { focus: 'hero', ...KIT, pose: 'worried', text: "Two down. Bosco, the energy readings from the planet's core are off the scale. Whatever controls those hives, it's powerful. And it knows we're coming." },
+    { focus: 'hero', ...KIT, pose: 'worried', text: "Two hives ruptured. Bosco, the energy readings from the planet's core are off the scale. Whatever controls those hives, it's powerful. And it knows we're coming." },
     { focus: 'arena', text: "A sound crackles through the radio—not static. A voice. Not Martian. Not machine." },
     { focus: 'arena', ...UNKNOWN_SIGNAL, text: "…interesting… they're learning faster than expected…" },
     { focus: 'arena', text: "The signal cuts out." },
@@ -185,7 +185,7 @@ export const OUTRO_SCENES: Record<number, Shot[]> = {
     { focus: 'hero', ...KIT, pose: 'determined', text: "No. It wasn't. Keep moving. Answers are deeper." },
   ],
   15: [
-    { focus: 'boss', shake: true, boom: 0xff4f6d, reveal: "MAZE MASTER DOWN", pose: 'defeated', text: "The Maze Master collapses, spent. The walls stop moving and fold inward, revealing a chamber beneath: screens, control panels, old mining equipment under centuries of dust." },
+    { focus: 'boss', shake: true, boom: 0xff4f6d, reveal: "MAZE MASTER OUTLASTED", pose: 'defeated', text: "The Maze Master collapses, spent. The walls stop moving and fold inward, revealing a chamber beneath: screens, control panels, old mining equipment under centuries of dust." },
     { focus: 'hero', ...BOSCO, pose: 'surprised', text: "This is... a mining facility." },
     { focus: 'hero', ...KIT, pose: 'determined', text: "The Mars colony. This is what's left." },
     { focus: 'arena', text: "The control panel flickers to life. Data scrolls across the screen: radiation levels, containment failures, timestamps from centuries ago." },
@@ -195,7 +195,7 @@ export const OUTRO_SCENES: Record<number, Shot[]> = {
     { focus: 'hero', ...KIT, pose: 'determined', text: "Nobody forgot, Bosco. The Council buried it." },
     { focus: 'arena', ...UNKNOWN_VOICE, text: "Captain Kit. You're beginning to understand." },
     { focus: 'hero', ...KIT, pose: 'worried', text: "Who are you?" },
-    { focus: 'arena', ...UNKNOWN_VOICE, text: "An Astropaw. Like you. These records told me everything: the radiation, the creatures, how to bend them." },
+    { focus: 'arena', ...UNKNOWN_VOICE, text: "A scientist. The only one who ever read these records properly. They told me everything: the radiation, the creatures, how to bend them." },
     { focus: 'hero', ...BOSCO, pose: 'angry', text: "You're controlling the Martians." },
     { focus: 'arena', ...UNKNOWN_VOICE, text: "A little biotech rewires the brain. One signal, spreading host to host like a cold. The Martians were only the test. The real target is civilized minds. Whole worlds, thinking what I tell them to think." },
     { focus: 'hero', ...BOSCO, pose: 'surprised', text: "That's impossible." },
@@ -217,7 +217,7 @@ export const OUTRO_SCENES: Record<number, Shot[]> = {
 
 /** Plays after the duel's outro, before the ending screen (whose text is ENDING in story.ts). */
 export const ENDING_SCENE: Shot[] = [
-    { focus: 'arena', fade: true, text: "The repaired Biscuit lifts off Mars. Below, the facility's lights flicker and die. The hives wander without direction." },
+    { focus: 'arena', fade: true, text: "The repaired Biscuit lifts off Mars. Below, the facility's lights flicker and die. The Martians wander off, free of the signal." },
     { focus: 'hero', ...CAPYBARA, pose: 'happy', text: "Cores are back in, not a scratch on them. They just need a few days to recalibrate." },
     { focus: 'hero', ...KIT, pose: 'relieved', text: "Then we take the slow way to the Earth station gate. We're heading home, one way or another." },
     { focus: 'rival', pose: 'hurt', text: "In the brig, Ducking sits restrained and silent." },
