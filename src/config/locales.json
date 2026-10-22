@@ -137,6 +137,7 @@
     "lobby.opt.match": "Match",
     "lobby.opt.scenarios": "Scenarios",
     "lobby.opt.time": "Round time",
+    "lobby.removeBot": "tap to remove",
     "lobby.roomCode": "Room code",
     "lobby.scen.both": "Both",
     "lobby.scen.off": "Off",

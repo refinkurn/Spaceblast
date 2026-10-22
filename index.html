@@ -35,6 +35,7 @@
       <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
       <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 5v14l9-7z" fill="currentColor"/><path d="M18 5v14"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
       <symbol id="i-charge" viewBox="0 0 24 24"><circle cx="11" cy="14" r="7"/><path d="M15.8 9.2l2.7-3.2"/><path d="M20.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="currentColor"/></symbol>
       <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></symbol>
     </svg>
@@ -247,12 +248,12 @@
         </div>
         <div id="online-lobby" hidden>
           <div class="lobby-col" id="lobby-left">
-            <div class="online-code-label" data-i18n="lobby.roomCode">Room code</div>
-            <div class="online-room-row"><div id="online-room" class="online-room"></div><button id="online-invite" class="icon-btn" type="button" data-i18n-aria="html.online-invite" data-i18n-title="html.online-invite"><svg class="ui-icon" aria-hidden="true"><use href="#i-share"/></svg></button></div>
+            <div class="online-room-row"><span class="online-code-label" data-i18n="lobby.roomCode">Room code</span><div id="online-room" class="online-room"></div><button id="online-invite" class="icon-btn" type="button" data-i18n-aria="html.online-invite" data-i18n-title="html.online-invite"><svg class="ui-icon" aria-hidden="true"><use href="#i-share"/></svg></button></div>
             <div id="online-invite-note" class="online-code-label" aria-live="polite"></div>
             <div id="online-slots" class="slots" aria-label="Player slots"></div>
-            <div class="online-code-label" data-i18n="lobby.yourColour">Your colour</div>
-            <div id="online-colors" class="swatches"></div>
+            <!-- One row of 5 colours; swipe sideways for the rest. -->
+            <div id="online-colors" class="swatches" role="group" aria-label="Your colour" data-i18n-aria="lobby.yourColour"></div>
+            <button id="online-start" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-start">Start match</span></button>
           </div>
           <div class="lobby-col">
             <div class="online-code-label" id="settings-label" data-i18n="html.settings-label">Match settings</div>
@@ -260,7 +261,6 @@
             <div class="setting-row"><span data-i18n="lobby.opt.scenarios">Scenarios</span><div id="set-scenario"></div></div>
             <div class="setting-row"><span data-i18n="lobby.opt.match">Match</span><div id="set-match"></div></div>
             <div class="setting-row"><span data-i18n="lobby.opt.botLevel">Bot level</span><div id="set-bot-level"></div></div>
-            <button id="online-start" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-start">Start match</span></button>
           </div>
         </div>
         <div id="online-status" class="online-status"></div>

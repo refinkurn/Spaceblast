@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PLAYER_COLORS } from '../net/protocol';
-import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
+import { botColorsFor, botsAfterTap, initialsOf, lobbySlots } from './lobby_slots';
 
 const players = [{ slot: 0, name: 'Ana', color: 0 }, { slot: 1, name: 'Ben', color: 1 }];
 
@@ -9,12 +9,14 @@ describe('lobby slot cards', () => {
     const slots = lobbySlots(players, 1, 0, 1);
     expect(slots.map((s) => s.kind)).toEqual(['player', 'player', 'bot', 'open']);
     expect(slots.map((s) => s.label)).toEqual(['P1', 'P2', 'P3', 'P4']);
-    expect(slots[0].tag).toBe('HOST');
+    // Only the host's tile gets the star; tiles show initials, bots and open seats none.
+    expect(slots.map((s) => s.host)).toEqual([true, false, false, false]);
+    expect(slots[0].initials).toBe('AN');
     expect(slots[1].you).toBe(true);
-    expect(slots[2]).toMatchObject({ name: 'Bot 1', tag: 'BOT', color: PLAYER_COLORS[botColorsFor(players)[0]] });
-    // An open seat says so once (no OPEN tag next to "Open"); guests see Open, the host Add bot.
-    expect(slots[3]).toMatchObject({ tag: '', name: 'Open' });
-    expect(lobbySlots(players, 1, 0, 0)[3]).toMatchObject({ tag: '', name: 'Add bot' });
+    expect(slots[2]).toMatchObject({ name: 'Bot 1', initials: '', color: PLAYER_COLORS[botColorsFor(players)[0]] });
+    // An open seat says so once: guests hear Open, the host Add bot.
+    expect(slots[3]).toMatchObject({ name: 'Open', initials: '' });
+    expect(lobbySlots(players, 1, 0, 0)[3]).toMatchObject({ name: 'Add bot' });
   });
 
   it('a 4th player joining takes the last slot and bots make room', () => {
@@ -27,5 +29,16 @@ describe('lobby slot cards', () => {
     expect(botsAfterTap(slots[3], 1)).toBe(2);
     expect(botsAfterTap(slots[2], 1)).toBe(0);
     expect(botsAfterTap(slots[0], 1)).toBeNull();
+  });
+});
+
+describe('seat initials', () => {
+  it('takes the first letters of two words, or the first two letters of one, in capitals', () => {
+    expect(initialsOf('Ana Gold')).toBe('AG');
+    expect(initialsOf('yuki kato')).toBe('YK');
+    expect(initialsOf('Refindo')).toBe('RE');
+    expect(initialsOf('W')).toBe('W');
+    expect(initialsOf('  ')).toBe('?');
+    expect(initialsOf('Øle Ñu')).toBe('ØÑ');
   });
 });

@@ -427,7 +427,7 @@ export class OnlineRoom {
     this.setStatus(note || waiting);
   }
 
-  /** The four slot cards. The host taps OPEN to add a bot and BOT to remove one. */
+  /** The four seat tiles in one row. The host taps an open seat (+) to add a bot and a bot to remove it. */
   private renderSlots(): void {
     const box = $('online-slots');
     box.innerHTML = '';
@@ -438,25 +438,32 @@ export class OnlineRoom {
       card.className = `slot ${slot.kind}`;
       const next = botsAfterTap(slot, this.settings.bots);
       card.disabled = !this.isHost || next === null;
-      if (next !== null && this.isHost) {
-        card.setAttribute('aria-label', slot.kind === 'open' ? `${slot.label}: add a bot` : `${slot.label}: remove ${slot.name}`);
-        card.addEventListener('click', () => this.changeSettings({ bots: next }));
-      }
-      const dot = document.createElement('span');
-      dot.className = 'dot';
-      dot.style.background = slot.color || 'transparent';
-      const name = document.createElement('span');
-      name.className = 'slot-name';
-      // Your own seat is lit (CSS .slot.you) instead of "(you)" after the name, which cut long names short.
-      name.textContent = slot.name;
+      if (next !== null && this.isHost) card.addEventListener('click', () => this.changeSettings({ bots: next }));
       card.classList.toggle('you', slot.you);
-      const tag = document.createElement('span');
-      tag.className = 'slot-tag';
-      tag.textContent = slot.tag;
+      // Spoken / hover name: the tile itself only shows P#, initials (or a bot icon, or +) and the host star.
+      const host = slot.host ? `, ${t('lobby.tag.host')}` : '';
+      const spoken = next !== null && this.isHost
+        ? (slot.kind === 'open' ? `${slot.label}: ${t('lobby.addBot')}` : `${slot.label}: ${slot.name} (${t('lobby.removeBot')})`)
+        : `${slot.label}: ${slot.name}${host}`;
+      card.setAttribute('aria-label', spoken);
+      card.title = spoken;
       const label = document.createElement('span');
       label.className = 'slot-label';
       label.textContent = slot.label;
-      card.append(label, dot, name, tag);
+      const face = document.createElement('span');
+      face.className = 'slot-face';
+      face.setAttribute('aria-hidden', 'true');
+      if (slot.color) face.style.setProperty('--seat', slot.color);
+      if (slot.kind === 'player') face.textContent = slot.initials;
+      else face.innerHTML = `<svg class="ui-icon"><use href="#${slot.kind === 'bot' ? 'i-bot' : 'i-plus'}"/></svg>`;
+      card.append(label, face);
+      if (slot.host) {
+        const star = document.createElement('span');
+        star.className = 'slot-star';
+        star.setAttribute('aria-hidden', 'true');
+        star.innerHTML = '<svg class="ui-icon"><use href="#i-credits"/></svg>';
+        card.append(star);
+      }
       box.append(card);
     }
   }

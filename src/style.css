@@ -554,9 +554,6 @@ body.scene .net-stats { visibility: hidden; }
 #online .slot.bot { color: var(--ink-quiet); }
 #online .slot:not(:disabled):hover, #online .slot:not(:disabled):focus-visible { outline: none; border-color: var(--accent); background: #5ad1ff22; }
 .slot-label { grid-area: label; font-size: 11px; letter-spacing: 0.08em; color: var(--ink-quiet); }
-.slot-tag { grid-area: tag; justify-self: end; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
-.slot .dot { grid-area: dot; width: 12px; height: 12px; border-radius: 50%; border: 1px dashed #ffffff44; }
-.slot-name { grid-area: name; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .swatches { display: grid; grid-template-columns: repeat(4, 48px); gap: 8px; }
 #online .swatches button { min-height: 48px; height: 48px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
 #online .swatches button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #14161d inset; }
@@ -1175,14 +1172,55 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 /* Lobby: two roomy panels (players, match settings); empty seats say so once. */
 .lobby-col { padding: 12px 14px 14px; gap: 10px; background: #0b0e14cc; border: 1px solid #ffffff1a; border-radius: 10px; }
 .slots { gap: 8px; }
-#online .slot { min-height: 52px; padding: 8px 12px; gap: 3px 8px; border-radius: var(--dash-radius); }
-#online .slot.open { grid-template-areas: "label label" "name name"; }
-.slot.open .dot, .slot.open .slot-tag { display: none; }
-.slot.open .slot-name { font-weight: 600; }
 .online-room-row { gap: 12px; }
-#online-start { width: 100%; margin-top: 4px; }
 /* Lobby rows are narrower than the Settings card: a slimmer value box, labels on one line. */
 #online .stepper .step-value { min-width: 92px; font-size: 14px; }
 .setting-row > span { white-space: nowrap; }
 /* Your own seat is lit, so the name needs no "(you)". */
 #online .slot.you { border-color: var(--accent); box-shadow: var(--dash-lit); }
+
+/* Lobby sized for a phone held sideways (iPhone 11 in Safari: about 896 x 360) with no scrolling:
+   two panels side by side, seats in one row, colours in one sideways-scrolling strip, Start under the
+   players. The card keeps clear of the corner Back, so it needs no top padding for it. */
+.online-card { width: min(780px, calc(100vw - 2 * (var(--edge-left) + 60px))); }
+#online:has(#online-lobby:not([hidden])) .online-card { padding-top: 0; }
+#online:has(#online-lobby:not([hidden])) .online-card > .kicker { display: none; }
+#online-lobby { gap: 12px; flex-wrap: nowrap; align-items: stretch; }
+.lobby-col { min-width: 0; flex: 1 1 0; padding: 10px 12px; gap: 8px; justify-content: space-between; }
+.online-room-row { width: 100%; justify-content: center; gap: 10px; }
+.online-room { font-size: 30px; }
+#online-invite-note:empty { display: none; }
+#online-start { width: 100%; }
+.online-status { min-height: 0; }
+.online-status:empty { display: none; }
+
+/* Seats: four tiles in a row. P# top-left, the host's star top-right, the player's initials on a disc
+   of their colour (a bot: the bot icon in its colour; an open seat: + for the host). */
+.slots { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+#online button.slot { position: relative; min-height: 56px; padding: 4px; display: grid; place-items: center; grid-template-areas: none; grid-template-columns: none; border-radius: var(--dash-radius); }
+/* grid-area auto: an absolutely placed grid item would otherwise sit in its old named area, outside the tile. */
+.slot-label { grid-area: auto; position: absolute; top: 3px; left: 6px; font-size: 10px; font-weight: 700; }
+.slot-star { position: absolute; top: 2px; right: 3px; color: #ffd23f; display: grid; }
+.slot-star .ui-icon { width: 13px; height: 13px; fill: currentColor; }
+.slot-face { grid-area: auto; margin-top: 8px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--seat, transparent); color: #fff; font: 800 13px system-ui, sans-serif; letter-spacing: 0.02em; text-shadow: 0 1px 2px #0009; }
+.slot.bot .slot-face { background: transparent; color: var(--seat); }
+.slot.bot .slot-face .ui-icon { width: 24px; height: 24px; }
+.slot.open .slot-face { color: var(--ink-quiet); border: 1px dashed #ffffff44; }
+.slot.open .slot-face .ui-icon { width: 16px; height: 16px; }
+
+/* Colours: one row of five, swipe sideways for the rest (snaps to each swatch; the faded edge hints there is more). */
+.swatches { display: flex; gap: 8px; width: calc(5 * 48px + 4 * 8px); max-width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; touch-action: pan-x; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px 0; -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent); mask-image: linear-gradient(90deg, #000 86%, transparent); }
+.swatches::-webkit-scrollbar { display: none; }
+#online .swatches button { flex: none; width: 48px; scroll-snap-align: start; }
+
+/* Narrow or short screens: a little tighter, still one screen. */
+@media (max-width: 800px) {
+  #online .stepper .step-value { min-width: 78px; font-size: 13px; }
+  .setting-row > span { font-size: 12px; }
+}
+@media (max-height: 380px) {
+  .lobby-col { padding: 8px 10px; gap: 6px; }
+  .online-room { font-size: 26px; }
+}
+/* Very narrow (small phones): the panels stack and the screen scrolls, rather than squeezing. */
+@media (max-width: 620px) { #online-lobby { flex-wrap: wrap; } }
