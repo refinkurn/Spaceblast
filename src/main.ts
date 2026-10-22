@@ -100,7 +100,7 @@ const story = new StoryMode({
 const tutorial = new Tutorial(story.progress.beats);
 $('settings-tutorial').addEventListener('click', () => {
   story.progress.resetTutorial();
-  $('settings-tutorial').textContent = t('settings.tutorialReset');
+  $('settings-tutorial').querySelector('span')!.textContent = t('settings.tutorialReset');
 });
 const settings = new SettingsScreen((s) => {
   audio.setVolumes(s.music, s.sfx);

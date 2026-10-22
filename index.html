@@ -16,6 +16,20 @@
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
+    <!-- UI icons (24 px line icons), used with <svg class="ui-icon"><use href="#i-…"/></svg>. -->
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-story" viewBox="0 0 24 24"><path d="M3 5.5c2.7-1.5 5.7-1.5 9 .5 3.3-2 6.3-2 9-.5V19c-2.7-1.5-5.7-1.5-9 .5-3.3-2-6.3-2-9-.5zM12 6v13.5"/></symbol>
+      <symbol id="i-versus" viewBox="0 0 24 24"><path d="M4 4l11 11M12.5 17.5l5-5M16 16l4 4M20 4L9 15M6.5 12.5l5 5M8 16l-4 4"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+      <symbol id="i-credits" viewBox="0 0 24 24"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3l-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></symbol>
+      <symbol id="i-bot" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4.5V8M9.5 12.5v1.5M14.5 12.5v1.5M2.5 12v4M21.5 12v4"/><circle cx="12" cy="3.5" r="1"/></symbol>
+      <symbol id="i-online" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></symbol>
+      <symbol id="i-easy" viewBox="0 0 24 24"><path d="M6 19v-4"/><path d="M12 19v-9M18 19V5" opacity="0.3"/></symbol>
+      <symbol id="i-normal" viewBox="0 0 24 24"><path d="M6 19v-4M12 19v-9"/><path d="M18 19V5" opacity="0.3"/></symbol>
+      <symbol id="i-hard" viewBox="0 0 24 24"><path d="M6 19v-4M12 19v-9M18 19V5"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></symbol>
+      <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></symbol>
+    </svg>
     <canvas id="game"></canvas>
     <div id="vignette" aria-hidden="true"></div>
     <div id="countdown" hidden aria-live="assertive"></div>
@@ -130,23 +144,23 @@
         <h1>SPACEBLAST</h1>
         <p class="tagline">Animal astronauts vs hungry Martians</p>
         <nav id="menu-main" class="menu-page menu-list" aria-label="Main menu">
-          <button id="mode-survival" type="button" data-i18n="html.mode-survival">Story Mode</button>
-          <button id="menu-versus" type="button" data-i18n="html.menu-versus">Versus</button>
-          <button id="menu-settings" type="button" data-i18n="html.menu-settings">Settings</button>
-          <button id="menu-credits" type="button" data-i18n="html.menu-credits">Credits</button>
+          <button id="mode-survival" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-story"/></svg><span data-i18n="html.mode-survival">Story Mode</span></button>
+          <button id="menu-versus" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-versus"/></svg><span data-i18n="html.menu-versus">Versus</span></button>
+          <button id="menu-settings" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-settings"/></svg><span data-i18n="html.menu-settings">Settings</span></button>
+          <button id="menu-credits" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-credits"/></svg><span data-i18n="html.menu-credits">Credits</span></button>
         </nav>
         <nav id="menu-versus-page" class="menu-page menu-list" aria-label="Versus" hidden>
           <button type="button" class="menu-back">Back</button>
           <h2>Versus</h2>
-          <button id="mode-battle" type="button" data-i18n="html.mode-battle">Battle vs Bot</button>
-          <button id="mode-online" type="button" data-i18n="html.mode-online">Multiplayer</button>
+          <button id="mode-battle" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-bot"/></svg><span data-i18n="html.mode-battle">Battle vs Bot</span></button>
+          <button id="mode-online" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-online"/></svg><span data-i18n="html.mode-online">Multiplayer</span></button>
         </nav>
         <nav id="menu-bot" class="menu-page menu-list" aria-label="Battle vs Bot" hidden>
           <button type="button" class="menu-back">Back</button>
           <h2>Battle vs Bot</h2>
-          <button type="button" data-level="easy">Easy</button>
-          <button type="button" data-level="normal">Normal</button>
-          <button type="button" data-level="hard">Hard</button>
+          <button type="button" data-level="easy"><svg class="ui-icon" aria-hidden="true"><use href="#i-easy"/></svg><span>Easy</span></button>
+          <button type="button" data-level="normal"><svg class="ui-icon" aria-hidden="true"><use href="#i-normal"/></svg><span>Normal</span></button>
+          <button type="button" data-level="hard"><svg class="ui-icon" aria-hidden="true"><use href="#i-hard"/></svg><span>Hard</span></button>
         </nav>
         <div id="settings" class="menu-page" hidden>
           <button id="settings-done" type="button" class="menu-back" data-i18n="html.settings-done">Back</button>
@@ -193,10 +207,10 @@
               </div>
             </div>
             <div class="setting-line">Tutorial
-              <button id="settings-tutorial" type="button" class="quiet-btn" data-i18n="html.settings-tutorial">Show the tutorial again</button>
+              <button id="settings-tutorial" type="button" class="quiet-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-replay"/></svg><span data-i18n="html.settings-tutorial">Show the tutorial again</span></button>
             </div>
             <div class="setting-line">Help
-              <button id="menu-howto" type="button" class="quiet-btn" data-i18n="html.menu-howto">How to Play</button>
+              <button id="menu-howto" type="button" class="quiet-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-help"/></svg><span data-i18n="html.menu-howto">How to Play</span></button>
             </div>
           </div>
         </div>

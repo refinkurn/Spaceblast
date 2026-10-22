@@ -374,9 +374,13 @@ body.scene .net-stats { visibility: hidden; }
 .menu-page[hidden] { display: none; }
 /* Sub-pages: Back is the first item, a 48 px button pinned at the top-left of the panel. */
 .menu-page .menu-back { align-self: flex-start; min-width: 96px; margin-bottom: 4px; }
+/* Menu items: icon + label, 48 px tall. */
 .menu-list button, .menu-back {
   min-height: 48px;
-  padding: 0 18px;
+  padding: 0 18px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-align: left;
   font: 700 18px system-ui, sans-serif;
   color: var(--ink);
@@ -384,9 +388,9 @@ body.scene .net-stats { visibility: hidden; }
   border: 1px solid #ffffff26;
   border-radius: 12px;
 }
-.menu-list button:hover, .menu-list button:focus-visible, .menu-back:hover, .menu-back:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); }
-.menu-list button:focus-visible::before, .menu-back:focus-visible::before { content: '▸ '; color: var(--accent); }
-.menu-list button[aria-current="true"]::after { content: ' ✓'; color: var(--accent); }
+.menu-list button .ui-icon { width: 24px; height: 24px; color: var(--accent); }
+.menu-list button:hover, .menu-list button:focus-visible, .menu-back:hover, .menu-back:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.menu-list button[aria-current="true"]::after { content: '✓'; margin-left: auto; color: var(--accent); }
 .menu-scroll { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
 .menu-text .menu-scroll { font-size: 15px; line-height: 1.45; color: #c9d0de; }
 .menu-text h3 { margin: 6px 0 0; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
@@ -895,7 +899,8 @@ button { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; 
 body.scene #coach { visibility: hidden; }
 .banner-tip { font-size: 13px; color: var(--ink-quiet); font-style: italic; }
 .banner-tip[hidden] { display: none; }
-.quiet-btn { min-height: 48px; padding: 0 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
+.quiet-btn { min-height: 48px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
+.quiet-btn .ui-icon { width: 20px; height: 20px; color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .coach.pop { animation: none; } }
 /* Menu key art (src/assets/menu/menu.json) replaces the plain backdrop. */
 #menu.art { background-color: #14161d; }
@@ -1008,3 +1013,6 @@ body.scene #coach { visibility: hidden; }
 .power.range .pips i.on { background: #ff5500; }
 .power.speed .pips i.on { background: #ffe600; }
 #lb-back { align-self: center; min-height: 48px; padding: 0 28px; font: 500 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; border-radius: 10px; }
+/* Shared line icons (index.html's sprite). */
+.icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ui-icon { flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
