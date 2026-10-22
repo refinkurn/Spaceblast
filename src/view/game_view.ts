@@ -133,6 +133,16 @@ export class GameView {
       }
       case 'player_died':
         debris.burst(e.tx, e.ty, this.colors[e.id] ?? 0xffffff, 14);
+        this.heroes[e.id]?.anim.hurt();
+        break;
+      case 'armor_hit':
+        this.heroes[e.id]?.anim.hurt();
+        break;
+      case 'charge_placed':
+        // The event has no owner: squash whoever stands on that tile.
+        state.players.forEach((p, i) => {
+          if (p.alive && Math.round(p.x / TILE) === e.tx && Math.round(p.y / TILE) === e.ty) this.heroes[i]?.anim.squash();
+        });
         break;
       case 'martian_killed':
         debris.burst(e.tx, e.ty, 0x6fd14f, 12);
