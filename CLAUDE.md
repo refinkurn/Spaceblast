@@ -10,6 +10,7 @@ Capacitor. Multiplayer is the main goal, so the simulation must stay determinist
 - `npm test` — Vitest unit tests (must pass before every commit)
 - `npm run build` — typecheck + production build into `dist/`
 - `npm run deploy` — build and upload the game + online rooms to Cloudflare (see ONLINE.md)
+- `npm run deploy:fly` — deploy the room server + leaderboard to Fly.io, Singapore, one machine (see ONLINE.md)
 
 ## Architecture (do not break these)
 
@@ -26,7 +27,7 @@ src/
   config/  data: locales.json (interface text by key; English now)
   utils/   i18n.ts: t(key, vars) for interface text; applyDom() fills data-i18n labels in index.html
   main.ts  wiring + fixed 60 Hz loop
-server/    the room server: room.ts (shared: seats, round clock, rejoin), leaderboard.ts (scores API), dev_relay.ts (npm run dev), worker.ts (Cloudflare)
+server/    the room server: room.ts (shared: seats, round clock, rejoin), leaderboard.ts (scores API), node_host.ts (Node hosting for dev + Fly), node_sqlite.ts, dev_relay.ts (npm run dev), fly.ts (Fly.io; Dockerfile, fly.toml, npm run build:server), worker.ts (Cloudflare)
 ```
 
 - Online play runs on the room server's clock: it sends every player's packed

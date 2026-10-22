@@ -1,21 +1,10 @@
-import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import { maxScore } from '../src/services/score';
 import { DAILY_POSTS, IP_DAILY_POSTS, Leaderboard, MemoryStore, STAGE_CAP, SqlStore, clientKey, scoresApi, validate, type SqlLike, type Store } from './leaderboard';
+import { openSqlite } from './node_sqlite';
 
-// node:sqlite stands in for Cloudflare's ctx.storage.sql, so the SQL is tested too.
-const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite') as {
-  DatabaseSync: new (path: string) => { prepare(q: string): { all(...b: unknown[]): Record<string, unknown>[] } };
-};
-function sqlite(): SqlLike {
-  const db = new DatabaseSync(':memory:');
-  return {
-    exec: (q, ...b) => {
-      const rows = db.prepare(q).all(...b); // runs now, like Cloudflare's exec
-      return { toArray: () => rows };
-    },
-  };
-}
+// node:sqlite (the Fly server's storage) stands in for Cloudflare's ctx.storage.sql, so the SQL is tested too.
+const sqlite = (): SqlLike => openSqlite(':memory:');
 
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const sub = (o: Record<string, unknown> = {}) => ({

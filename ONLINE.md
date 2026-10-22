@@ -47,8 +47,9 @@ match. Blackouts never overlap the arena collapse.
 
 During online rounds a small line at the bottom shows, for this phone:
 
-- `SIN` — the Cloudflare data centre the room runs in (rooms are placed in
-  Asia-Pacific; see `ROOM_REGION` in `server/worker.ts`).
+- `SIN` — where the room runs: the Fly.io region (always `SIN`, see below),
+  or on Cloudflare the data centre (rooms are placed in Asia-Pacific; see
+  `ROOM_REGION` in `server/worker.ts`).
 - `ping 24±3 ms` — round trip to the room, and how much it wobbles.
   High ping = the server is far; big wobble = an uneven connection (Wi-Fi).
 - `buffer 2+0` — updates held back to smooth out wobble, plus any backlog.
@@ -73,6 +74,7 @@ inside the dev server, nothing else to set up.
 ## Put it online for friends (free)
 
 Cloudflare hosts both the game page and the rooms. Free plan, no card.
+(The rooms can move to Fly.io in Singapore instead; see the next section.)
 
 1. Make a free account at https://dash.cloudflare.com/sign-up
 2. In the `spaceblast` folder run `npx wrangler login` (opens the browser
@@ -86,6 +88,43 @@ day). If it ever grows past that, the paid Workers plan is $5/month.
 
 Note: the claude.ai preview link can't open rooms; use the Cloudflare link.
 
+## Rooms on Fly.io (Singapore)
+
+The rooms and the leaderboard can run on one Fly.io machine in Singapore
+(`sin`) instead, so every room is in the same place, close to players in
+South-East Asia. The game page stays on Cloudflare. Fly is not free: one
+small always-on machine plus a 1 GB volume is a few dollars a month.
+
+One-time setup (Windows PowerShell, in the `spaceblast` folder):
+
+1. Install the Fly command line: `iwr https://fly.io/install.ps1 -useb | iex`,
+   then `fly auth login` (opens the browser to approve).
+2. `fly apps create spaceblast-server --org <your-org>` (`fly orgs list` shows
+   it; if the name is taken, pick another and change `app` in `fly.toml` and
+   the addresses below).
+3. `fly volumes create spaceblast_data --region sin --size 1 --app spaceblast-server`
+   (the leaderboard's SQLite file lives on it).
+4. `npm run deploy:fly`. `https://spaceblast-server.fly.dev/healthz` should say `ok`.
+5. Point the game page at it: create `.env.production` with
+
+       VITE_RELAY_URL=wss://spaceblast-server.fly.dev
+       VITE_API_BASE=https://spaceblast-server.fly.dev
+
+   and run `npm run deploy`. The stats line in an online round shows `SIN`.
+
+Run `npm run deploy:fly` again after a server change. Good to know:
+
+- **Exactly one machine.** Rooms live in its memory, so a second machine
+  would split a room's players. `deploy:fly` passes `--ha=false` for that;
+  never `fly scale count 2`.
+- **A deploy restarts the machine and ends every room in progress.** Deploy
+  when nobody is playing.
+- `fly logs` shows the server's output, `fly status` the machine.
+- Shared CPU: if rounds stutter only when many rooms are busy, a bigger
+  machine (`[[vm]]` in `fly.toml`) is the fix.
+- Going back to Cloudflare rooms: delete `.env.production` and run
+  `npm run deploy`. The Cloudflare rooms keep working meanwhile.
+
 ## Files
 
 - `src/net/protocol.ts` — messages and room code rules
@@ -94,8 +133,11 @@ Note: the claude.ai preview link can't open rooms; use the Cloudflare link.
 - `src/net/link.ts` — the connection: ping, automatic reconnect, rejoin after reload
 - `src/net/client.ts` — the WebSocket connection
 - `src/flow/online.ts` — create / join / lobby screens
-- `server/room.ts` — the room: seats, settings, the round clock, rejoining (shared by both servers below)
+- `server/room.ts` — the room: seats, settings, the round clock, rejoining (shared by all the servers below)
+- `server/node_host.ts` — rooms and `/api/scores` on Node (shared by the dev relay and Fly)
 - `server/dev_relay.ts` — relay inside `npm run dev`
+- `server/fly.ts` + `Dockerfile` + `fly.toml` — the Fly.io server (`npm run build:server` builds it into `dist-server/`)
+- `server/node_sqlite.ts` — the Fly leaderboard's SQLite file (Node's built-in `node:sqlite`)
 - `server/worker.ts` + `wrangler.toml` — the Cloudflare server
 
 ## Leaving the app
@@ -114,7 +156,7 @@ can join again with the code from the next round.
 - **Why Cloudflare and not Vercel:** Vercel can host the web page for free,
   but it can't keep the live connections an online game needs (its
   functions stop after each request). Cloudflare runs both the page and the
-  rooms on one free account. The page could still move to Vercel later:
+  rooms on one free account (or the rooms run on Fly.io, see above). The page could still move to Vercel later:
   build it with `VITE_RELAY_URL=wss://spaceblast.<you>.workers.dev` and it
   will use the Cloudflare rooms.
 - **Database:** not needed yet (progress and settings live on each device).

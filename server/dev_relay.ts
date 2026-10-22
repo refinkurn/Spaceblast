@@ -1,96 +1,29 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
-import type { Connect, Plugin } from 'vite';
-import { WebSocketServer } from 'ws';
-import { isRoomCode } from '../src/net/protocol';
-import { CORS_HEADERS, JSON_HEADERS, Leaderboard, MAX_BODY, MemoryStore, scoresApi } from './leaderboard';
-import { Room, requestFromUrl, type Peer } from './room';
+import type { Plugin, PreviewServer, ViteDevServer } from 'vite';
+import { Leaderboard, MemoryStore } from './leaderboard';
+import { createNodeHost, socketAddress, type NodeHost } from './node_host';
 
 // The room server for `npm run dev` and `npm run preview`: rooms run inside the Vite
 // server at ws://<host>/room/CODE, so phones on the same Wi-Fi can play too.
-// Production uses server/worker.ts on Cloudflare instead; both share Room.
+// Production uses server/worker.ts on Cloudflare or server/fly.ts on Fly.io;
+// all of them share Room (the Node hosting itself is server/node_host.ts).
 // Also serves the leaderboard at /api/scores (in memory, gone on restart).
 
-/** The /api/scores route over a Leaderboard, as Connect middleware. */
-function scoresMiddleware(lb: Leaderboard): Connect.NextHandleFunction {
-  return (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    const url = new URL(req.url ?? '/', 'http://localhost');
-    if (url.pathname !== '/api/scores') return next();
-    const method = req.method ?? 'GET';
-    if (method === 'OPTIONS') {
-      res.writeHead(204, CORS_HEADERS).end();
-      return;
-    }
-    const send = (status: number, body: unknown) => res.writeHead(status, JSON_HEADERS).end(JSON.stringify(body));
-    if (method !== 'POST') {
-      const r = scoresApi(lb, method, url, '', Date.now());
-      send(r.status, r.body);
-      return;
-    }
-    let text = '';
-    let tooBig = false;
-    req.setEncoding('utf8');
-    req.on('data', (chunk: string) => {
-      if (tooBig) return;
-      text += chunk;
-      if (text.length > MAX_BODY) tooBig = true;
-    });
-    req.on('end', () => {
-      const r = scoresApi(lb, method, url, tooBig ? 'x'.repeat(MAX_BODY + 1) : text, Date.now(), req.socket.remoteAddress);
-      send(r.status, r.body);
+export function devRelay(): Plugin {
+  // Made on first use, so loading the config (builds, tests) starts nothing.
+  let host: NodeHost | null = null;
+  const attach = (server: ViteDevServer | PreviewServer) => {
+    host ??= createNodeHost({ leaderboard: new Leaderboard(new MemoryStore()), clientAddress: socketAddress, where: '' });
+    const h = host;
+    server.httpServer?.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => { h.upgrade(req, socket, head); });
+    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      if (!h.scores(req, res)) next();
     });
   };
-}
-
-export function devRelay(): Plugin {
-  const rooms = new Map<string, Room>();
-  const wss = new WebSocketServer({ noServer: true });
-  const scores = scoresMiddleware(new Leaderboard(new MemoryStore()));
-
-  function upgrade(req: IncomingMessage, socket: Duplex, head: Buffer): void {
-    const url = new URL(req.url ?? '/', 'http://localhost');
-    const match = url.pathname.match(/\/room\/([A-Z]+)$/);
-    if (!match) return; // not ours (e.g. Vite's hot reload socket)
-    const code = match[1];
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      if (!isRoomCode(code)) {
-        ws.send(JSON.stringify({ t: 'error', reason: 'bad_code' }));
-        ws.close();
-        return;
-      }
-      const room = rooms.get(code) ?? new Room();
-      rooms.set(code, room);
-      const peer: Peer = { send: (d) => ws.send(d), close: (c, r) => ws.close(c, r) };
-      const slot = room.connect(peer, requestFromUrl(url));
-      if (slot === null) {
-        if (room.empty) rooms.delete(code);
-        return;
-      }
-      ws.on('message', (data) => room.message(slot, data.toString()));
-      ws.on('close', (closeCode) => {
-        room.closed(slot, peer, closeCode);
-        if (room.empty) rooms.delete(code);
-      });
-    });
-  }
-
-  // One clock for all rooms: sends due ticks and expires dropped seats.
-  setInterval(() => {
-    for (const [code, room] of rooms) {
-      if (room.busy) room.pump();
-      if (room.empty) rooms.delete(code);
-    }
-  }, 16).unref();
-
   return {
     name: 'spaceblast-dev-relay',
-    configureServer(server) {
-      server.httpServer?.on('upgrade', upgrade);
-      server.middlewares.use(scores);
-    },
-    configurePreviewServer(server) {
-      server.httpServer?.on('upgrade', upgrade);
-      server.middlewares.use(scores);
-    },
+    configureServer: attach,
+    configurePreviewServer: attach,
   };
 }
