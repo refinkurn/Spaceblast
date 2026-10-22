@@ -115,3 +115,18 @@ describe('level card', () => {
     expect(block('card-launch')).toContain('href="#i-rocket"');
   });
 });
+
+describe('pause card', () => {
+  it('hides the count and pop-ups while paused (BLAST! drew over the card)', () => {
+    for (const id of ['countdown', 'announce', 'alert', 'coach', 'radio-toast']) expect(css).toContain(`body.paused #${id}`);
+    expect(css).toMatch(/body\.paused #radio-toast \{ visibility: hidden; \}/);
+  });
+});
+
+describe('stats panel', () => {
+  it('stacks one power-up per row and keeps hearts on a 3-column grid', () => {
+    expect(rule(css, '.hud-powers')).toContain('flex-direction: column');
+    expect(rule(css, '.hud-health')).toContain('grid-template-columns: repeat(3, 16px)');
+    expect(rule(css, '.hud-left')).toContain('border-radius: 12px');
+  });
+});

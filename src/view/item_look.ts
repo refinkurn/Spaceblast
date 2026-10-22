@@ -3,11 +3,13 @@ import { Item } from '../sim/constants';
 
 // How each power-up looks on the grid: colours, a low-poly mesh built from shared
 // geometry and materials, and the glass shell around it. Colours follow
-// docs/design/powerup-look.md. Everything is built in code, no assets.
+// docs/design/powerup-look.md, except that the shell is clear and there is no
+// floor aura (playtest: a glow in the item's colour was confusing). Everything
+// is built in code, no assets.
 
 export interface ItemLook {
   name: string;
-  /** Main colour: glass shell, floor aura, particles, HUD. */
+  /** Main colour: the item, pick-up particles, HUD. */
   color: number;
   /** Second colour: body or trim. */
   second: number;
@@ -95,27 +97,18 @@ function body(item: number): THREE.Group {
   return g;
 }
 
-/** The glass shell, one geometry for all and one material per colour. */
-export function shellMesh(item: number): THREE.Mesh {
-  const l = ITEM_LOOK[item];
+/** Shell colour: pale neutral glass, the same for every item, so the coloured item inside is the only colour. */
+export const SHELL_COLOR = 0xdfe8f2;
+
+/** The clear glass shell, one geometry and one material for every item. */
+export function shellMesh(_item: number): THREE.Mesh {
   const m = mesh(
     geo('shell', () => new THREE.IcosahedronGeometry(0.3, 1)),
-    mat(`shell:${item}`, () => new THREE.MeshStandardMaterial({
-      color: l.color, emissive: l.color, emissiveIntensity: 0.25, transparent: true, opacity: 0.4, depthWrite: false, roughness: 0.2, flatShading: true,
+    mat('shell', () => new THREE.MeshStandardMaterial({
+      color: SHELL_COLOR, transparent: true, opacity: 0.16, depthWrite: false, roughness: 0.15, metalness: 0.1, flatShading: true,
     })),
   );
   m.castShadow = false;
-  return m;
-}
-
-/** A flat glowing disc for the floor under the item. */
-export function auraMesh(item: number): THREE.Mesh {
-  const m = mesh(
-    geo('aura', () => new THREE.CircleGeometry(0.42, 20).rotateX(-Math.PI / 2)),
-    mat(`aura:${item}`, () => new THREE.MeshBasicMaterial({ color: ITEM_LOOK[item].color, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false })),
-    0, 0.03, 0,
-  );
-  m.renderOrder = 1;
   return m;
 }
 

@@ -1,7 +1,7 @@
 import type * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { Item } from '../sim/constants';
-import { auraMesh, ITEM_KINDS, ITEM_LOOK, itemBody, shellMesh } from './item_look';
+import { ITEM_KINDS, ITEM_LOOK, itemBody, SHELL_COLOR, shellMesh } from './item_look';
 import { ParticlePool, POOL_SIZE } from './particles';
 
 describe('item looks', () => {
@@ -13,7 +13,15 @@ describe('item looks', () => {
       expect(l.color).toBeGreaterThan(0);
       expect(itemBody(item).children.length).toBeGreaterThan(0);
       expect(shellMesh(item).geometry).toBeTruthy();
-      expect(auraMesh(item).material).toBeTruthy();
+    }
+  });
+  it('keeps the shell neutral and faint, so the item is the only colour (no glow in its colour)', () => {
+    for (const item of ITEM_KINDS) {
+      const m = shellMesh(item).material as THREE.MeshStandardMaterial;
+      expect(m.color.getHex()).toBe(SHELL_COLOR);
+      expect(m.color.getHex()).not.toBe(ITEM_LOOK[item].color);
+      expect(m.emissive.getHex()).toBe(0);
+      expect(m.opacity).toBeLessThanOrEqual(0.2);
     }
   });
   it('uses the game names and distinct main colours', () => {

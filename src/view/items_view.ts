@@ -2,23 +2,22 @@ import * as THREE from 'three';
 import { Cell, Item } from '../sim/constants';
 import type { GameState } from '../sim/state';
 import { tileToWorld } from './coords';
-import { auraMesh, ITEM_LOOK, itemBody, shellMesh } from './item_look';
+import { ITEM_LOOK, itemBody, shellMesh } from './item_look';
 import { ParticlePool } from './particles';
 
-// Power-ups on the grid: a low-poly item floating in a glass shell, a pulsing
-// floor aura, idle sparkles from one shared particle pool, and bursts when an
-// item appears or is picked up. View only; reads the state, never writes it.
+// Power-ups on the grid: a low-poly item floating in a clear glass shell, and
+// bursts from one shared particle pool when an item appears or is picked up.
+// No floor glow or idle sparkles: in the item's colour they read as a second
+// object (or a danger tile), so only the item itself carries the colour.
+// View only; reads the state, never writes it.
 
 const FLOAT = 0.3;
 const SPIN = (30 * Math.PI) / 180; // rad/s
 const POP_SECONDS = 0.2;
-/** Idle dots per second per item. */
-const IDLE_RATE = 2;
 
 interface Entry {
   root: THREE.Group;
   body: THREE.Group;
-  aura: THREE.Mesh;
   item: number;
   tx: number;
   ty: number;
@@ -28,11 +27,10 @@ interface Entry {
 export class ItemsView {
   readonly group = new THREE.Group();
   readonly particles = new ParticlePool();
-  /** Set by the game view when AdaptiveQuality has stepped down: no aura, no idle dots. */
+  /** Set by the game view when AdaptiveQuality has stepped down (items are already light; kept for the view's wiring). */
   reduced = false;
   private entries = new Map<number, Entry>();
   private lastTime = -1;
-  private idleCarry = 0;
   private primed = false;
 
   constructor() {
@@ -65,9 +63,6 @@ export class ItemsView {
       shell.position.y = e.body.position.y;
       const pop = Math.min(1, (time - e.born) / POP_SECONDS);
       e.root.scale.setScalar(Math.max(pop, 0.001));
-      e.aura.visible = !this.reduced;
-      (e.aura.material as THREE.MeshBasicMaterial).opacity = 0.25 + 0.15 * Math.sin(time * 2.2 + phase);
-      if (!this.reduced) e.aura.scale.setScalar(1 + 0.08 * Math.sin(time * 2.2 + phase));
     }
     // Gone from the grid (picked up): a burst in its colour.
     for (const [key, e] of this.entries) {
@@ -77,23 +72,6 @@ export class ItemsView {
       this.entries.delete(key);
     }
     this.primed = true;
-
-    // Idle sparkles rising from each aura.
-    if (!this.reduced && dt > 0) {
-      this.idleCarry += dt * IDLE_RATE * this.entries.size;
-      while (this.idleCarry >= 1) {
-        this.idleCarry -= 1;
-        const list = [...this.entries.values()];
-        const e = list[Math.floor(Math.random() * list.length)];
-        const p = e.root.position;
-        this.particles.emit(
-          p.x + (Math.random() - 0.5) * 0.4, 0.05, p.z + (Math.random() - 0.5) * 0.4,
-          0, 0.45 + Math.random() * 0.3, 0, ITEM_LOOK[e.item].color, 0.9,
-        );
-      }
-    } else if (this.reduced) {
-      this.idleCarry = 0;
-    }
     this.particles.update(dt);
   }
 
@@ -101,12 +79,9 @@ export class ItemsView {
     const root = new THREE.Group();
     const body = itemBody(item);
     root.add(body, shellMesh(item));
-    const aura = auraMesh(item);
-    root.add(aura);
     tileToWorld(tx, ty, 0, root.position);
-    aura.position.y = 0.03;
     this.group.add(root);
-    return { root, body, aura, item, tx, ty, born: time };
+    return { root, body, item, tx, ty, born: time };
   }
 
   private burstAt(e: Entry, count: number): void {

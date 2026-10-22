@@ -57,20 +57,24 @@ export class Crawl {
     this.anim.onfinish = () => this.finish();
   }
 
-  /** Ends the crawl (Skip, or it has scrolled away) and starts what follows. */
+  /**
+   * Ends the crawl (Skip, or it has scrolled away). What follows (the prologue
+   * scene) starts first, underneath the crawl, which then fades out over it:
+   * fading first showed the arena through the crawl for the length of the fade.
+   */
   finish(): void {
     if (!this.active || this.el.classList.contains('out')) return;
     this.el.classList.add('out');
     const run = this.run;
+    const done = this.done;
+    this.done = () => {};
+    done();
     window.setTimeout(() => {
       if (run !== this.run) return;
       this.anim?.cancel();
       this.anim = null;
       this.el.hidden = true;
       this.el.classList.remove('out');
-      const done = this.done;
-      this.done = () => {};
-      done();
     }, FADE_MS);
   }
 

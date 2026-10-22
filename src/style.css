@@ -43,21 +43,36 @@ html, body {
 /* Three anchored groups: top-left column (avatar, hearts, power-ups, goal), centre chip + clock, top-right buttons.
    The buttons used to be loose flex items pushed right by #full-btn's auto margin: with full screen hidden
    (installed app, no Fullscreen API) Sound and Pause slid to the left edge, over the avatar and hearts. */
-.hud-left { position: absolute; top: max(4px, env(safe-area-inset-top)); left: var(--edge-left); display: flex; flex-direction: column; gap: 3px; max-width: calc(var(--gutter) - 8px); }
+/* Top-left stats panel ("dashboard"): avatar + hearts, one row per power-up, then the goal, divided by hairlines. */
+.hud-left {
+  position: absolute;
+  top: max(4px, env(safe-area-inset-top));
+  left: var(--edge-left);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: calc(var(--gutter) - 8px);
+  padding: 6px 9px 7px 6px;
+  background: #0b0d12b8;
+  border: 1px solid #ffffff1f;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px #0006;
+}
 .hud-right { position: absolute; top: max(4px, env(safe-area-inset-top)); right: var(--edge-right); display: flex; gap: 8px; }
-.hud-who { display: flex; align-items: center; gap: 6px; }
-.hud-avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; color: #fff; background: #3a7bff; border: 2px solid #ffffffcc; }
+.hud-who { display: flex; align-items: center; gap: 7px; }
+.hud-avatar { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 15px; color: #fff; background: #3a7bff; border: 2px solid #ffffffcc; }
 .hud-mid { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .hud-clock { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000a; }
 .hud-clock[hidden] { display: none; }
-.hud-health { flex-wrap: wrap; }
 .hud-health.hurt { animation: hurt-flash 0.4s ease-out; }
 .hud-health.hurt .icon.heart, .hud-health.hurt .icon.oxygen { filter: drop-shadow(0 0 4px #ff2d4d) brightness(1.6); }
 @keyframes hurt-flash { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
 @media (prefers-reduced-motion: reduce) { .hud-health.hurt { animation: none; } }
 
 /* HUD: hearts and oxygen, stage chip, objective, power-up pips. */
-.hud-health { display: flex; gap: 2px; align-items: center; }
+/* Three columns: hearts fill the first row, Oxygen Vest armor (up to 3) the second, never a ragged wrap. */
+.hud-health { display: grid; grid-template-columns: repeat(3, 16px); gap: 3px; align-items: center; }
+.hud-health .icon { width: 16px; height: 16px; }
 .icon { width: 18px; height: 18px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 0; }
 .icon.heart { color: #ff4f6d; }
 .lost .icon.heart { color: #ffffff2a; }
@@ -75,13 +90,15 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .hud-chip.boss { background: #ff4f6d26; border-color: #ff4f6d; color: #ffd0d8; }
-.hud-goal { color: var(--ink-quiet); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
-.hud-powers { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
-.power { display: flex; gap: 4px; align-items: center; color: var(--accent); font-size: 12px; font-weight: 700; }
-.power .icon { width: 16px; height: 16px; }
+.hud-goal { padding-top: 5px; border-top: 1px solid #ffffff14; color: var(--ink-quiet); font-size: 11px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
+.hud-goal:empty { display: none; }
+/* One power-up per row (it used to wrap two to a line): icon column, then its pips. */
+.hud-powers { display: flex; flex-direction: column; gap: 5px; padding-top: 6px; border-top: 1px solid #ffffff14; }
+.power { display: flex; gap: 7px; align-items: center; min-height: 16px; color: var(--accent); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.power .icon { flex: none; width: 16px; height: 16px; }
 .power.freeze { color: #b9a4ff; }
-.pips { display: flex; gap: 2px; }
-.pips i { width: 6px; height: 10px; border-radius: 2px; background: #ffffff22; }
+.pips { display: flex; gap: 3px; }
+.pips i { width: 7px; height: 9px; border-radius: 2px; background: #ffffff22; }
 .pips i.on { background: var(--accent); }
 #menu-btn {
   pointer-events: auto;
@@ -972,6 +989,9 @@ body.scene #coach { visibility: hidden; }
 .pause-list button:hover, .pause-list button:focus-visible { outline: none; background: #5ad1ff22; border-color: var(--accent); }
 .pause-list #pause-resume, .pause-list #pause-keep { color: #0e1118; background: var(--accent); border: 0; }
 #menu-btn.pause-btn { width: 48px; min-height: 48px; padding: 0; display: grid; place-items: center; }
+/* While paused, the 3-2-1-BLAST! count (z 8, it stops where it is) and the warning / tip / radio pop-ups
+   are hidden, so nothing draws over the pause card; they come back as they were on Resume. */
+body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #coach, body.paused #radio-toast { visibility: hidden; }
 @media (max-height: 400px) { .pause-list { gap: 5px; } }
 /* Story leaderboard (flow/leaderboard_screen.ts). */
 #leaderboard { position: fixed; inset: 0; z-index: 10; display: flex; align-items: safe center; justify-content: center; overflow-y: auto; background: #14161df2;
