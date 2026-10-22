@@ -1,9 +1,11 @@
-// Player settings, saved on this device, and the Settings page of the menu.
+// Player settings, saved on this device, and the Settings card (menu or over a paused game).
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 const KEY = 'spaceblast.settings';
 
 import type { JoystickMode } from '../input/stick_geometry';
+import { t } from '../utils/i18n';
+import { Stepper } from './stepper';
 
 export type ControlSize = 'small' | 'normal' | 'large';
 /** Round-end cinematic: replay + winner, winner only, or none. */
@@ -46,8 +48,16 @@ export function loadSettings(): Settings {
   };
 }
 
+/** A ‹ value › selector for one setting; the labels come from the opt.<id>.<value> keys. */
+function stepper<T>(id: string, values: readonly T[], words: (v: T) => string, nameKey: string, pick: (v: T) => void): Stepper<T> {
+  return new Stepper($(id), values.map((v) => ({ value: v, label: t(`opt.${id}.${words(v)}`) })), pick, t(nameKey));
+}
+
+const onOff = (v: boolean) => (v ? 'on' : 'off');
+
 export class SettingsScreen {
   readonly value: Settings = loadSettings();
+  private steppers: { show(s: Settings): void }[] = [];
 
   /** `onChange` runs now and after every change. */
   constructor(private onChange: (s: Settings) => void) {
@@ -56,22 +66,21 @@ export class SettingsScreen {
       input.value = String(this.value[key]);
       input.addEventListener('input', () => this.set({ [key]: Number(input.value) }));
     }
-    for (const [group, key] of [['set-controls', 'controls'], ['set-cinematic', 'cinematic'], ['set-joystick', 'joystick']] as const) {
-      for (const el of $(group).children) {
-        const b = el as HTMLButtonElement;
-        b.addEventListener('click', () => this.set({ [key]: b.dataset.value } as Partial<Settings>));
-      }
-    }
+    // Option settings: one ‹ value › selector each.
+    const controls = stepper<ControlSize>('set-controls', ['small', 'normal', 'large'], (v) => v, 'settings.controls', (controls) => this.set({ controls }));
+    const joystick = stepper<JoystickMode>('set-joystick', ['floating', 'fixed'], (v) => v, 'settings.joystick', (joystick) => this.set({ joystick }));
+    const vibration = stepper('set-vibration', [true, false], onOff, 'settings.vibration', (vibration) => this.set({ vibration }));
+    const shake = stepper('set-shake', [true, false], onOff, 'settings.shake', (screenShake) => this.set({ screenShake }));
+    const cinematic = stepper<CinematicLength>('set-cinematic', ['full', 'short', 'off'], (v) => v, 'settings.replays', (cinematic) => this.set({ cinematic }));
+    this.steppers = [
+      { show: (v) => controls.set(v.controls) },
+      { show: (v) => joystick.set(v.joystick) },
+      { show: (v) => vibration.set(v.vibration) },
+      { show: (v) => shake.set(v.screenShake) },
+      { show: (v) => cinematic.set(v.cinematic) },
+    ];
     // Vibration: shown only where the browser can buzz (iOS Safari has no navigator.vibrate).
     $('set-vibration-line').hidden = !('vibrate' in navigator);
-    for (const el of $('set-vibration').children) {
-      const b = el as HTMLButtonElement;
-      b.addEventListener('click', () => this.set({ vibration: b.dataset.value === 'on' }));
-    }
-    for (const el of $('set-shake').children) {
-      const b = el as HTMLButtonElement;
-      b.addEventListener('click', () => this.set({ screenShake: b.dataset.value === 'on' }));
-    }
     this.render();
     onChange(this.value);
   }
@@ -84,15 +93,7 @@ export class SettingsScreen {
   }
 
   private render(): void {
-    for (const el of $('set-vibration').children) {
-      el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === (this.value.vibration ? 'on' : 'off')));
-    }
-    for (const el of $('set-shake').children) {
-      el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === (this.value.screenShake ? 'on' : 'off')));
-    }
-    for (const [group, key] of [['set-controls', 'controls'], ['set-cinematic', 'cinematic'], ['set-joystick', 'joystick']] as const) {
-      for (const el of $(group).children) el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.value === this.value[key]));
-    }
+    for (const st of this.steppers) st.show(this.value);
     $('set-music-value').textContent = `${this.value.music}%`;
     $('set-sfx-value').textContent = `${this.value.sfx}%`;
   }

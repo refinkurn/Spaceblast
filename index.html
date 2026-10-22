@@ -30,6 +30,12 @@
       <symbol id="i-normal" viewBox="0 0 24 24"><path d="M6 19v-4M12 19v-9"/><path d="M18 19V5" opacity="0.3"/></symbol>
       <symbol id="i-hard" viewBox="0 0 24 24"><path d="M6 19v-4M12 19v-9M18 19V5"/></symbol>
       <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+      <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 5v14l9-7z" fill="currentColor"/><path d="M18 5v14"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-charge" viewBox="0 0 24 24"><circle cx="11" cy="14" r="7"/><path d="M15.8 9.2l2.7-3.2"/><path d="M20.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="currentColor"/></symbol>
       <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></symbol>
     </svg>
     <canvas id="game"></canvas>
@@ -55,7 +61,7 @@
       <div id="stick-base"><div id="stick-knob"></div></div>
     </div>
     <div id="action-zone">
-      <button id="place-btn" type="button" aria-label="Place charge" data-i18n="html.place-btn" data-i18n-aria="aria.place-btn">CHARGE</button>
+      <button id="place-btn" type="button" aria-label="Place charge" data-i18n-aria="aria.place-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-charge"/></svg></button>
     </div>
     <div id="pause-card" hidden>
       <div class="pause-box" role="dialog" aria-labelledby="pause-title">
@@ -140,7 +146,7 @@
         <p id="intro-speaker" class="intro-speaker"></p>
         <p class="intro-tip"><strong id="intro-label"></strong> <span id="intro-hint"></span></p>
         <p id="intro-tap" class="intro-tap"></p>
-        <button id="intro-skip" class="intro-skip go-btn" type="button" hidden><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.intro-skip">Skip</span></button>
+        <button id="intro-skip" class="intro-skip" type="button" hidden data-i18n-aria="html.intro-skip" data-i18n-title="html.intro-skip"><svg class="ui-icon" aria-hidden="true"><use href="#i-skip"/></svg></button>
       </div>
     </div>
     <div id="menu">
@@ -174,50 +180,33 @@
           <button id="settings-done" type="button" class="menu-back nav-back" data-i18n-aria="html.settings-done" data-i18n-title="html.settings-done"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>
           <h2>Settings</h2>
           <div class="menu-scroll">
-            <label class="setting-line">Music
+            <label class="setting-line"><span data-i18n="settings.music">Music</span>
               <input id="set-music" type="range" min="0" max="100" step="5" />
               <output id="set-music-value"></output>
             </label>
-            <label class="setting-line">Effects
+            <label class="setting-line"><span data-i18n="settings.effects">Effects</span>
               <input id="set-sfx" type="range" min="0" max="100" step="5" />
               <output id="set-sfx-value"></output>
             </label>
-            <div class="setting-line">Touch controls
-              <div id="set-controls" class="segmented">
-                <button type="button" data-value="small" data-i18n="opt.set-controls.small">Small</button>
-                <button type="button" data-value="normal" data-i18n="opt.set-controls.normal">Normal</button>
-                <button type="button" data-value="large" data-i18n="opt.set-controls.large">Large</button>
-              </div>
+            <div class="setting-line"><span data-i18n="settings.controls">Touch controls</span>
+              <div id="set-controls"></div>
             </div>
-            <div class="setting-line">Joystick
-              <div id="set-joystick" class="segmented">
-                <button type="button" data-value="floating" data-i18n="opt.set-joystick.floating">Floating</button>
-                <button type="button" data-value="fixed" data-i18n="opt.set-joystick.fixed">Fixed</button>
-              </div>
+            <div class="setting-line"><span data-i18n="settings.joystick">Joystick</span>
+              <div id="set-joystick"></div>
             </div>
-            <div id="set-vibration-line" class="setting-line">Vibration
-              <div id="set-vibration" class="segmented">
-                <button type="button" data-value="on" data-i18n="opt.set-vibration.on">On</button>
-                <button type="button" data-value="off" data-i18n="opt.set-vibration.off">Off</button>
-              </div>
+            <div id="set-vibration-line" class="setting-line"><span data-i18n="settings.vibration">Vibration</span>
+              <div id="set-vibration"></div>
             </div>
-            <div class="setting-line">Screen shake
-              <div id="set-shake" class="segmented">
-                <button type="button" data-value="on" data-i18n="opt.set-shake.on">On</button>
-                <button type="button" data-value="off" data-i18n="opt.set-shake.off">Off</button>
-              </div>
+            <div class="setting-line"><span data-i18n="settings.shake">Screen shake</span>
+              <div id="set-shake"></div>
             </div>
-            <div class="setting-line">Round replays
-              <div id="set-cinematic" class="segmented">
-                <button type="button" data-value="full" data-i18n="opt.set-cinematic.full">Full</button>
-                <button type="button" data-value="short" data-i18n="opt.set-cinematic.short">Short</button>
-                <button type="button" data-value="off" data-i18n="opt.set-cinematic.off">Off</button>
-              </div>
+            <div class="setting-line"><span data-i18n="settings.replays">Round replays</span>
+              <div id="set-cinematic"></div>
             </div>
-            <div class="setting-line">Tutorial
+            <div class="setting-line"><span data-i18n="settings.tutorial">Tutorial</span>
               <button id="settings-tutorial" type="button" class="quiet-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-replay"/></svg><span data-i18n="html.settings-tutorial">Show the tutorial again</span></button>
             </div>
-            <div class="setting-line">Help
+            <div class="setting-line"><span data-i18n="settings.help">Help</span>
               <button id="menu-howto" type="button" class="quiet-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-help"/></svg><span data-i18n="html.menu-howto">How to Play</span></button>
             </div>
           </div>
@@ -253,48 +242,24 @@
           <button id="online-create" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-create">Create room</span></button>
           <div class="online-join">
             <input id="online-code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Room code" />
-            <button id="online-join" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-join">Join</span></button>
+            <button id="online-join" class="icon-btn" type="button" data-i18n-aria="html.online-join" data-i18n-title="html.online-join"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg></button>
           </div>
         </div>
         <div id="online-lobby" hidden>
           <div class="lobby-col" id="lobby-left">
-            <div class="online-code-label">Room code</div>
-            <div class="online-room-row"><div id="online-room" class="online-room"></div><button id="online-invite" type="button" data-i18n="html.online-invite">Invite</button></div>
+            <div class="online-code-label" data-i18n="lobby.roomCode">Room code</div>
+            <div class="online-room-row"><div id="online-room" class="online-room"></div><button id="online-invite" class="icon-btn" type="button" data-i18n-aria="html.online-invite" data-i18n-title="html.online-invite"><svg class="ui-icon" aria-hidden="true"><use href="#i-share"/></svg></button></div>
             <div id="online-invite-note" class="online-code-label" aria-live="polite"></div>
             <div id="online-slots" class="slots" aria-label="Player slots"></div>
-            <div class="online-code-label">Your colour</div>
+            <div class="online-code-label" data-i18n="lobby.yourColour">Your colour</div>
             <div id="online-colors" class="swatches"></div>
           </div>
           <div class="lobby-col">
             <div class="online-code-label" id="settings-label" data-i18n="html.settings-label">Match settings</div>
-            <div class="setting-row">
-              <span>Round time</span>
-              <div id="set-time" class="segmented"></div>
-            </div>
-            <div class="setting-row">
-              <span>Scenarios</span>
-              <div class="segmented">
-                <button id="set-maze" type="button" aria-pressed="false" data-i18n="html.set-maze">Maze Shift</button>
-                <button id="set-blackout" type="button" aria-pressed="false" data-i18n="html.set-blackout">Blackout</button>
-              </div>
-            </div>
-            <div class="setting-row">
-              <span>Match</span>
-              <div id="set-match" class="segmented">
-                <button type="button" data-match="bo3">Best of 3</button>
-                <button type="button" data-match="ft3">First to 3 wins</button>
-              </div>
-            </div>
-            <div class="setting-row">
-              <span>Bot level</span>
-              <div class="bots-row">
-                <div id="set-bot-level" class="segmented">
-                  <button type="button" data-level="easy">Easy</button>
-                  <button type="button" data-level="normal">Normal</button>
-                  <button type="button" data-level="hard">Hard</button>
-                </div>
-              </div>
-            </div>
+            <div class="setting-row"><span data-i18n="lobby.opt.time">Round time</span><div id="set-time"></div></div>
+            <div class="setting-row"><span data-i18n="lobby.opt.scenarios">Scenarios</span><div id="set-scenario"></div></div>
+            <div class="setting-row"><span data-i18n="lobby.opt.match">Match</span><div id="set-match"></div></div>
+            <div class="setting-row"><span data-i18n="lobby.opt.botLevel">Bot level</span><div id="set-bot-level"></div></div>
             <button id="online-start" type="button" class="primary go-btn"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.online-start">Start match</span></button>
           </div>
         </div>
@@ -310,13 +275,13 @@
     </div>
     <div id="crawl" hidden>
       <div class="crawl-stage"><div id="crawl-text" class="crawl-text"></div></div>
-      <button id="crawl-skip" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.crawl-skip">Skip</span></button>
+      <button id="crawl-skip" type="button" data-i18n-aria="html.crawl-skip" data-i18n-title="html.crawl-skip"><svg class="ui-icon" aria-hidden="true"><use href="#i-skip"/></svg></button>
     </div>
     <div id="cutscene" hidden>
       <div class="cut-bg"></div>
       <canvas id="cut-sprite" class="cut-sprite" aria-hidden="true"></canvas>
       <div id="cut-reveal" class="cut-reveal" hidden></div>
-      <button id="cut-skip" class="go-btn" type="button"><svg class="ui-icon" aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="html.cut-skip">Skip</span></button>
+      <button id="cut-skip" type="button" data-i18n-aria="html.cut-skip" data-i18n-title="html.cut-skip"><svg class="ui-icon" aria-hidden="true"><use href="#i-skip"/></svg></button>
       <div class="cut-box">
         <canvas id="cut-portrait" class="cut-portrait" aria-hidden="true"></canvas>
         <div class="cut-lines">
@@ -373,7 +338,7 @@
         <form id="lb-form" class="lb-form">
           <label for="lb-name">Your name</label>
           <input id="lb-name" autocomplete="nickname" spellcheck="false" />
-          <button type="submit">Save</button>
+          <button type="submit" class="icon-btn" data-i18n-aria="aria.save" data-i18n-title="aria.save"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"/></svg></button>
         </form>
         <p id="lb-name-note" class="lb-status"></p>
         <button id="lb-back" type="button" class="nav-back" data-i18n-aria="html.lb-back" data-i18n-title="html.lb-back"><svg class="ui-icon" aria-hidden="true"><use href="#i-back"/></svg></button>

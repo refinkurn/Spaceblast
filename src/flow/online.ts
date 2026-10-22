@@ -5,8 +5,9 @@ import {
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
 import { shareInvite } from './invite';
-import { ROUND_SECONDS } from '../sim/constants';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
+import { botLevelOptions, matchOptions, scenarioFlags, scenarioOf, scenarioOptions, timeOptions, type Scenario } from './online_options';
+import { Stepper } from './stepper';
 import { t } from '../utils/i18n';
 
 export { botColorsFor };
@@ -54,7 +55,6 @@ function backLabel(label: string): void {
   back.title = label;
 }
 
-const timeLabel = (s: number) => (s < 120 ? `${s}s` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
 
 export class OnlineRoom {
   onRoundStart: (s: RoundStart) => void = () => {};
@@ -366,6 +366,13 @@ export class OnlineRoom {
 
   // --- Lobby ----------------------------------------------------------------------
 
+  private steppers!: {
+    time: Stepper<number>;
+    scenario: Stepper<Scenario>;
+    match: Stepper<RoomSettings['match']>;
+    botLevel: Stepper<RoomSettings['botLevel']>;
+  };
+
   private buildLobbyControls(): void {
     const swatches = $('online-colors');
     PLAYER_COLORS.forEach((color, i) => {
@@ -376,25 +383,13 @@ export class OnlineRoom {
       b.addEventListener('click', () => this.net.send({ t: 'profile', name: this.me()?.name ?? '', color: i }));
       swatches.append(b);
     });
-    const times = $('set-time');
-    for (const s of ROUND_SECONDS) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = timeLabel(s);
-      b.dataset.time = String(s);
-      b.addEventListener('click', () => this.changeSettings({ time: s }));
-      times.append(b);
-    }
-    $('set-maze').addEventListener('click', () => this.changeSettings({ maze: !this.settings.maze }));
-    $('set-blackout').addEventListener('click', () => this.changeSettings({ blackout: !this.settings.blackout }));
-    for (const el of $('set-match').children) {
-      const b = el as HTMLButtonElement;
-      b.addEventListener('click', () => this.changeSettings({ match: b.dataset.match as RoomSettings['match'] }));
-    }
-    for (const el of $('set-bot-level').children) {
-      const b = el as HTMLButtonElement;
-      b.addEventListener('click', () => this.changeSettings({ botLevel: b.dataset.level as RoomSettings['botLevel'] }));
-    }
+    // Match options: one ‹ value › selector each (the host steps; guests see the host's pick).
+    this.steppers = {
+      time: new Stepper($('set-time'), timeOptions(), (time) => this.changeSettings({ time }), t('lobby.opt.time')),
+      scenario: new Stepper<Scenario>($('set-scenario'), scenarioOptions(), (sc) => this.changeSettings(scenarioFlags(sc)), t('lobby.opt.scenarios')),
+      match: new Stepper($('set-match'), matchOptions(), (match) => this.changeSettings({ match }), t('lobby.opt.match')),
+      botLevel: new Stepper($('set-bot-level'), botLevelOptions(), (botLevel) => this.changeSettings({ botLevel }), t('lobby.opt.botLevel')),
+    };
   }
 
   private changeSettings(change: Partial<RoomSettings>): void {
@@ -414,27 +409,14 @@ export class OnlineRoom {
 
     const host = this.isHost;
     $('settings-label').textContent = host ? t('online.matchSettings') : t('online.matchSettingsGuest');
-    for (const el of $('set-time').children) {
-      const b = el as HTMLButtonElement;
-      b.setAttribute('aria-pressed', String(Number(b.dataset.time) === this.settings.time));
-      b.disabled = !host;
-    }
-    const toggle = (id: string, on: boolean) => {
-      $(id).setAttribute('aria-pressed', String(on));
-      $<HTMLButtonElement>(id).disabled = !host;
-    };
-    for (const el of $('set-match').children) {
-      const b = el as HTMLButtonElement;
-      b.setAttribute('aria-pressed', String(b.dataset.match === this.settings.match));
-      b.disabled = !host;
-    }
-    for (const el of $('set-bot-level').children) {
-      const b = el as HTMLButtonElement;
-      b.setAttribute('aria-pressed', String(b.dataset.level === this.settings.botLevel));
-      b.disabled = !host || this.settings.bots === 0;
-    }
-    toggle('set-maze', this.settings.maze);
-    toggle('set-blackout', this.settings.blackout);
+    const st = this.steppers;
+    st.time.set(this.settings.time);
+    st.scenario.set(scenarioOf(this.settings));
+    st.match.set(this.settings.match);
+    st.botLevel.set(this.settings.botLevel);
+    st.time.disabled = st.scenario.disabled = st.match.disabled = !host;
+    // Bot level only matters with a bot in the room.
+    st.botLevel.disabled = !host || this.settings.bots === 0;
 
     const start = $<HTMLButtonElement>('online-start');
     start.hidden = !host;
@@ -465,7 +447,9 @@ export class OnlineRoom {
       dot.style.background = slot.color || 'transparent';
       const name = document.createElement('span');
       name.className = 'slot-name';
-      name.textContent = slot.you ? `${slot.name} (you)` : slot.name;
+      // Your own seat is lit (CSS .slot.you) instead of "(you)" after the name, which cut long names short.
+      name.textContent = slot.name;
+      card.classList.toggle('you', slot.you);
       const tag = document.createElement('span');
       tag.className = 'slot-tag';
       tag.textContent = slot.tag;

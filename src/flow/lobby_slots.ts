@@ -1,7 +1,7 @@
 import { MAX_PLAYERS, PLAYER_COLORS, type Profile } from '../net/protocol';
 import { t } from '../utils/i18n';
 
-/** One of the lobby's four slot cards: seated players first, then bots, then OPEN. */
+/** One of the lobby's four slot cards: seated players first, then bots, then open seats. */
 export interface LobbySlot {
   kind: 'player' | 'bot' | 'open';
   /** "P1".."P4". */
@@ -9,7 +9,7 @@ export interface LobbySlot {
   name: string;
   /** CSS colour, '' for an open slot. */
   color: string;
-  /** "HOST", "BOT" or "OPEN" (a joined guest has none). */
+  /** "HOST" or "BOT"; none for a joined guest or an open seat (its name already says it). */
   tag: string;
   you: boolean;
 }
@@ -27,7 +27,8 @@ export function lobbySlots(players: Profile[], bots: number, host: number, you: 
     if (p) return { kind: 'player', label, name: p.name, color: PLAYER_COLORS[p.color], tag: p.slot === host ? t('lobby.tag.host') : '', you: p.slot === you };
     const b = i - players.length;
     if (b < bots) return { kind: 'bot', label, name: t('lobby.bot', { n: b + 1 }), color: PLAYER_COLORS[botColors[b]], tag: t('lobby.tag.bot'), you: false };
-    return { kind: 'open', label, name: t('lobby.open'), color: '', tag: t('lobby.tag.open'), you: false };
+    // One word for an empty seat: the host can tap it to add a bot, everyone else sees it is open.
+    return { kind: 'open', label, name: you === host ? t('lobby.addBot') : t('lobby.open'), color: '', tag: '', you: false };
   });
 }
 

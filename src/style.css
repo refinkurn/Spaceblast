@@ -561,11 +561,8 @@ body.scene .net-stats { visibility: hidden; }
 #online .swatches button { min-height: 48px; height: 48px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
 #online .swatches button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #14161d inset; }
 #online .swatches button:disabled { opacity: 0.2; }
-.setting-row { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-quiet); }
-.setting-row > span { min-width: 74px; text-align: right; }
-.segmented { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
-#online .segmented button { min-height: 48px; min-width: 48px; padding: 0 10px; font-size: 14px; }
-#online .segmented button[aria-pressed="true"] { color: #0e1118; background: var(--accent); border-color: var(--accent); }
+.setting-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%; font-size: 13px; color: var(--ink-quiet); }
+.setting-row > span { text-align: left; }
 .online-status { min-height: 18px; font-size: 14px; color: var(--ink-quiet); }
 .online-status.error { color: #ffb4a2; }
 
@@ -657,8 +654,6 @@ body.scene .net-stats { visibility: hidden; }
 @keyframes count-tick { from { transform: scale(1.4); } }
 @media (prefers-reduced-motion: reduce) { .announce.pop, .announce-count.tick { animation: none; } }
 
-.bots-row { display: flex; gap: 8px; align-items: center; }
-#online .bots-row .segmented button { padding: 0 8px; }
 
 /* Round-end cinematic: the winner's title over the close-up. */
 .cine {
@@ -766,8 +761,6 @@ body:has(#announce:not([hidden])) #alert { top: calc(var(--hud) + 44px); }
 .setting-line { display: flex; align-items: center; gap: 12px; justify-content: space-between; font-size: 15px; }
 .setting-line input[type="range"] { flex: 1; accent-color: var(--accent); min-height: 32px; }
 .setting-line output { min-width: 44px; text-align: right; color: var(--ink-quiet); }
-#settings .segmented button { min-height: 48px; min-width: 48px; padding: 0 12px; font: 600 14px system-ui, sans-serif; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff30; border-radius: 10px; }
-#settings .segmented button[aria-pressed="true"] { color: #0e1118; background: var(--accent); border-color: var(--accent); }
 
 /* Story cutscenes: letterbox bars, dialogue and a slam-in reveal caption. */
 #cutscene { position: fixed; inset: 0; z-index: 11; cursor: pointer; overflow: hidden; }
@@ -1031,7 +1024,6 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 
 /* Invite button beside the room code; full-screen reconnecting overlay. */
 .online-room-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-#online-invite { min-height: 48px; min-width: 96px; }
 #reconnect { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: #0b0d12d9; }
 #reconnect[hidden] { display: none; }
 .reconnect-box { display: flex; flex-direction: column; align-items: center; gap: 14px; color: var(--ink); font: 700 18px system-ui, sans-serif; text-align: center; padding: 0 16px; }
@@ -1104,7 +1096,7 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
   --dash-radius: 6px;
   --dash-lit: inset 0 0 0 1px var(--accent), inset 0 0 14px #5ad1ff33;
 }
-.menu-list button:not(.nav-back), .nav-back, .quiet-btn, #settings .segmented button, .sound-btn, #menu-btn,
+.menu-list button:not(.nav-back), .nav-back, .quiet-btn, .stepper button, .icon-btn, .sound-btn, #menu-btn,
 #online button:not(.nav-back), .pause-list button, #banner button, #banner button.quiet, #congrats button, #hub-board,
 .map-card-actions button, .lb-pick button, .lb-form button, #ending-btn, #install-ok, .intro-skip, #crawl-skip, #cut-skip, .icon-go {
   color: var(--ink);
@@ -1114,7 +1106,7 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
   box-shadow: inset 0 1px 0 #ffffff12;
 }
 .menu-list button:not(.nav-back):hover, .menu-list button:not(.nav-back):focus-visible, .nav-back:hover, .nav-back:focus-visible,
-.quiet-btn:hover, .quiet-btn:focus-visible, #settings .segmented button:hover, .sound-btn:hover, #menu-btn:hover,
+.quiet-btn:hover, .quiet-btn:focus-visible, .stepper button:not(:disabled):hover, .icon-btn:hover, .sound-btn:hover, #menu-btn:hover,
 #online button:not(.nav-back):not(:disabled):hover, .pause-list button:hover, .pause-list button:focus-visible, #banner button:hover,
 #congrats button:hover, #hub-board:hover, .map-card-actions button:hover, .lb-pick button:not(:disabled):hover, .lb-form button:hover,
 #ending-btn:hover, #install-ok:hover, .intro-skip:hover, #crawl-skip:hover, #cut-skip:hover {
@@ -1124,8 +1116,7 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 }
 /* Lit: the main action, and the chosen option of a row. */
 #online button.primary, .pause-list #pause-resume, .pause-list #pause-keep, #banner #banner-btn, #congrats button.primary,
-#map-card-enter, #ending-btn, #install-ok, .icon-go, .menu-list button[aria-current="true"],
-#settings .segmented button[aria-pressed="true"], #online .segmented button[aria-pressed="true"] {
+#map-card-enter, #ending-btn, #install-ok, .icon-go, .menu-list button[aria-current="true"] {
   color: var(--accent);
   background: var(--dash-bg);
   border-color: var(--accent);
@@ -1134,3 +1125,64 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 .icon-go:hover, .icon-go:focus-visible { outline: none; background: var(--dash-bg-hover); box-shadow: var(--dash-lit), 0 0 0 3px #5ad1ff44; }
 /* Not panels: the colour swatches stay round (their colour is inline). */
 #online .swatches button { border-radius: 50%; border: 2px solid transparent; box-shadow: none; }
+
+/* Settings and How to Play: a centred card over the menu, or over the paused game (#menu.over: no menu
+   art or character behind it). The dim backdrop is #menu's own ::after, so a tap on it reaches #menu
+   (menu.ts: Back). No transform on the card: Back inside it stays pinned to the screen corner. */
+#menu.card::after { content: ''; position: fixed; inset: 0; z-index: 1; background: #000b; }
+#menu.over { background: none !important; }
+#menu.over .menu-right, #menu.over h1, #menu.over .tagline, #menu.over .menu-corner { visibility: hidden; }
+#menu.card #settings, #menu.card #menu-howto-page {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  z-index: 2;
+  width: min(500px, calc(100vw - 32px));
+  height: fit-content;
+  max-height: calc(100dvh - 2 * var(--edge-top) - 16px);
+  padding: 14px 18px 16px;
+  gap: 10px;
+  background: #0b0e14f7;
+  border: 1px solid #ffffff2a;
+  border-radius: 10px;
+  box-shadow: 0 18px 50px #000c;
+  animation: fade-in 0.15s ease-out;
+}
+#menu.card #settings h2, #menu.card #menu-howto-page h2 { text-align: center; }
+@media (prefers-reduced-motion: reduce) { #menu.card #settings, #menu.card #menu-howto-page { animation: none; } }
+
+/* ‹ value › selector (flow/stepper.ts): one choice at a time, square arrow buttons either side. */
+.stepper { flex: none; display: inline-flex; align-items: center; gap: 4px; }
+.stepper button { width: 48px; min-width: 48px; height: 48px; min-height: 48px; padding: 0; display: grid; place-items: center; }
+#online .stepper button { padding: 0; min-width: 48px; }
+.stepper button .ui-icon { width: 20px; height: 20px; }
+/* A block, so every selector has the same width and the arrows line up row to row (beats .setting-line output). */
+.stepper .step-value { display: block; min-width: 112px; padding: 0 4px; text-align: center; font: 700 15px system-ui, sans-serif; color: var(--ink); white-space: nowrap; }
+.stepper.off { opacity: 0.5; }
+.setting-line .stepper { margin-left: auto; }
+
+/* Icon-only buttons (Invite = share, Join = play, leaderboard Save = check). */
+.icon-btn { width: 48px; min-width: 48px; height: 48px; min-height: 48px; padding: 0 !important; display: grid; place-items: center; }
+.icon-btn .ui-icon { width: 22px; height: 22px; }
+#crawl-skip, #cut-skip, .intro-skip { min-width: 48px; width: 48px; padding: 0; display: grid; place-items: center; }
+#crawl-skip .ui-icon, #cut-skip .ui-icon, .intro-skip .ui-icon { width: 22px; height: 22px; }
+.intro-skip[hidden] { display: none; }
+
+/* The Charge button: the charge icon (same shape as the Extra Charge power-up), no word. */
+#place-btn { display: grid; place-items: center; color: var(--accent); }
+#place-btn .ui-icon { width: 46%; height: 46%; stroke-width: 1.8; }
+
+/* Lobby: two roomy panels (players, match settings); empty seats say so once. */
+.lobby-col { padding: 12px 14px 14px; gap: 10px; background: #0b0e14cc; border: 1px solid #ffffff1a; border-radius: 10px; }
+.slots { gap: 8px; }
+#online .slot { min-height: 52px; padding: 8px 12px; gap: 3px 8px; border-radius: var(--dash-radius); }
+#online .slot.open { grid-template-areas: "label label" "name name"; }
+.slot.open .dot, .slot.open .slot-tag { display: none; }
+.slot.open .slot-name { font-weight: 600; }
+.online-room-row { gap: 12px; }
+#online-start { width: 100%; margin-top: 4px; }
+/* Lobby rows are narrower than the Settings card: a slimmer value box, labels on one line. */
+#online .stepper .step-value { min-width: 92px; font-size: 14px; }
+.setting-row > span { white-space: nowrap; }
+/* Your own seat is lit, so the name needs no "(you)". */
+#online .slot.you { border-color: var(--accent); box-shadow: var(--dash-lit); }

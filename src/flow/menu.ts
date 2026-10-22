@@ -5,8 +5,10 @@ import { POWERUP_CARDS } from './powerup_cards';
 import { CONTROL_WORDS } from './tutorial_script';
 
 // The main menu: a column of choices on the left, Astropaw standing on the
-// right. Versus (Battle vs Bot, Multiplayer), Settings (with How to Play) and
-// Credits open in the same column (Back, pinned top-left, or Escape returns). Arrow keys move between the choices; Enter,
+// right. Versus (Battle vs Bot, Multiplayer) and Credits open in the same column;
+// Settings (with How to Play) opens as a centred card over the menu, or over the
+// paused game from the pause card. Back (pinned top-left), Escape or a tap
+// outside the card returns. Arrow keys move between the choices; Enter,
 // Space or a tap picks one.
 // The look comes from src/assets/menu/menu.json: background image (the size
 // that suits the screen), readability overlay, focal point, and whether a
@@ -38,6 +40,9 @@ const PAGES: Record<MenuPage, string> = {
   howto: 'menu-howto-page',
   credits: 'menu-credits-page',
 };
+
+/** Pages shown as a centred card over what is behind them (the main menu, or a paused game). */
+export const CARD_PAGES: readonly MenuPage[] = ['settings', 'howto'];
 
 /** Where Back goes from each sub-page, and which button to refocus there. */
 export const BACK: Record<Exclude<MenuPage, 'main'>, { page: MenuPage; focus: string }> = {
@@ -86,6 +91,9 @@ export class Menu {
         e.preventDefault();
       }
     }, true);
+    this.el.addEventListener('click', (e) => {
+      if (e.target === this.el && CARD_PAGES.includes(this.page)) this.back();
+    });
     window.addEventListener('keydown', (e) => this.key(e));
     window.addEventListener('resize', () => this.drawHero());
   }
@@ -111,13 +119,19 @@ export class Menu {
 
   hide(): void {
     this.el.hidden = true;
+    this.el.classList.remove('card', 'over');
   }
 
   open(page: MenuPage): void {
     if (page !== this.page || this.el.hidden) this.switchedAt = performance.now();
     this.page = page;
-    for (const [p, id] of Object.entries(PAGES)) $(id).hidden = p !== page;
-    this.el.classList.toggle('sub', page !== 'main');
+    // A card page keeps the main menu under it; over a game nothing is under it (the game shows through).
+    const card = CARD_PAGES.includes(page);
+    const under: MenuPage | null = card && !this.returnTo ? 'main' : null;
+    for (const [p, id] of Object.entries(PAGES)) $(id).hidden = p !== page && p !== under;
+    this.el.classList.toggle('sub', page !== 'main' && !card);
+    this.el.classList.toggle('card', card);
+    this.el.classList.toggle('over', this.returnTo !== null);
     if (page === 'bot') {
       for (const b of $('menu-bot').querySelectorAll('[data-level]')) {
         b.setAttribute('aria-current', String((b as HTMLElement).dataset.level === this.botLevel));

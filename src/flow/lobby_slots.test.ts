@@ -12,7 +12,9 @@ describe('lobby slot cards', () => {
     expect(slots[0].tag).toBe('HOST');
     expect(slots[1].you).toBe(true);
     expect(slots[2]).toMatchObject({ name: 'Bot 1', tag: 'BOT', color: PLAYER_COLORS[botColorsFor(players)[0]] });
-    expect(slots[3].tag).toBe('OPEN');
+    // An open seat says so once (no OPEN tag next to "Open"); guests see Open, the host Add bot.
+    expect(slots[3]).toMatchObject({ tag: '', name: 'Open' });
+    expect(lobbySlots(players, 1, 0, 0)[3]).toMatchObject({ tag: '', name: 'Add bot' });
   });
 
   it('a 4th player joining takes the last slot and bots make room', () => {

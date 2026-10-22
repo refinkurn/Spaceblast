@@ -135,7 +135,8 @@ describe('stats panel', () => {
 });
 
 describe('proceed and back icons', () => {
-  const PROCEED = ['story-btn', 'card-launch', 'banner-btn', 'map-card-enter', 'pause-resume', 'pause-keep', 'online-rejoin', 'online-create', 'online-join', 'online-start', 'crawl-skip', 'cut-skip', 'intro-skip'];
+  const PROCEED = ['story-btn', 'card-launch', 'banner-btn', 'map-card-enter', 'pause-resume', 'pause-keep', 'online-rejoin', 'online-create', 'online-join', 'online-start'];
+  const SKIP = ['crawl-skip', 'cut-skip', 'intro-skip'];
   const BACK = ['banner-menu', 'pause-quit', 'pause-quit-yes', 'ending-btn', 'settings-done', 'online-back', 'hub-back', 'map-card-back', 'lb-back'];
 
   it('every proceed button uses #i-play and every back button #i-back, nothing else', () => {
@@ -149,11 +150,12 @@ describe('proceed and back icons', () => {
       expect(b, id).toContain('href="#i-back"');
       expect(b, id).not.toContain('href="#i-play"');
     }
+    for (const id of SKIP) expect(block(id), id).toContain('href="#i-skip"');
     expect(html).not.toContain('i-rocket');
   });
 
   it('keeps labels in a <span data-i18n> so the startup translation pass keeps the icon', () => {
-    for (const id of [...PROCEED, ...BACK]) expect(block(id).match(/^<button[^>]*>/)![0], id).not.toMatch(/ data-i18n="/);
+    for (const id of [...PROCEED, ...BACK, ...SKIP]) expect(block(id).match(/^<button[^>]*>/)![0], id).not.toMatch(/ data-i18n="/);
   });
 });
 
@@ -173,5 +175,35 @@ describe('online screen', () => {
     expect(css).not.toContain('justify-content: flex-start;\n  padding-left: max(28px');
     expect(rule(css, '#online')).toContain('justify-content: center');
     expect(css).toMatch(/\.online-card \{ width: min\(640px, 100%\)/);
+  });
+});
+
+describe('icon-only buttons', () => {
+  it('Invite, Join, Save, Skip and Charge show an icon, no words, and keep a spoken name', () => {
+    const save = html.match(/<button type="submit"[^>]*>[\s\S]*?<\/button>/)![0];
+    for (const [b, icon] of [[block('online-invite'), 'i-share'], [block('online-join'), 'i-play'], [save, 'i-check'], [block('crawl-skip'), 'i-skip'], [block('place-btn'), 'i-charge']] as const) {
+      expect(b).toContain(`href="#${icon}"`);
+      expect(b.replace(/<[^>]*>/g, '').trim()).toBe('');
+      expect(b).toMatch(/aria-label="|data-i18n-aria="/);
+    }
+  });
+});
+
+describe('settings card and selectors', () => {
+  it('opens Settings and How to Play as a centred card (no transform, so Back stays in the corner)', () => {
+    const card = css.slice(css.indexOf('#menu.card #settings, #menu.card #menu-howto-page {'));
+    const rule = card.slice(0, card.indexOf('}'));
+    expect(rule).toContain('position: fixed');
+    expect(rule).toContain('margin: auto');
+    expect(rule).not.toContain('transform');
+    expect(css).toContain('#menu.card::after');
+  });
+
+  it('every option setting is a ‹ value › selector, in Settings and in the lobby', () => {
+    for (const id of ['set-controls', 'set-joystick', 'set-vibration', 'set-shake', 'set-cinematic', 'set-time', 'set-scenario', 'set-match', 'set-bot-level']) {
+      expect(html, id).toContain(`<div id="${id}"></div>`);
+    }
+    expect(html).not.toContain('segmented');
+    expect(rule(css, '.stepper button')).toContain('height: 48px');
   });
 });
