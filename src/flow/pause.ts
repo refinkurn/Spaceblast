@@ -41,12 +41,15 @@ export class PauseMenu {
     this.showConfirm(false);
     this.open = true;
     this.card.hidden = false;
+    // body.paused hides the count and pop-ups (style.css) so nothing draws over the card or Settings.
+    document.body.classList.add('paused');
     $('pause-resume').focus();
   }
 
   close(): void {
     this.open = false;
     this.card.hidden = true;
+    document.body.classList.remove('paused');
     this.showConfirm(false);
   }
 
