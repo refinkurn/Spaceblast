@@ -67,9 +67,10 @@ export class StoryMode {
       for (let n = 1; n <= LEVEL_COUNT; n++) if (this.progress.stars(n) > 0) last = n;
       this.board.show(last);
     });
+    // After the ending: back to the Story map (all 20 levels cleared, ready to replay for stars).
     $('ending-btn').addEventListener('click', () => fadeThrough(() => {
       this.closeEnding();
-      host.openMenu();
+      this.map.show();
     }));
   }
 
@@ -247,8 +248,15 @@ export class StoryMode {
   private gameOver(): void {
     this.progress.save();
     const level = this.level;
-    this.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.mainMenu'), randomTip(),
-      { pose: 'defeated', summary: storySummary(this.host.state, Math.min(this.livesLost, START_LIVES), 0) });
+    this.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.map'), randomTip(),
+      {
+        pose: 'defeated', summary: storySummary(this.host.state, Math.min(this.livesLost, START_LIVES), 0),
+        // "Map" goes back to the Story map, not the main menu.
+        onMenu: () => fadeThrough(() => {
+          this.screens.hideBanner();
+          this.map.show();
+        }),
+      });
   }
 
   private showEnding(): void {

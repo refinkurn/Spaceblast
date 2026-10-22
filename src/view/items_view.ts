@@ -11,7 +11,10 @@ import { ParticlePool } from './particles';
 // object (or a danger tile), so only the item itself carries the colour.
 // View only; reads the state, never writes it.
 
-const FLOAT = 0.3;
+/** Power-ups are drawn this much bigger than their meshes (playtest: too small to notice). */
+export const ITEM_SCALE = 1.6;
+/** Float height inside the scaled item (about 0.4 above the floor). */
+const FLOAT = 0.25;
 const SPIN = (30 * Math.PI) / 180; // rad/s
 const POP_SECONDS = 0.2;
 
@@ -62,7 +65,7 @@ export class ItemsView {
       const shell = e.root.children[1];
       shell.position.y = e.body.position.y;
       const pop = Math.min(1, (time - e.born) / POP_SECONDS);
-      e.root.scale.setScalar(Math.max(pop, 0.001));
+      e.root.scale.setScalar(Math.max(pop, 0.001) * ITEM_SCALE);
     }
     // Gone from the grid (picked up): a burst in its colour.
     for (const [key, e] of this.entries) {
@@ -85,7 +88,7 @@ export class ItemsView {
   }
 
   private burstAt(e: Entry, count: number): void {
-    this.particles.burst(e.root.position.x, FLOAT, e.root.position.z, ITEM_LOOK[e.item].color, count);
+    this.particles.burst(e.root.position.x, FLOAT * ITEM_SCALE, e.root.position.z, ITEM_LOOK[e.item].color, count);
   }
 
   clear(): void {

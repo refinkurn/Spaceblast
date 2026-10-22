@@ -45,6 +45,28 @@ function mesh(g: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0): 
   return o;
 }
 
+/** A lightning bolt outline, flat, about 0.22 long (for the hoverboard deck). */
+function boltGeometry(): THREE.BufferGeometry {
+  const s = new THREE.Shape();
+  const pts: [number, number][] = [[-0.14, 0.035], [0.0, 0.06], [-0.025, 0.0], [0.14, 0.0], [0.0, -0.06], [0.025, -0.005], [-0.14, -0.012]];
+  s.moveTo(...pts[0]);
+  for (const p of pts.slice(1)) s.lineTo(...p);
+  s.closePath();
+  return new THREE.ExtrudeGeometry(s, { depth: 0.015, bevelEnabled: false });
+}
+
+/** A heater shield (flat top, sides curving to a point), `r` half-width, `depth` thick, centred. */
+function shieldGeometry(r: number, depth: number): THREE.BufferGeometry {
+  const s = new THREE.Shape();
+  s.moveTo(-r, r * 0.9);
+  s.lineTo(r, r * 0.9);
+  s.quadraticCurveTo(r, -r * 0.4, 0, -r * 1.25);
+  s.quadraticCurveTo(-r, -r * 0.4, -r, r * 0.9);
+  const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 1, curveSegments: 6 });
+  g.translate(0, 0, -depth / 2);
+  return g;
+}
+
 /** The item itself, centred on the origin and about 0.4 tall. */
 function body(item: number): THREE.Group {
   const g = new THREE.Group();
@@ -68,20 +90,27 @@ function body(item: number): THREE.Group {
       break;
     }
     case Item.JetBoots: {
-      g.add(mesh(geo('boot-leg', () => new THREE.BoxGeometry(0.12, 0.2, 0.12)), mat('boot', () => glow(l.color, 0.6)), -0.02, 0.05, 0));
-      g.add(mesh(geo('boot-foot', () => new THREE.BoxGeometry(0.14, 0.09, 0.24)), mat('boot', () => glow(l.color, 0.6)), -0.02, -0.08, 0.04));
-      const wing = geo('boot-wing', () => new THREE.BoxGeometry(0.02, 0.05, 0.16));
-      const white = mat('boot-wing', () => solid(l.second));
-      for (const s of [-1, 1]) {
-        const w = mesh(wing, white, 0.08 * s - 0.02, 0.05, -0.02);
-        w.rotation.z = -0.5 * s;
-        g.add(w);
-      }
+      // Speed Boost: a hoverboard tilted nose-up as if racing, a lightning bolt on
+      // its deck and a boost flame behind it.
+      const board = new THREE.Group();
+      board.add(mesh(geo('board', () => new THREE.CapsuleGeometry(0.075, 0.26, 2, 8).rotateZ(Math.PI / 2).scale(1, 0.32, 1)), mat('board', () => glow(l.color, 0.55))));
+      const bolt = mesh(geo('bolt', () => boltGeometry()), mat('bolt', () => glow(0x2b3fbf, 0.9)), 0, 0.028, 0);
+      bolt.rotation.x = -Math.PI / 2;
+      board.add(bolt);
+      const flame = mesh(geo('boost', () => new THREE.ConeGeometry(0.06, 0.2, 6).rotateZ(Math.PI / 2)), mat('boost', () => glow(0xff8a00, 1.2)), -0.29, 0, 0);
+      board.add(flame);
+      for (const z of [-0.06, 0.06]) board.add(mesh(geo('pad', () => new THREE.CylinderGeometry(0.035, 0.035, 0.02, 8)), mat('pad', () => glow(0x7fe8ff, 1)), 0.08, -0.035, z), mesh(geo('pad', () => new THREE.CylinderGeometry(0.035, 0.035, 0.02, 8)), mat('pad', () => glow(0x7fe8ff, 1)), -0.1, -0.035, z));
+      board.rotation.z = 0.42; // nose up: running fast
+      board.rotation.x = 0.18;
+      g.add(board);
       break;
     }
     case Item.OxygenVest: {
-      g.add(mesh(geo('helmet', () => new THREE.IcosahedronGeometry(0.17, 1)), mat('helmet', () => new THREE.MeshStandardMaterial({ color: l.color, emissive: l.second, emissiveIntensity: 0.35, roughness: 0.1, metalness: 0.1, flatShading: true }))));
-      g.add(mesh(geo('visor', () => new THREE.TorusGeometry(0.17, 0.02, 6, 14)), mat('visor', () => glow(l.second, 1)), 0, 0, 0));
+      // Oxygen Vest: a shield (white face, pale cyan rim) with an O2 bar across it.
+      g.add(mesh(geo('shield-rim', () => shieldGeometry(0.2, 0.03)), mat('shield-rim', () => glow(l.second, 0.9)), 0, 0, -0.025));
+      g.add(mesh(geo('shield', () => shieldGeometry(0.165, 0.05)), mat('shield', () => new THREE.MeshStandardMaterial({ color: l.color, emissive: l.second, emissiveIntensity: 0.25, roughness: 0.25, metalness: 0.1, flatShading: true }))));
+      g.add(mesh(geo('shield-bar', () => new THREE.BoxGeometry(0.16, 0.04, 0.02)), mat('shield-bar', () => glow(l.second, 1)), 0, 0.03, 0.04));
+      g.add(mesh(geo('shield-bar-v', () => new THREE.BoxGeometry(0.04, 0.16, 0.02)), mat('shield-bar', () => glow(l.second, 1)), 0, 0.03, 0.04));
       break;
     }
     default: {
@@ -96,6 +125,9 @@ function body(item: number): THREE.Group {
   }
   return g;
 }
+
+/** The item fills most of its shell (playtest: items were too small to notice). */
+export const BODY_SCALE = 1.3;
 
 /** Shell colour: pale neutral glass, the same for every item, so the coloured item inside is the only colour. */
 export const SHELL_COLOR = 0xdfe8f2;
@@ -115,6 +147,7 @@ export function shellMesh(_item: number): THREE.Mesh {
 /** The item's own mesh (spins inside the shell). */
 export function itemBody(item: number): THREE.Group {
   const g = body(item);
+  g.scale.setScalar(BODY_SCALE);
   g.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.castShadow = true; });
   return g;
 }

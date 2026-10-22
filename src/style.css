@@ -1233,13 +1233,13 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 /* Very narrow (small phones): the panels stack and the screen scrolls, rather than squeezing. */
 @media (max-width: 620px) { #online-lobby { flex-wrap: wrap; } }
 
-/* HUD avatar: Bosco's own portrait (assets/characters/astropaw, neutral frame), cropped to his helmeted head
-   (about an 84 px square around (63, 96) in the 384 x 152 sheet) and kept sharp as pixel art. */
+/* HUD avatar: Bosco's own portrait (assets/characters/astropaw, neutral frame), cropped so his face sits in the
+   middle of the circle (a 70 px square around (66, 103) in the 384 x 152 sheet) and kept sharp as pixel art. */
 .hud-avatar {
   --av: calc(30px * var(--hs));
   background: #1b2a4a url('./assets/characters/astropaw/hero_portrait_atlas.png') no-repeat;
-  background-size: calc(var(--av) * 4.571) calc(var(--av) * 1.81);
-  background-position: calc(var(--av) * -0.25) calc(var(--av) * -0.643);
+  background-size: calc(var(--av) * 5.486) calc(var(--av) * 2.171);
+  background-position: calc(var(--av) * -0.443) calc(var(--av) * -0.971);
   image-rendering: pixelated;
   overflow: hidden;
 }
