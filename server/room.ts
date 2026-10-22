@@ -175,6 +175,8 @@ export class Room {
     } catch {
       return;
     }
+    // Valid JSON that isn't an object (null, 1, "x", [...]) is ignored too: `msg.t` on null would throw.
+    if (typeof msg !== 'object' || msg === null || Array.isArray(msg)) return;
     switch (msg.t) {
       case 'start':
         if (slot === this.host && Number.isInteger(msg.seed)) this.start(msg.seed >>> 0, now);

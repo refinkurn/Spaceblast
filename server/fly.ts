@@ -5,7 +5,7 @@ import { openSqlite } from './node_sqlite';
 
 // Fly.io entry (one machine): rooms at /room/CODE and the leaderboard at
 // /api/scores on a plain Node server, plus GET /healthz for Fly's checks.
-// The game page stays on Cloudflare, built to point here (VITE_RELAY_URL,
+// The game page (on Vercel) would be built to point here (VITE_RELAY_URL,
 // VITE_API_BASE). Built by `npm run build:server` into dist-server/fly.js.
 // Env: PORT (default 8080), FLY_REGION (shown in the stats overlay) and
 // DB_PATH (the SQLite file on the volume; unset = scores in memory only).

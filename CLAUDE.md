@@ -9,8 +9,9 @@ Capacitor. Multiplayer is the main goal, so the simulation must stay determinist
 - `npm run dev` — dev server (also reachable from a phone on the same Wi-Fi)
 - `npm test` — Vitest unit tests (must pass before every commit)
 - `npm run build` — typecheck + production build into `dist/`
-- `npm run deploy` — build and upload the game + online rooms to Cloudflare (see ONLINE.md)
-- `npm run deploy:fly` — deploy the room server + leaderboard to Fly.io, Singapore, one machine (see ONLINE.md)
+- Hosting (ONLINE.md): game page on Vercel (https://spaceblast.vercel.app, built on every push: `main` = live), rooms + leaderboard on Cloudflare (https://spaceblast.refinkurn.workers.dev)
+- `npm run deploy` — upload the rooms + leaderboard (and a page copy) to Cloudflare; pushing does not update them, so run it after `server/` or `src/net/` changes
+- `npm run deploy:fly` — Fly.io room server, Singapore, one machine: ready but not deployed (not free; see ONLINE.md)
 
 ## Architecture (do not break these)
 

@@ -185,6 +185,18 @@ describe('room: abuse', () => {
     expect(a.got.length).toBe(before);
   });
 
+  it('ignores valid JSON that is not a message object, without throwing', () => {
+    const { room, a, b } = started();
+    const before = [a.got.length, b.got.length];
+    for (const raw of ['null', '1', '"x"', '[]', '{}', '{"t":null}', '[{"t":"ping","id":1}]']) {
+      expect(() => room.message(1, raw, 5)).not.toThrow();
+    }
+    expect([a.got.length, b.got.length]).toEqual(before);
+    expect(b.closed).toBe(0);
+    room.message(1, msg({ t: 'ping', id: 7 }), 5); // the seat is still there
+    expect(b.got.at(-1)).toEqual({ t: 'pong', id: 7 });
+  });
+
   it('answers pings at once', () => {
     const { room, b } = started();
     room.message(1, msg({ t: 'ping', id: 42 }), 5);

@@ -47,9 +47,9 @@ match. Blackouts never overlap the arena collapse.
 
 During online rounds a small line at the bottom shows, for this phone:
 
-- `SIN` — where the room runs: the Fly.io region (always `SIN`, see below),
-  or on Cloudflare the data centre (rooms are placed in Asia-Pacific; see
-  `ROOM_REGION` in `server/worker.ts`).
+- `SIN` — where the room runs: the Cloudflare data centre (rooms are placed
+  in Asia-Pacific; see `ROOM_REGION` in `server/worker.ts`), or on Fly.io
+  always `SIN`.
 - `ping 24±3 ms` — round trip to the room, and how much it wobbles.
   High ping = the server is far; big wobble = an uneven connection (Wi-Fi).
 - `buffer 2+0` — updates held back to smooth out wobble, plus any backlog.
@@ -71,29 +71,45 @@ Open the address it prints in two browser tabs (or on a phone on the same
 Wi-Fi), create a room in one and join it from the other. The relay runs
 inside the dev server, nothing else to set up.
 
-## Put it online for friends (free)
+## Where it runs now (free)
 
-Cloudflare hosts both the game page and the rooms. Free plan, no card.
-(The rooms can move to Fly.io in Singapore instead; see the next section.)
+Two free services, one for the page and one for the live connections:
+
+- **Game page: Vercel**, https://spaceblast.vercel.app (project
+  `space-blast/spaceblast`, linked to the GitHub repo). Every push builds
+  it: `main` becomes the live page, other branches get preview links.
+  Vercel can't keep live connections open, so the page talks to Cloudflare:
+  in Vercel → Settings → Environment Variables (Production and Preview),
+  `VITE_RELAY_URL=wss://spaceblast.refinkurn.workers.dev` and
+  `VITE_API_BASE=https://spaceblast.refinkurn.workers.dev`. They are read at
+  build time, so redeploy after changing them.
+- **Rooms + leaderboard: Cloudflare**, https://spaceblast.refinkurn.workers.dev
+  (`server/worker.ts`; it also serves its own copy of the page). Pushing to
+  GitHub does **not** update it: after a change in `server/`, `src/net/` or
+  the score rules, run `npm run deploy`. A change to the messages
+  (`src/net/protocol.ts`) needs both: `npm run deploy` and a push.
+
+Cloudflare from scratch (free plan, no card):
 
 1. Make a free account at https://dash.cloudflare.com/sign-up
 2. In the `spaceblast` folder run `npx wrangler login` (opens the browser
    to approve).
-3. Run `npm run deploy`.
-4. It prints your link, like `https://spaceblast.<your-name>.workers.dev`.
-   Send that to friends. Run `npm run deploy` again after every change.
+3. Run `npm run deploy`. It prints the link, like
+   `https://spaceblast.<your-name>.workers.dev`; put that in the two Vercel
+   variables above.
 
 Free plan limits are plenty for testing (roughly a few hundred matches a
 day). If it ever grows past that, the paid Workers plan is $5/month.
 
-Note: the claude.ai preview link can't open rooms; use the Cloudflare link.
+Note: the claude.ai preview link can't open rooms; use the Vercel link.
 
-## Rooms on Fly.io (Singapore)
+## Rooms on Fly.io (Singapore) — ready, not deployed
 
 The rooms and the leaderboard can run on one Fly.io machine in Singapore
 (`sin`) instead, so every room is in the same place, close to players in
-South-East Asia. The game page stays on Cloudflare. Fly is not free: one
-small always-on machine plus a 1 GB volume is a few dollars a month.
+South-East Asia. The game page stays on Vercel. Not deployed because Fly is
+not free: one small always-on machine plus a 1 GB volume is a few dollars a
+month (no Fly app or volume exists yet).
 
 One-time setup (Windows PowerShell, in the `spaceblast` folder):
 
@@ -105,12 +121,12 @@ One-time setup (Windows PowerShell, in the `spaceblast` folder):
 3. `fly volumes create spaceblast_data --region sin --size 1 --app spaceblast-server`
    (the leaderboard's SQLite file lives on it).
 4. `npm run deploy:fly`. `https://spaceblast-server.fly.dev/healthz` should say `ok`.
-5. Point the game page at it: create `.env.production` with
+5. Point the game page at it: in Vercel set
 
        VITE_RELAY_URL=wss://spaceblast-server.fly.dev
        VITE_API_BASE=https://spaceblast-server.fly.dev
 
-   and run `npm run deploy`. The stats line in an online round shows `SIN`.
+   and redeploy. The stats line in an online round shows `SIN`.
 
 Run `npm run deploy:fly` again after a server change. Good to know:
 
@@ -122,8 +138,9 @@ Run `npm run deploy:fly` again after a server change. Good to know:
 - `fly logs` shows the server's output, `fly status` the machine.
 - Shared CPU: if rounds stutter only when many rooms are busy, a bigger
   machine (`[[vm]]` in `fly.toml`) is the fix.
-- Going back to Cloudflare rooms: delete `.env.production` and run
-  `npm run deploy`. The Cloudflare rooms keep working meanwhile.
+- Going back to Cloudflare rooms: set the two Vercel variables back to the
+  `workers.dev` addresses and redeploy. The Cloudflare rooms keep working meanwhile.
+- Fly scores start empty: the Cloudflare leaderboard isn't copied over.
 
 ## Files
 
@@ -142,25 +159,26 @@ Run `npm run deploy:fly` again after a server change. Good to know:
 
 ## Leaving the app
 
-If a player switches apps or locks their phone, the others see "Waiting for
-Player N…". After 8 seconds that player is dropped from the room (their
-astronaut is out for the round) and the match goes on. They see a message and
-can join again with the code from the next round.
+If a player switches apps or locks their phone, the others see them as away.
+If the connection dropped, their seat is kept for 20 seconds (`REJOIN_MS`)
+so the phone can rejoin by itself; a connection that stays open but sends
+nothing for 30 seconds (`SILENT_MS` in `server/room.ts`) is closed. Either
+way, after that the player is out of the room (their astronaut is out for
+the round) and the match goes on. They see a message and can join again
+with the code, playing from the next round.
 
 ## Not done yet
 
 - Online co-op Story Mode.
 
-## Hosting and databases (for later)
+## Hosting and databases
 
-- **Why Cloudflare and not Vercel:** Vercel can host the web page for free,
-  but it can't keep the live connections an online game needs (its
-  functions stop after each request). Cloudflare runs both the page and the
-  rooms on one free account (or the rooms run on Fly.io, see above). The page could still move to Vercel later:
-  build it with `VITE_RELAY_URL=wss://spaceblast.<you>.workers.dev` and it
-  will use the Cloudflare rooms.
-- **Database:** not needed yet (progress and settings live on each device).
-  For accounts, cloud saves or leaderboards later, Cloudflare D1 (a free
-  SQL database on the same account) is the natural choice; Supabase or
-  Firebase also have free tiers. Saving goes through `src/flow/progress.ts`
-  and `src/flow/settings.ts`, so that is the one place to switch over.
+- **Why rooms aren't on Vercel:** Vercel hosts the page for free, but its
+  functions stop after each request, so it can't keep the live connections
+  an online game needs. Cloudflare (free) or Fly.io (paid) run the rooms.
+- **Database:** the leaderboard is SQLite inside a Cloudflare Durable Object
+  (free plan); on Fly it would be a SQLite file on the volume. Progress and
+  settings still live on each device. For accounts or cloud saves later,
+  Cloudflare D1 is the natural choice; saving goes through
+  `src/flow/progress.ts` and `src/flow/settings.ts`, so that is the one
+  place to switch over.

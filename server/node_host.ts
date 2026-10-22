@@ -84,12 +84,16 @@ export function createNodeHost(opts: NodeHostOptions): NodeHost {
       return;
     }
     const r = room;
-    ws.on('message', (data) => r.message(slot, data.toString()));
-    ws.on('close', (closeCode) => {
+    // A bug in one room must never take down the process (and every other room with it).
+    const guard = (what: string, fn: () => void) => {
+      try { fn(); } catch (e) { console.error(`room ${code} ${what}:`, e); }
+    };
+    ws.on('message', (data) => guard('message', () => r.message(slot, data.toString())));
+    ws.on('close', (closeCode) => guard('close', () => {
       if (closed) return;
       r.closed(slot, peer, closeCode);
       if (r.empty && rooms.get(code) === r) rooms.delete(code);
-    });
+    }));
   }
 
   function upgrade(req: IncomingMessage, socket: Duplex, head: Buffer): boolean {

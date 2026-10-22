@@ -1,0 +1,28 @@
+name: Test
+
+# Tests and builds every push to main. Deploys happen elsewhere: Vercel builds
+# the game page from GitHub, and the rooms go to Cloudflare with `npm run deploy`
+# (see ONLINE.md).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:server

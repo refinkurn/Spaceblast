@@ -30,7 +30,7 @@ Old saves keep their stars: the best is kept, as before. The best score per leve
 Players change the name on the Leaderboard screen. Names are 2–12 letters, numbers, spaces, `_` or `-`. A word filter (English and Indonesian) checks names both in the game and on the server. The server replaces a rude name with a default instead of rejecting the score.
 
 ## API
-`server/leaderboard.ts` is shared by the dev relay (in memory) and Cloudflare (a Durable Object with SQLite, free plan).
+`server/leaderboard.ts` is shared by the dev relay (in memory), Cloudflare (a Durable Object with SQLite, free plan; the live one at https://spaceblast.refinkurn.workers.dev/api/scores) and the not-deployed Fly.io server (a SQLite file, `server/node_sqlite.ts`).
 
 - `POST /api/scores` takes the `ScoreSubmission` payload (`src/services/leaderboard_types.ts`).
   - The server keeps each device's best per stage.

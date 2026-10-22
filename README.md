@@ -20,7 +20,10 @@ npm run build    # production build in dist/
 
 ## Deploy
 
-Pushing to `main` runs `.github/workflows/deploy.yml`: tests, build, then
-GitHub Pages. In the repo, set Settings -> Pages -> Source to "GitHub Actions".
+- Game page: Vercel builds every push (`main` = https://spaceblast.vercel.app).
+- Online rooms + leaderboard: Cloudflare, `npm run deploy` (pushing doesn't update them).
+- Pushing to `main` also runs `.github/workflows/test.yml` (tests + build).
+
+Details in `ONLINE.md`.
 
 See `CLAUDE.md` for the architecture rules.

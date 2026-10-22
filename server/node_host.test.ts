@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import WebSocket from 'ws';
 import { CLOSE_RETRY } from '../src/net/protocol';
 import { Leaderboard, MAX_BODY, MemoryStore, clientKey, type Store } from './leaderboard';
+import { Room } from './room';
 import { createNodeHost, flyClientAddress, socketAddress, standaloneServer, type NodeHost, type NodeHostOptions } from './node_host';
 
 // The Node hosting (dev relay and Fly) over real sockets: routes, the scores
@@ -184,6 +185,32 @@ describe('node host: rooms', () => {
     expect(host.rooms).toBe(0);
     const other = new WebSocket(`ws://127.0.0.1:${port}/elsewhere`);
     await expect(new Promise((_, reject) => other.once('error', reject))).rejects.toThrow(/404/);
+  });
+});
+
+describe('node host: bad clients', () => {
+  it('a client sending null, or a room that throws, does not take the server down', async () => {
+    const { host, port } = await start();
+    const a = new WebSocket(`ws://127.0.0.1:${port}/room/ABCD?create=1&name=Ana`);
+    await firstMessage(a);
+    const got: Record<string, unknown>[] = [];
+    a.on('message', (d) => got.push(JSON.parse(d.toString())));
+    a.send('null');
+    a.send(JSON.stringify({ t: 'ping', id: 0 }));
+    await vi.waitFor(() => expect(got).toContainEqual({ t: 'pong', id: 0 })); // null was handled, room still up
+    // Defence in depth: even a bug that throws inside a room is logged, not fatal.
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(Room.prototype, 'message').mockImplementationOnce(() => { throw new Error('boom'); });
+    a.send(JSON.stringify({ t: 'ping', id: 1 }));
+    await vi.waitFor(() => expect(log).toHaveBeenCalled());
+    const b = new WebSocket(`ws://127.0.0.1:${port}/room/ABCD?name=Bo`);
+    expect(await firstMessage(b)).toMatchObject({ t: 'welcome', you: 1 });
+    a.send(JSON.stringify({ t: 'ping', id: 2 }));
+    await vi.waitFor(() => expect(got).toContainEqual({ t: 'pong', id: 2 }));
+    expect(got).not.toContainEqual({ t: 'pong', id: 1 }); // the thrown one was dropped
+    expect(host.rooms).toBe(1);
+    a.close(1000);
+    b.close(1000);
   });
 });
 

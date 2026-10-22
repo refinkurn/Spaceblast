@@ -1,5 +1,5 @@
 # Fly.io deploy for the Spaceblast room server: online rooms (/room/CODE) and
-# the leaderboard (/api/scores) in Singapore. The game page stays on Cloudflare.
+# the leaderboard (/api/scores) in Singapore. The game page is on Vercel.
 # Exactly one machine: rooms live in its memory, so deploy with
 # `npm run deploy:fly` (fly deploy --ha=false). See ONLINE.md.
 
