@@ -179,9 +179,9 @@ describe('online screen', () => {
 });
 
 describe('icon-only buttons', () => {
-  it('Invite, Join, Save, Skip and Charge show an icon, no words, and keep a spoken name', () => {
+  it('Invite, Join, Save and Skip show an icon, no words, and keep a spoken name', () => {
     const save = html.match(/<button type="submit"[^>]*>[\s\S]*?<\/button>/)![0];
-    for (const [b, icon] of [[block('online-invite'), 'i-share'], [block('online-join'), 'i-play'], [save, 'i-check'], [block('crawl-skip'), 'i-skip'], [block('place-btn'), 'i-charge']] as const) {
+    for (const [b, icon] of [[block('online-invite'), 'i-share'], [block('online-join'), 'i-play'], [save, 'i-check'], [block('crawl-skip'), 'i-skip']] as const) {
       expect(b).toContain(`href="#${icon}"`);
       expect(b.replace(/<[^>]*>/g, '').trim()).toBe('');
       expect(b).toMatch(/aria-label="|data-i18n-aria="/);
@@ -205,5 +205,20 @@ describe('settings card and selectors', () => {
     }
     expect(html).not.toContain('segmented');
     expect(rule(css, '.stepper button')).toContain('height: 48px');
+  });
+});
+
+describe('HUD art', () => {
+  it('the Charge button is a solid plasma charge (no word), with a spoken name', () => {
+    const b = block('place-btn');
+    expect(b).toContain('class="charge-bomb"');
+    expect(b).toContain('#00ffff');
+    expect(b).toMatch(/aria-label="Place charge"/);
+    expect(b.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]*>/g, '').trim()).toBe('');
+  });
+
+  it("the HUD avatar is Bosco's portrait, not a letter", () => {
+    expect(html).toContain('<span class="hud-avatar" aria-hidden="true"></span>');
+    expect(css).toContain("url('./assets/characters/astropaw/hero_portrait_atlas.png')");
   });
 });

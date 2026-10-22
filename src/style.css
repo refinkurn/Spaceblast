@@ -82,7 +82,6 @@ html, body {
 .icon.heart { color: #ff4f6d; }
 .lost .icon.heart { color: #ffffff2a; }
 .icon.oxygen { filter: drop-shadow(0 0 3px #7fe8ff99); }
-.icon.oxygen text { font: 700 7px system-ui, sans-serif; }
 .hud-chip {
   padding: 3px 10px;
   border-radius: 999px;
@@ -1165,9 +1164,11 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 #crawl-skip .ui-icon, #cut-skip .ui-icon, .intro-skip .ui-icon { width: 22px; height: 22px; }
 .intro-skip[hidden] { display: none; }
 
-/* The Charge button: the charge icon (same shape as the Extra Charge power-up), no word. */
+/* The Charge button: a solid plasma charge (the Extra Charge colours), no word. */
 #place-btn { display: grid; place-items: center; color: var(--accent); }
-#place-btn .ui-icon { width: 46%; height: 46%; stroke-width: 1.8; }
+/* Sized with the button (Touch controls setting); a % here resolves against the grid cell, not the button. */
+#place-btn .charge-bomb { width: calc(76px * var(--ctl, 1)); height: calc(76px * var(--ctl, 1)); overflow: visible; filter: drop-shadow(0 0 5px #00ffff66); transition: transform 0.08s ease-out; }
+#place-btn.pressed .charge-bomb { transform: scale(0.92); filter: drop-shadow(0 0 9px #00ffffaa); }
 
 /* Lobby: two roomy panels (players, match settings); empty seats say so once. */
 .lobby-col { padding: 12px 14px 14px; gap: 10px; background: #0b0e14cc; border: 1px solid #ffffff1a; border-radius: 10px; }
@@ -1231,3 +1232,14 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 }
 /* Very narrow (small phones): the panels stack and the screen scrolls, rather than squeezing. */
 @media (max-width: 620px) { #online-lobby { flex-wrap: wrap; } }
+
+/* HUD avatar: Bosco's own portrait (assets/characters/astropaw, neutral frame), cropped to his helmeted head
+   (about an 84 px square around (63, 96) in the 384 x 152 sheet) and kept sharp as pixel art. */
+.hud-avatar {
+  --av: calc(30px * var(--hs));
+  background: #1b2a4a url('./assets/characters/astropaw/hero_portrait_atlas.png') no-repeat;
+  background-size: calc(var(--av) * 4.571) calc(var(--av) * 1.81);
+  background-position: calc(var(--av) * -0.25) calc(var(--av) * -0.643);
+  image-rendering: pixelated;
+  overflow: hidden;
+}

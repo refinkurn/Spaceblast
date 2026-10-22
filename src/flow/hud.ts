@@ -14,13 +14,15 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
 const HEART =
   '<svg viewBox="0 0 24 24" class="icon heart"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3.1 1.7-1.9 3.2-3.1 5.3-3.1 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>';
-// Icons use the power-up colours from view/item_look.ts (docs/design/powerup-look.md).
+// Icons use the power-up colours from view/item_look.ts (docs/design/powerup-look.md) and say what
+// each one does at a glance: a shield (Oxygen Vest), a charge with energy cracks (Extra Charge),
+// a flame (Beam Range+), a running boot with a bolt (Speed Boost), a snowflake (Freeze Pulse).
 export const OXYGEN =
-  '<svg viewBox="0 0 24 24" class="icon oxygen"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z" fill="#ffffff" stroke="#7fe8ff" stroke-width="2" stroke-linejoin="round"/><text x="12" y="14.5" text-anchor="middle" fill="#2a8fb0" stroke="none">O2</text></svg>';
+  '<svg viewBox="0 0 24 24" class="icon oxygen"><path d="M12 2l8.5 3.2v6.3c0 5.3-3.6 9-8.5 10.5-4.9-1.5-8.5-5.2-8.5-10.5V5.2z" fill="#2a8fb0" stroke="#7fe8ff" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 5.2l5.6 2.1v4.3c0 3.6-2.3 6.2-5.6 7.4z" fill="#7fe8ff"/><path d="M7.5 9.5v2c0 1.6.6 3 1.6 4.1" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>';
 export const POWER_ICONS: Record<string, string> = {
-  charges: '<svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="14" r="7" fill="#1a103c" stroke="#00ffff" stroke-width="2"/><path d="M15 6.5l2.5-3M17.5 6l1.5 1.5" stroke="#00ffff" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="19.5" cy="3.5" r="1.8" fill="#00ffff" stroke="none"/></svg>',
-  range: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M2 12h20" stroke="#ff5500" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="3.2" fill="#ffcc00" stroke="none"/></svg>',
-  speed: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 3h5v10l4 3v4H9v-5l3-2z" fill="#ffe600" stroke="none"/><path d="M1 8h6M2 13h5" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
+  charges: '<svg viewBox="0 0 24 24" class="icon"><circle cx="10.5" cy="14" r="8" fill="#1a103c" stroke="#00ffff" stroke-width="1.6"/><path d="M5.5 11.5l3 1.6-.8 3.2 3 1.2M11.5 8.6l1 3 3 .9-.6 2.8" stroke="#00ffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="13.6" y="4.6" width="4.2" height="3.4" rx=".8" transform="rotate(42 15.7 6.3)" fill="#2a3a66" stroke="#00ffff" stroke-width="1"/><path d="M17.6 4.2c.8-1.4 2-2 3.2-1.7" stroke="#c8a46a" stroke-width="1.4" stroke-linecap="round" fill="none"/><circle cx="21.3" cy="2.6" r="1.5" fill="#ffe600"/></svg>',
+  range: '<svg viewBox="0 0 24 24" class="icon"><path d="M12.4 2c.5 3.4 5 5.4 5 10.5a5.4 5.4 0 0 1-5.4 9.5 5.9 5.9 0 0 1-6-5.9c0-2.8 1.5-4.5 2.8-5.8.2 1.7 1 2.7 2.1 3.2-.1-3.8-.3-7 1.5-11.5z" fill="#ff5500"/><path d="M12 12.4c1.6 1.5 2.9 2.8 2.9 4.8a2.9 2.9 0 0 1-5.8.3c0-1.8 1-2.7 1.8-3.5.2.9.6 1.3 1.1 1.5-.1-1.1-.2-2 0-3.1z" fill="#ffcc00"/></svg>',
+  speed: '<svg viewBox="0 0 24 24" class="icon"><path d="M3.5 16.2c0-1 .8-1.7 1.8-1.7h3.6l2-5.6c.3-.9 1.2-1.4 2.1-1.2l1.8.5-1.2 4.4 4.6 1.9c1.4.6 2.3 1.8 2.3 3.2v1.6H3.5z" fill="#ffe600"/><path d="M3.5 21h17" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/><path d="M8.6 1.5L5.2 7h2.9l-1.7 4.3 4.6-6.3H8.1l1.9-3.5z" fill="#ffffff"/></svg>',
   freeze: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7" stroke="#b9a4ff" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="2.4" fill="#ffffff" stroke="none"/></svg>',
 };
 
