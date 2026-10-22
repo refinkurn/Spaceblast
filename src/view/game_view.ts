@@ -87,6 +87,9 @@ export class GameView {
       h.setColor(colors[i] ?? 0xffffff);
       h.setYou(i === local);
       h.celebrate(false);
+      // Online (a local player is set): server frames arrive unevenly, so astronauts glide (view/smooth.ts).
+      h.smooth = local >= 0;
+      h.resetGlide();
     });
     this.snapshot(state);
   }

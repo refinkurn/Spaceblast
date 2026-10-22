@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { DIR_DX, DIR_DY, GOD_SHIELD } from '../sim/constants';
 import type { Player } from '../sim/state';
 import { toWorld } from './coords';
+import { GLIDE_SECONDS, GLIDE_SECONDS_YOU, SNAP_DISTANCE, glideFactor } from './smooth';
 import { SpeedTrail, bubbleOpacity } from './speed_trail';
 
 /** Placeholder astronaut: a suit sphere, a glass helmet and a "nose" for facing. */
@@ -10,6 +11,11 @@ export class HeroView {
   private body = new THREE.Group();
   private from = new THREE.Vector3();
   private to = new THREE.Vector3();
+  private target = new THREE.Vector3();
+  /** The drawn position has been set since the hero (re)appeared, so it may glide from there. */
+  private placed = false;
+  /** Online: glide towards the sim position instead of drawing it exactly (see view/smooth.ts). */
+  smooth = false;
   private bob = 0;
   /** Oxygen Vest bubble: pale cyan, pulses, a little brighter with each armor point (up to 3). */
   private bubbleMaterial = new THREE.MeshBasicMaterial({ color: 0xbff4ff, transparent: true, opacity: 0.4, depthWrite: false });
@@ -60,6 +66,11 @@ export class HeroView {
     if (!on) this.body.rotation.z = 0;
   }
 
+  /** A new map: the next update draws the hero exactly where it is, without gliding from the old map. */
+  resetGlide(): void {
+    this.placed = false;
+  }
+
   /** Shows the "this is you" arrow. */
   setYou(on: boolean): void {
     this.marker.visible = on;
@@ -83,7 +94,14 @@ export class HeroView {
     }
     toWorld(prev.x, prev.y, 0, this.from);
     toWorld(p.x, p.y, 0, this.to);
-    this.group.position.lerpVectors(this.from, this.to, alpha);
+    this.target.lerpVectors(this.from, this.to, alpha);
+    // Online ticks arrive unevenly: glide the drawn position (view/smooth.ts). Offline ticks are even: exact.
+    if (!this.smooth || !this.placed || !p.alive || this.target.distanceTo(this.group.position) > SNAP_DISTANCE) {
+      this.group.position.copy(this.target);
+    } else {
+      this.group.position.lerp(this.target, glideFactor(dt, this.marker.visible ? GLIDE_SECONDS_YOU : GLIDE_SECONDS));
+    }
+    this.placed = p.alive;
 
     const yaw = Math.atan2(-DIR_DX[p.facing], -DIR_DY[p.facing]);
     const k = 1 - Math.exp(-18 * dt);
