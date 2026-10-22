@@ -20,6 +20,7 @@ import { CONTROL_SCALE, SettingsScreen } from './flow/settings';
 import { GameAudio } from './flow/sound';
 import { StoryMode } from './flow/story_mode';
 import { installMultiTouchTaps } from './flow/taps';
+import { fadeThrough } from './flow/transition';
 import { Tutorial, randomTip } from './flow/tutorial';
 import { BATTLE_TIPS } from './flow/tutorial_script';
 import { Bot } from './input/bot';
@@ -111,7 +112,10 @@ const settings = new SettingsScreen((s) => {
 });
 const dev = new DevPanel(startAtLevel);
 const pause = new PauseMenu({
-  restart: () => { if (mode === 'battle') newGame(); else story.play(story.level, false); },
+  restart: () => fadeThrough(() => {
+    pause.close();
+    if (mode === 'battle') newGame(); else story.play(story.level, false);
+  }),
   settings: (back) => screens.openSettingsOver(back),
   quit: openMenu,
 });
@@ -144,7 +148,12 @@ function startAtLevel(n: number) {
   story.play(n, dev.opts.story);
 }
 
+/** A menu choice: the new screen (Story map, a battle arena, the online lobby) comes in through a quick black fade. */
 function startMode(m: MenuChoice) {
+  fadeThrough(() => startModeNow(m));
+}
+
+function startModeNow(m: MenuChoice) {
   if (m === 'online') {
     screens.hideMenu();
     online.open();
@@ -174,6 +183,11 @@ function openMenu() {
     }, t('online.leave'));
     return;
   }
+  fadeThrough(showMenuNow);
+}
+
+/** Drops whatever is on screen and shows the main menu (no fade: also used under the splash at load). */
+function showMenuNow() {
   leaveAsked = false;
   countdown.cancel();
   pause.close();
@@ -335,7 +349,7 @@ function showRoundScore() {
   const goal = t('battle.firstTo', { n: winsNeeded() });
   const menu = t('banner.mainMenu');
   if (mode !== 'online') {
-    screens.showBanner(big, `${line} · ${goal}`, t('banner.nextRound'), () => { score.nextRound(false); newGame(); }, menu, randomTip(BATTLE_TIPS), extra);
+    screens.showBanner(big, `${line} · ${goal}`, t('banner.nextRound'), () => fadeThrough(() => { score.nextRound(false); newGame(); }), menu, randomTip(BATTLE_TIPS), extra);
   } else if (online.total < 2) {
     screens.showBanner(big, `${line} · ${t('battle.everyoneLeft')}`, t('banner.backToRoom'), () => { screens.hideBanner(); online.showLobby(); }, menu, '', extra);
   } else if (online.isHost) {
@@ -359,7 +373,7 @@ function showMatchWinner() {
     congrats.show(winner, standings, [{ label: t('banner.backToRoom'), primary: true, onClick: () => { congrats.hide(); online.showLobby(); } }]);
   } else {
     congrats.show(winner, standings, [
-      { label: t('banner.playAgain'), primary: true, onClick: () => { congrats.hide(); startMode('battle'); } },
+      { label: t('banner.playAgain'), primary: true, onClick: () => fadeThrough(() => { congrats.hide(); startModeNow('battle'); }) },
       { label: t('banner.menu'), onClick: openMenu },
     ]);
   }
@@ -407,10 +421,10 @@ online.onExit = (reason) => {
   congrats.hide();
   if (mode === 'online') mode = 'battle';
   localId = 0;
-  if (!reason) {
+  if (!reason) fadeThrough(() => {
     newGame();
     screens.showMenu();
-  }
+  });
 };
 
 /** Quiet ticks (catching up after a reconnect): no effects, sounds or hash messages. */
@@ -551,13 +565,14 @@ layout(true);
 
 // --- Fixed-timestep loop -----------------------------------------------------------
 // A map plays behind the start screen; the sim waits while any card or the menu is open.
+// Both are set up under the splash, so no fade here.
 newGame();
-openMenu();
+showMenuNow();
 // An invite link (?room=CODE) opens Multiplayer with the code filled in.
 {
   const invited = parseRoomParam(window.location.search);
   if (invited) {
-    startMode('online');
+    startModeNow('online');
     online.prefillCode(invited);
     try {
       const url = new URL(window.location.href);

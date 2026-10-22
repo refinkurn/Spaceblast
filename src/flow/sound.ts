@@ -2,6 +2,7 @@ import { AudioEngine, type SoundSetting } from '../audio/engine';
 import { Music } from '../audio/music';
 import { Sfx } from '../audio/sfx';
 import { enterFullscreen } from './fullscreen';
+import { fadeThrough } from './transition';
 import type { GameState, SimEvent } from '../sim/state';
 import { t } from '../utils/i18n';
 
@@ -26,10 +27,13 @@ export class GameAudio {
   /** `onStart` runs after the first tap, once sound is unlocked. */
   constructor(onStart: () => void) {
     const start = $('start-screen');
+    let tapped = false;
     const go = (e: Event) => {
-      if (start.hidden) return;
+      if (start.hidden || tapped) return;
+      tapped = true;
       e.preventDefault();
-      start.hidden = true;
+      // The splash fades out to the menu; sound and full screen must start inside the tap itself.
+      fadeThrough(() => (start.hidden = true));
       this.engine.unlock();
       this.sfx.start();
       // Phones go full screen on that first tap where the browser allows it.

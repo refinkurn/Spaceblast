@@ -1067,3 +1067,7 @@ body.scene #coach { visibility: hidden; }
 /* Proceed buttons with a label (Next level, Retry, Enter): play icon before the words. */
 .go-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .go-btn .ui-icon { width: 18px; height: 18px; }
+
+/* Screen-change micro-fade (flow/transition.ts): above everything, takes taps only while dark. */
+#fade { position: fixed; inset: 0; z-index: 100; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.1s linear; }
+#fade.on { opacity: 1; pointer-events: auto; }

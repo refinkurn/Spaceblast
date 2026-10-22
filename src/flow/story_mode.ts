@@ -19,6 +19,7 @@ import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCEN
 import { randomTip } from './tutorial';
 import { bossClearLine, storySummary } from './summary';
 import { t } from '../utils/i18n';
+import { fadeThrough } from './transition';
 
 // Story Mode flow: the Story map (flow/story_map.ts), each level's
 // lead-in (sector card, boss cutscene, level card), results, retrying a level
@@ -55,20 +56,21 @@ export class StoryMode {
 
   constructor(private host: StoryHost, private screens: Screens, private cutscene: Cutscene, private view: GameView) {
     this.cards = new IntroCards(view);
-    this.map = new StoryMap(this.progress, (level) => this.play(level, true, true), () => {
+    // Map -> level and map -> menu change the whole screen (and rebuild the arena): both fade through black.
+    this.map = new StoryMap(this.progress, (level) => fadeThrough(() => this.play(level, true, true)), () => fadeThrough(() => {
       this.map.hide();
       host.openMenu();
-    }, () => {
+    }), () => {
       this.map.hide();
       // Open on the last level you cleared (where you have a score), not the next, unplayed one.
       let last = 1;
       for (let n = 1; n <= LEVEL_COUNT; n++) if (this.progress.stars(n) > 0) last = n;
       this.board.show(last);
     });
-    $('ending-btn').addEventListener('click', () => {
+    $('ending-btn').addEventListener('click', () => fadeThrough(() => {
       this.closeEnding();
       host.openMenu();
-    });
+    }));
   }
 
   get endingOpen(): boolean {
@@ -231,13 +233,13 @@ export class StoryMode {
       const nextSpec = levelSpec(next);
       const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : t('story.martians', { n: levelRoster(next).length });
       const upNext = isSectorStart(next) ? t('story.sectorComplete', { n: spec.sector, name: SECTORS[spec.sector].name }) : t('story.next', { n: next, goal: nextGoal });
-      this.screens.showBanner(spec.boss ? t('banner.survived') : t('banner.levelClear'), `${line}\n${upNext}`, t('banner.nextLevel'), () => this.play(next, true), t('banner.map'), '', {
+      this.screens.showBanner(spec.boss ? t('banner.survived') : t('banner.levelClear'), `${line}\n${upNext}`, t('banner.nextLevel'), () => fadeThrough(() => this.play(next, true)), t('banner.map'), '', {
         pose: 'happy', summary: [...storySummary(state, lost, stars), ...scoreRows(score, prevBest)],
         // "Map" goes back to the Story map, where Bosco walks (or warps) on to the next node.
-        onMenu: () => {
+        onMenu: () => fadeThrough(() => {
           this.screens.hideBanner();
           this.map.show({ from: level });
-        },
+        }),
       });
     });
   }
@@ -245,7 +247,7 @@ export class StoryMode {
   private gameOver(): void {
     this.progress.save();
     const level = this.level;
-    this.screens.showBanner(t('banner.defeated'), t('story.gameOver', { n: level }), t('story.retry', { n: level }), () => this.play(level, false), t('banner.mainMenu'), randomTip(),
+    this.screens.showBanner(t('banner.defeated'), t('story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.mainMenu'), randomTip(),
       { pose: 'defeated', summary: storySummary(this.host.state, Math.min(this.livesLost, START_LIVES), 0) });
   }
 
