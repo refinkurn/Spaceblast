@@ -6,6 +6,8 @@ import type { Prediction } from '../net/predict';
 import { GateView, MartiansView, PortalsView } from './actors_view';
 import { ItemsView } from './items_view';
 import { BoardView } from './board_view';
+import { sectorLook } from './sector_look';
+import { buildProps, disposeProps, updateProps } from './sector_props';
 import { BossView, CrossPreviewView } from './boss_view';
 import { CameraRig, blastShake } from './camera_rig';
 import { toWorld } from './coords';
@@ -41,6 +43,10 @@ export class GameView {
   private prevPlayers: { x: number; y: number }[] = [];
   private prevMartians = new Map<number, { x: number; y: number }>();
   private colors: number[] = [];
+  /** The sector's ground plane and edge props (view/sector_props.ts), rebuilt only when the sector changes. */
+  private props = new THREE.Group();
+  private propsSector = 0;
+  private sky!: THREE.HemisphereLight;
   /** The player this screen belongs to: shakes are measured from them. */
   private you = 0;
 
@@ -64,17 +70,31 @@ export class GameView {
     sun.shadow.mapSize.setScalar(PHONE ? 512 : 1024);
     Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
     scene.add(sky, sun);
+    this.sky = sky;
+    scene.add(this.props);
     scene.add(this.board.group, this.charges.group, this.beams.group, this.debris.group, this.items.group, this.gate.group);
     scene.add(this.martians.group, this.portals.group, this.boss.group, this.crossPreview.group, this.shiftPreview.group);
     for (const h of this.heroes) scene.add(h.group);
     this.lighting = new LightingView([sky, sun], scene, scene.background as THREE.Color);
   }
 
-  /** Resets everything for a new map. `colors` per player; `local` gets the "you" arrow (-1 for none). */
-  build(state: GameState, colors: number[], local: number): void {
+  /**
+   * Resets everything for a new map. `colors` per player; `local` gets the "you" arrow (-1 for none);
+   * `sector` (1-4) picks the arena's look from src/config/sectors.json (Battle and online: 1).
+   */
+  build(state: GameState, colors: number[], local: number, sector = 1): void {
     this.colors = colors;
     this.you = local >= 0 ? local : 0;
-    this.board.build(state);
+    const look = sectorLook(sector);
+    this.board.build(state, look.arena);
+    if (this.propsSector !== sector) {
+      disposeProps(this.props);
+      this.props.add(buildProps(look.arena, look.props));
+      this.propsSector = sector;
+    }
+    this.sky.color.setHex(look.arena.skyLight);
+    this.sky.groundColor.setHex(look.arena.groundLight);
+    this.lighting.setBase(look.arena.background);
     this.charges.clear();
     this.items.clear();
     this.martians.clear();
@@ -173,6 +193,7 @@ export class GameView {
     this.crossPreview.sync(state, time);
     this.shiftPreview.sync(state, time);
     this.lighting.sync(state, state.players.map((_, i) => this.heroes[i].group), dt);
+    updateProps(this.props, time);
     this.board.update(dt);
     this.debris.update(dt);
     this.rig.update(dt);

@@ -2,6 +2,7 @@ import { LEVEL_COUNT, levelSpec, sectorOf } from '../sim/levels';
 import { SpriteView } from '../view/sprite_renderer';
 import { GOAL_ICONS } from './goal_icons';
 import { LEVELS_PER_SECTOR, MAP_SECTORS, nodeOf, sectorsShown } from './map_layout';
+import { sectorLook } from '../view/sector_look';
 import { bestLine, bossLabel, coreSignal, enterLabel, nodeGoal, sectorStars, sectorTitle, starChecklist } from './map_text';
 import type { StoryProgress } from './progress';
 import { levelCard } from './story';
@@ -122,6 +123,9 @@ export class StoryMap {
       panel.className = `map-sector theme-${layout.theme}`;
       panel.classList.toggle('locked', s > openSector);
       panel.dataset.sector = String(s);
+      // Colours from src/config/sectors.json; story_map.css draws each theme's shapes with them.
+      const c = sectorLook(s).map;
+      for (const [k, v] of Object.entries({ sky: c.sky, 'sky-low': c.skyLow, ground: c.ground, 'ground-deep': c.groundDeep, trail: c.trail, deco: c.deco })) panel.style.setProperty(`--map-${k}`, v);
       for (const d of layout.deco) {
         const deco = document.createElement('div');
         deco.className = `map-deco ${d.kind}`;

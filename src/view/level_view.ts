@@ -46,6 +46,8 @@ export class LightingView {
   private glows: THREE.PointLight[] = [];
   private dark = 0;
   private normal: number[];
+  /** The sector's background (sectors.json); Blackout darkens from it. */
+  private base = new THREE.Color(0x14161d);
 
   constructor(private lights: THREE.Light[], scene: THREE.Scene, private background: THREE.Color) {
     this.normal = lights.map((l) => l.intensity);
@@ -56,12 +58,18 @@ export class LightingView {
     }
   }
 
+  /** The sector's background colour (the screen around the arena). */
+  setBase(color: number): void {
+    this.base.setHex(color);
+    this.background.copy(this.base);
+  }
+
   sync(state: GameState, heroes: THREE.Object3D[], dt: number): void {
     const target = state.event === LevelEvent.Blackout && state.eventActive > 0 ? 1 : 0;
     this.dark += (target - this.dark) * (1 - Math.exp(-4 * dt));
     this.lights.forEach((l, i) => (l.intensity = this.normal[i] * (1 - 0.985 * this.dark)));
     const k = 1 - 0.8 * this.dark;
-    this.background.setRGB(0.078 * k, 0.086 * k, 0.114 * k);
+    this.background.setRGB(this.base.r * k, this.base.g * k, this.base.b * k);
     this.glows.forEach((g, i) => {
       const hero = heroes[i];
       const on = hero !== undefined && hero.visible && i < state.players.length;

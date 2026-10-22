@@ -213,7 +213,8 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   bot = mode === 'battle' ? new Bot(1, seed, screens.botLevel) : spec.rival ? new Bot(1, seed, 'hard') : null;
   recorder.reset();
   radio.reset();
-  view.build(state, colors(), mode === 'online' ? localId : -1);
+  // Story levels take their sector's look (src/config/sectors.json); Battle and online use sector 1.
+  view.build(state, colors(), mode === 'online' ? localId : -1, mode === 'survival' ? spec.sector : 1);
   view.rig.reset();
   screens.hideBanner();
   screens.hideLevelCard();

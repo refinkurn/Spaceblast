@@ -3,18 +3,11 @@ import { Cell } from '../sim/constants';
 import { cellAt } from '../sim/grid';
 import type { GameState } from '../sim/state';
 import { tileToWorld } from './coords';
+import { sectorLook, type ArenaLook } from './sector_look';
 
 // Draws the arena with one InstancedMesh per kind of tile (a handful of draw
 // calls in total, which matters on phones). Reads sim state, never writes it.
-
-const PALETTE = {
-  floorA: 0xb4553a,
-  floorB: 0xa64d35,
-  pillar: 0x3b3f4a,
-  border: 0x2a2d35,
-  rock: 0xd9773f,
-  collapse: 0x5b4652,
-};
+// Colours come from the sector's look (src/config/sectors.json).
 
 /** A collapse block falls from this height in FALL_SECONDS. */
 const FALL_FROM = 6;
@@ -30,9 +23,11 @@ export class BoardView {
   private collapseMesh?: THREE.InstancedMesh;
   private falling: { i: number; tx: number; ty: number; t: number }[] = [];
   private width = 0;
+  private look: ArenaLook = sectorLook(1).arena;
 
-  build(state: GameState): void {
+  build(state: GameState, look: ArenaLook = sectorLook(1).arena): void {
     this.dispose();
+    this.look = look;
     const { w, h } = state.grid;
     const pillars: [number, number][] = [];
     const rocks: [number, number][] = [];
@@ -49,15 +44,15 @@ export class BoardView {
     for (let y = 0; y < h; y++) border.push([-1, y], [w, y]);
 
     this.group.add(this.floor(w, h));
-    this.group.add(this.cubes(pillars, 1.0, PALETTE.pillar));
-    this.group.add(this.cubes(border, 1.0, PALETTE.border));
+    this.group.add(this.cubes(pillars, 1.0, look.pillar));
+    this.group.add(this.cubes(border, 1.0, look.wall));
     const allCells: [number, number][] = [];
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) allCells.push([x, y]);
-    this.rockMesh = this.cubes(allCells, 0.88, PALETTE.rock);
+    this.rockMesh = this.cubes(allCells, 0.88, look.rock);
     this.width = w;
     for (const [x, y] of allCells) if (!rocks.some(([rx, ry]) => rx === x && ry === y)) this.breakRock(x, y);
     this.group.add(this.rockMesh);
-    this.collapseMesh = this.cubes(allCells, 1.0, PALETTE.collapse);
+    this.collapseMesh = this.cubes(allCells, 1.0, look.collapse);
     for (let i = 0; i < allCells.length; i++) this.collapseMesh.setMatrixAt(i, HIDDEN);
     this.group.add(this.collapseMesh);
     this.falling = [];
@@ -107,7 +102,7 @@ export class BoardView {
       for (let x = 0; x < w; x++) {
         const i = y * w + x;
         mesh.setMatrixAt(i, m.makeTranslation(tileToWorld(x, y, -0.05, pos)));
-        mesh.setColorAt(i, color.setHex((x + y) % 2 === 0 ? PALETTE.floorA : PALETTE.floorB));
+        mesh.setColorAt(i, color.setHex((x + y) % 2 === 0 ? this.look.floorA : this.look.floorB));
       }
     }
     mesh.receiveShadow = true;
