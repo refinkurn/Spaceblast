@@ -4,6 +4,10 @@
   --ink: #e8ecf5;
   --ink-quiet: #9aa3b5;
   --accent: #5ad1ff;
+  /* Screen-corner spots for the corner buttons (HUD sound / pause group, menu corner), clear of notches. */
+  --edge-top: max(8px, env(safe-area-inset-top));
+  --edge-left: max(12px, env(safe-area-inset-left));
+  --edge-right: max(12px, env(safe-area-inset-right));
 }
 
 * { box-sizing: border-box; }
@@ -30,24 +34,22 @@ html, body {
   left: 0;
   right: 0;
   height: var(--hud);
-  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
-  display: flex;
-  /* Top-aligned: the 48 px buttons are taller than the bar and, centred, poked off the top edge. */
-  align-items: flex-start;
-  gap: 16px;
+  /* Above the touch-control gutters, so the corner buttons' lower edge (below the bar) still takes taps. */
+  z-index: 2;
   font-size: 14px;
   background: linear-gradient(#0009, #0000);
   pointer-events: none;
 }
-#hud { gap: 8px; }
-/* Left column, centre chip + clock, right buttons. Only the top-left column hangs below the bar, inside the left gutter. */
-.hud-left { position: absolute; top: 4px; left: max(12px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 3px; max-width: calc(var(--gutter) - 8px); }
+/* Three anchored groups: top-left column (avatar, hearts, power-ups, goal), centre chip + clock, top-right buttons.
+   The buttons used to be loose flex items pushed right by #full-btn's auto margin: with full screen hidden
+   (installed app, no Fullscreen API) Sound and Pause slid to the left edge, over the avatar and hearts. */
+.hud-left { position: absolute; top: max(4px, env(safe-area-inset-top)); left: var(--edge-left); display: flex; flex-direction: column; gap: 3px; max-width: calc(var(--gutter) - 8px); }
+.hud-right { position: absolute; top: max(4px, env(safe-area-inset-top)); right: var(--edge-right); display: flex; gap: 8px; }
 .hud-who { display: flex; align-items: center; gap: 6px; }
 .hud-avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; color: #fff; background: #3a7bff; border: 2px solid #ffffffcc; }
 .hud-mid { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .hud-clock { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000a; }
 .hud-clock[hidden] { display: none; }
-#full-btn { margin-left: auto; }
 .hud-health { flex-wrap: wrap; }
 .hud-health.hurt { animation: hurt-flash 0.4s ease-out; }
 .hud-health.hurt .icon.heart, .hud-health.hurt .icon.oxygen { filter: drop-shadow(0 0 4px #ff2d4d) brightness(1.6); }
@@ -574,7 +576,7 @@ body.scene .net-stats { visibility: hidden; }
   border-radius: 8px;
 }
 .sound-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.menu-corner { position: absolute; top: 12px; right: max(12px, env(safe-area-inset-right)); display: flex; gap: 8px; }
+.menu-corner { position: absolute; top: var(--edge-top); right: var(--edge-right); display: flex; gap: 8px; }
 /* 48 px touch targets, the same size as the Pause button next to them. */
 .menu-corner .sound-btn, #hud .sound-btn { min-width: 48px; min-height: 48px; }
 
@@ -940,9 +942,6 @@ body.scene #coach { visibility: hidden; }
 #crawl.still .crawl-stage { perspective: none; display: flex; align-items: center; justify-content: center; }
 #crawl.still .crawl-text { position: static; margin: 0; font-size: 18px; }
 #crawl-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-width: 48px; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; color: var(--ink); background: #ffffff14; border: 1px solid #ffffff40; border-radius: 999px; z-index: 2; }
-/* The top-bar buttons look 32 px tall but take a 44 x 48 px tap (CLAUDE.md: >= 48 px targets). */
-#hud button { position: relative; }
-#hud button::after { content: ''; position: absolute; inset: -6px -5px; }
 /* Very short screens (iPhone SE 1st gen, 320 px): the menu column scrolls instead of cutting off. */
 @media (max-height: 360px) {
   #menu { padding-top: 8px; padding-bottom: 8px; }
