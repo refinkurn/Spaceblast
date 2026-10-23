@@ -153,6 +153,7 @@ export class GameView {
         break;
       case 'rock_built':
         board.addRock(e.tx, e.ty);
+        this.martians.slapNear(state, e.tx, e.ty);
         debris.burst(e.tx, e.ty, 0xc6e33a, 5);
         break;
       case 'maze_shift':

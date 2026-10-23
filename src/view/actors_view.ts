@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { FROZEN, GATE_OPEN, MARTIAN_COLOR } from './play_colors';
-import { Cell, Kind, LevelEvent, PORTAL_TICKS } from '../sim/constants';
+import { SLAP_SECONDS, animateMartian, makeMartian, type MartianParts } from './martian_mesh';
+import { Cell, Kind, LevelEvent, PORTAL_TICKS, TILE } from '../sim/constants';
 import { gateOpen } from '../sim/items';
 import type { GameState, Martian } from '../sim/state';
 import { tileToWorld, toWorld } from './coords';
@@ -47,57 +48,6 @@ export class GateView {
 }
 
 
-function eyes(g: THREE.Group, y: number, spread: number, z: number) {
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const pupilMat = new THREE.MeshBasicMaterial({ color: 0x220a33 });
-  for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), eyeMat);
-    eye.position.set(side * spread, y, z);
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), pupilMat);
-    pupil.position.set(0, 0, -0.07);
-    eye.add(pupil);
-    g.add(eye);
-  }
-}
-
-/** Placeholder Martians, one silhouette per kind: blob, nosy blob, ghost, block. */
-function makeMartian(kind: number): THREE.Group {
-  const g = new THREE.Group();
-  const color = MARTIAN_COLOR[kind];
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.35, emissive: color, emissiveIntensity: 0.15 });
-  let body: THREE.Mesh;
-  if (kind === Kind.Builder) {
-    body = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.5, 0.56), mat);
-    body.position.y = 0.27;
-    eyes(g, 0.42, 0.13, -0.28);
-  } else if (kind === Kind.Phaser) {
-    mat.transparent = true;
-    mat.opacity = 0.78;
-    body = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.3, 6, 16), mat);
-    body.position.y = 0.4;
-    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.03, 8, 24), new THREE.MeshBasicMaterial({ color: 0xc9d0ff }));
-    halo.rotation.x = Math.PI / 2;
-    halo.position.y = 0.82;
-    g.add(halo);
-    eyes(g, 0.5, 0.1, -0.2);
-  } else {
-    body = new THREE.Mesh(new THREE.SphereGeometry(kind === Kind.Sniffer ? 0.3 : 0.34, 20, 14), mat);
-    body.scale.set(1, 0.72, 1);
-    body.position.y = 0.26;
-    eyes(g, 0.55, 0.13, -0.12);
-    if (kind === Kind.Sniffer) {
-      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.3, 10), new THREE.MeshStandardMaterial({ color: 0xe0b3ff }));
-      nose.rotation.x = -Math.PI / 2;
-      nose.position.set(0, 0.32, -0.36);
-      g.add(nose);
-    }
-  }
-  body.name = 'body';
-  body.castShadow = true;
-  g.add(body);
-  return g;
-}
-
 /** A dark swirl over a hidden Phaser's burrow, so players can see where it will come from. */
 function makeBurrow(): THREE.Mesh {
   const m = new THREE.Mesh(new THREE.CircleGeometry(0.32, 24), new THREE.MeshBasicMaterial({ color: 0x2a1840, transparent: true, opacity: 0.8 }));
@@ -112,8 +62,24 @@ export class MartiansView {
   private burrows = new Map<number, THREE.Mesh>();
   private from = new THREE.Vector3();
   private to = new THREE.Vector3();
+  /** Builder claw slaps: martian id -> view time the slap started. */
+  private slaps = new Map<number, number>();
+  private now = 0;
+
+  /** A rock was built at (tx, ty): the Builder next to it slaps its claws. */
+  slapNear(state: GameState, tx: number, ty: number): void {
+    let best: Martian | null = null;
+    let bestD = 3;
+    for (const m of state.martians) {
+      if (!m.alive || m.kind !== Kind.Builder) continue;
+      const d = Math.abs(Math.round(m.x / TILE) - tx) + Math.abs(Math.round(m.y / TILE) - ty);
+      if (d < bestD) { best = m; bestD = d; }
+    }
+    if (best) this.slaps.set(best.id, this.now);
+  }
 
   sync(state: GameState, prev: Map<number, { x: number; y: number }>, alpha: number, time: number): void {
+    this.now = time;
     for (const m of state.martians) {
       let v = this.views.get(m.id);
       if (!v) {
@@ -140,15 +106,19 @@ export class MartiansView {
       v.position.lerpVectors(this.from, this.to, alpha);
       this.face(v, m);
       const frozen = state.freeze > 0;
-      const body = v.getObjectByName('body') as THREE.Mesh;
-      const wobble = frozen ? 0 : Math.sin(time * 9 + m.id * 2) * 0.08;
-      const squash = m.kind === Kind.Goopling || m.kind === Kind.Sniffer ? 0.72 : 1;
-      body.scale.set(1 + wobble, squash - wobble, 1 + wobble);
+      const parts = v.userData.parts as MartianParts;
+      // Goopling jelly wobbles most; the others breathe a little.
+      const amp = m.kind === Kind.Goopling ? 0.08 : 0.03;
+      const wobble = frozen ? 0 : Math.sin(time * 9 + m.id * 2) * amp;
+      parts.body.scale.set(1 + wobble, 1 - wobble, 1 + wobble);
       if (m.kind === Kind.Phaser) v.position.y = 0.06 + Math.sin(time * 3 + m.id) * 0.05; // hovers
-      const mat = body.material as THREE.MeshStandardMaterial;
-      mat.color.setHex(frozen ? FROZEN : MARTIAN_COLOR[m.kind]);
+      const slapStart = this.slaps.get(m.id);
+      const slap = slapStart === undefined ? 0 : (time - slapStart) / SLAP_SECONDS;
+      if (slap >= 1) this.slaps.delete(m.id);
+      animateMartian(m.kind, parts, time, m.id * 1.7, p.x !== m.x || p.y !== m.y, frozen, slap > 0 && slap < 1 ? slap : 0);
+      parts.skin.color.setHex(frozen ? FROZEN : MARTIAN_COLOR[m.kind]);
       // In a Blackout only the eyes should give a Martian away.
-      mat.emissiveIntensity = state.event === LevelEvent.Blackout && state.eventActive > 0 ? 0 : 0.15;
+      parts.skin.emissiveIntensity = state.event === LevelEvent.Blackout && state.eventActive > 0 ? 0 : 0.15;
     }
   }
 
@@ -160,6 +130,7 @@ export class MartiansView {
   clear(): void {
     this.views.clear();
     this.burrows.clear();
+    this.slaps.clear();
     this.group.clear();
   }
 }

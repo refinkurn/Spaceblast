@@ -3,29 +3,18 @@ import { bossWarning, crossTiles } from '../sim/boss';
 import { BossKind } from '../sim/constants';
 import type { GameState } from '../sim/state';
 import { tileToWorld } from './coords';
+import { animateBoss, makeBoss, type BossParts } from './boss_mesh';
 
-// Placeholder boss: a pulsing dome on the centre tile, coloured per boss, with
-// a spinning ring. It pulses faster while a wave is being announced.
-
-const BOSS_COLOR: Record<number, number> = {
-  [BossKind.GooplingHive]: 0x6fd14f,
-  [BossKind.DarknessHive]: 0x7a4cff,
-  [BossKind.MazeMaster]: 0xff8a3d,
-};
+// The boss on the centre tile: a low-poly hive or the Maze Master
+// (view/boss_mesh.ts), built when its kind first shows up. It pulses, faster
+// while a wave is being announced.
 
 export class BossView {
   readonly group = new THREE.Group();
-  private mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.3, roughness: 0.35 });
-  private dome = new THREE.Mesh(new THREE.SphereGeometry(0.75, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2), this.mat);
-  private ring = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.06, 10, 40), new THREE.MeshBasicMaterial({ color: 0xffe9a8 }));
-  private eye = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  private parts: BossParts | null = null;
+  private kind = -1;
 
   constructor() {
-    this.dome.castShadow = true;
-    this.ring.rotation.x = Math.PI / 2;
-    this.ring.position.y = 0.3;
-    this.eye.position.set(0, 0.55, 0.45);
-    this.group.add(this.dome, this.ring, this.eye);
     this.group.visible = false;
   }
 
@@ -33,15 +22,16 @@ export class BossView {
     const b = state.boss;
     this.group.visible = !!b && b.alive;
     if (!b || !b.alive) return;
+    if (b.kind !== this.kind) {
+      this.group.clear();
+      this.parts = makeBoss(b.kind);
+      this.group.add(this.parts.root);
+      this.kind = b.kind;
+    }
     tileToWorld(b.tile % state.grid.w, Math.floor(b.tile / state.grid.w), 0, this.group.position);
-    const color = BOSS_COLOR[b.kind] ?? 0xffffff;
-    this.mat.color.setHex(color);
-    this.mat.emissive.setHex(color);
     const warning = bossWarning(state);
     const pulse = 0.5 + 0.5 * Math.sin(time * (warning ? 14 : 3));
-    this.mat.emissiveIntensity = 0.2 + (warning ? 0.8 : 0.3) * pulse;
-    this.dome.scale.set(1 + 0.05 * pulse, 0.9 + 0.15 * pulse, 1 + 0.05 * pulse);
-    this.ring.rotation.z = time * (warning ? 4 : 1);
+    if (this.parts) animateBoss(b.kind, this.parts, time, pulse, warning);
   }
 }
 
