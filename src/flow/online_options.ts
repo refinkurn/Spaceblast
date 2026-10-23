@@ -1,4 +1,4 @@
-import { BOT_LEVELS, type RoomSettings } from '../net/protocol';
+import { BOT_LEVELS, type RoomSettings, ARENA_SETTINGS } from '../net/protocol';
 import { ROUND_SECONDS } from '../sim/constants';
 import { t } from '../utils/i18n';
 import type { StepOption } from './stepper';
@@ -35,5 +35,8 @@ export const matchOptions = (): StepOption<RoomSettings['match']>[] => [
   { value: 'bo3', label: t('lobby.match.bo3') },
   { value: 'ft3', label: t('lobby.match.ft3') },
 ];
+
+/** Arena: one of the four sector layouts, or Random each round. */
+export const arenaOptions = (): StepOption<RoomSettings['arena']>[] => ARENA_SETTINGS.map((a) => ({ value: a, label: t(`arena.${a}`) }));
 
 export const botLevelOptions = (): StepOption<RoomSettings['botLevel']>[] => BOT_LEVELS.map((l) => ({ value: l, label: t(`menu.${l}`) }));

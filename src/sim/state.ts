@@ -1,4 +1,5 @@
 import { BossKind, Dir, FIRST_EVENT_TICKS, GRID_H, GRID_W, Kind, LevelEvent, ROUND_TICKS, SPAWNS, START_CHARGES, START_LIVES, START_RANGE, TILE } from './constants';
+import { resolveArena, type ArenaChoice } from './arenas';
 import { setupBoss } from './boss';
 import { NO_EVENTS, type LevelRules } from './levels';
 import { generateGrid, type Grid } from './grid';
@@ -131,6 +132,11 @@ export interface GameOptions {
    * Default 0: offline modes hold the game on the client instead.
    */
   startHold?: number;
+  /**
+   * Arena layout (arenas.ts): 0 classic (default), 1-4 the sector layouts, or
+   * 'random' = one of 1-4 picked from the seed (same on every browser).
+   */
+  arena?: ArenaChoice;
 }
 
 export interface GameState {
@@ -138,6 +144,8 @@ export interface GameState {
   seed: number;
   rng: number;
   mode: Mode;
+  /** Arena layout id the grid was built from (arenas.ts ARENAS; 0 = classic). */
+  arena: number;
   /** Ticks 1..startHold are the start hold: only leaving counts, no clock runs (0 = none). */
   startHold: number;
   status: Status;
@@ -197,6 +205,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     seed,
     rng: seedRng(seed),
     mode,
+    arena: resolveArena(options.arena, seed),
     startHold: Math.max(0, Math.trunc(options.startHold ?? 0)),
     status: 'playing',
     winner: -1,
@@ -227,7 +236,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     gateWait: 0,
     events: [],
   };
-  state.grid = generateGrid(state);
+  state.grid = generateGrid(state, state.arena);
   placeItems(state);
   if (bossKind) setupBoss(state, bossKind);
   else if (!battle && !rival) placeGate(state);

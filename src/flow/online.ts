@@ -7,7 +7,7 @@ import {
 import { dragScroll } from './drag_scroll';
 import { shareInvite } from './invite';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
-import { botLevelOptions, matchOptions, scenarioFlags, scenarioOf, scenarioOptions, timeOptions, type Scenario } from './online_options';
+import { arenaOptions, botLevelOptions, matchOptions, scenarioFlags, scenarioOf, scenarioOptions, timeOptions, type Scenario } from './online_options';
 import { Stepper } from './stepper';
 import { t } from '../utils/i18n';
 
@@ -368,6 +368,7 @@ export class OnlineRoom {
   // --- Lobby ----------------------------------------------------------------------
 
   private steppers!: {
+    arena: Stepper<RoomSettings['arena']>;
     time: Stepper<number>;
     scenario: Stepper<Scenario>;
     match: Stepper<RoomSettings['match']>;
@@ -388,6 +389,7 @@ export class OnlineRoom {
     dragScroll(swatches);
     // Match options: one ‹ value › selector each (the host steps; guests see the host's pick).
     this.steppers = {
+      arena: new Stepper($('set-arena'), arenaOptions(), (arena) => this.changeSettings({ arena }), t('lobby.opt.arena')),
       time: new Stepper($('set-time'), timeOptions(), (time) => this.changeSettings({ time }), t('lobby.opt.time')),
       scenario: new Stepper<Scenario>($('set-scenario'), scenarioOptions(), (sc) => this.changeSettings(scenarioFlags(sc)), t('lobby.opt.scenarios')),
       match: new Stepper($('set-match'), matchOptions(), (match) => this.changeSettings({ match }), t('lobby.opt.match')),
@@ -413,11 +415,12 @@ export class OnlineRoom {
     const host = this.isHost;
     $('settings-label').textContent = host ? t('online.matchSettings') : t('online.matchSettingsGuest');
     const st = this.steppers;
+    st.arena.set(this.settings.arena);
     st.time.set(this.settings.time);
     st.scenario.set(scenarioOf(this.settings));
     st.match.set(this.settings.match);
     st.botLevel.set(this.settings.botLevel);
-    st.time.disabled = st.scenario.disabled = st.match.disabled = !host;
+    st.arena.disabled = st.time.disabled = st.scenario.disabled = st.match.disabled = !host;
     // Bot level only matters with a bot in the room.
     st.botLevel.disabled = !host || this.settings.bots === 0;
 

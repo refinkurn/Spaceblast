@@ -66,7 +66,7 @@ export class OnlineRound {
   }
 
   gameOptions(): GameOptions {
-    const { time, maze, blackout } = this.settings;
+    const { time, maze, blackout, arena } = this.settings;
     return {
       mode: 'battle',
       players: this.players,
@@ -74,6 +74,8 @@ export class OnlineRound {
       // The 3-2-1-BLAST! count runs in the sim online (frames keep flowing), not as a client pause.
       startHold: START_HOLD_TICKS,
       rules: { ...NO_EVENTS, mazeShift: maze, blackout },
+      // 'random' is picked from the round seed, so every browser builds the same grid.
+      arena,
     };
   }
 

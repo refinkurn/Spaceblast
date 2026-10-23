@@ -63,6 +63,7 @@ export function hashState(state: GameState): number {
   mix(['playing', 'cleared', 'game_over', 'round_over'].indexOf(state.status));
   mix(state.mode === 'battle' ? 1 : 0);
   mix(state.startHold);
+  mix(state.arena);
   mix(state.winner);
   mix(state.timeLeft);
   mix(state.collapseTicks);

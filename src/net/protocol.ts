@@ -37,6 +37,12 @@ export interface RoomSettings {
   botLevel: BotLevel;
   /** Best of 3 (first to 2 round wins) or first to 3 round wins. */
   match: MatchFormat;
+  /**
+   * Arena layout: 1-4 (the sector layouts, sim/arenas.ts) or 'random', a new
+   * layout every round picked from the round seed (sim resolveArena), so every
+   * browser builds the same grid. Pass it to createGame as `arena`.
+   */
+  arena: ArenaSetting;
 }
 
 export const BOT_LEVELS = ['easy', 'normal', 'hard'] as const;
@@ -46,7 +52,10 @@ export type MatchFormat = (typeof MATCH_FORMATS)[number];
 /** Round wins needed to take the match. */
 export const WINS_NEEDED: Record<MatchFormat, number> = { bo3: 2, ft3: 3 };
 
-export const DEFAULT_SETTINGS: RoomSettings = { time: 120, maze: false, blackout: false, bots: 0, botLevel: 'normal', match: 'ft3' };
+export const ARENA_SETTINGS = ['random', 1, 2, 3, 4] as const;
+export type ArenaSetting = (typeof ARENA_SETTINGS)[number];
+
+export const DEFAULT_SETTINGS: RoomSettings = { time: 120, maze: false, blackout: false, bots: 0, botLevel: 'normal', match: 'ft3', arena: 'random' };
 
 /** Trims a typed name to something safe to show; empty becomes "Player N". */
 export function cleanName(raw: unknown, slot: number): string {
@@ -62,7 +71,9 @@ export function cleanSettings(raw: Partial<RoomSettings> | undefined, humans: nu
   const bots = Math.max(0, Math.min(MAX_PLAYERS - humans, Math.floor(Number(raw?.bots) || 0)));
   const botLevel = BOT_LEVELS.find((l) => l === raw?.botLevel) ?? DEFAULT_SETTINGS.botLevel;
   const match = MATCH_FORMATS.find((m) => m === raw?.match) ?? DEFAULT_SETTINGS.match;
-  return { time, maze: raw?.maze === true, blackout: raw?.blackout === true, bots, botLevel, match };
+  // Missing (an older page) or unknown: random.
+  const arena = ARENA_SETTINGS.find((a) => a === raw?.arena) ?? DEFAULT_SETTINGS.arena;
+  return { time, maze: raw?.maze === true, blackout: raw?.blackout === true, bots, botLevel, match, arena };
 }
 
 /**

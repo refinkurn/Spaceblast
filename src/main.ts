@@ -205,20 +205,26 @@ function showMenuNow() {
 }
 
 // --- A new map ----------------------------------------------------------------------------
+/** Which sector's look (colours, rocks, props) the arena gets: its layout's sector, 1 for classic. */
+function lookOf(s: GameState): number {
+  return s.arena >= 1 && s.arena <= 4 ? s.arena : 1;
+}
+
 function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   tutorial.stop();
   story.cancelCards();
   // Math.random is fine HERE: it only picks the seed. Inside sim/ it is banned.
   const spec = levelSpec(story.level);
   if (mode === 'online' && net) state = createGame(seed, net.gameOptions());
-  else if (mode === 'battle') state = createGame(seed, { mode: 'battle' });
-  else state = createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival });
+  // Battle vs Bot: a random sector arena each round (picked from the seed).
+  else if (mode === 'battle') state = createGame(seed, { mode: 'battle', arena: 'random' });
+  else state = createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival, arena: spec.arena });
   if (devRun && mode === 'survival') applyCheats();
   bot = mode === 'battle' ? new Bot(1, seed, screens.botLevel) : spec.rival ? new Bot(1, seed, 'hard') : null;
   recorder.reset();
   radio.reset();
-  // Story levels take their sector's look (src/config/sectors.json); Battle and online use sector 1.
-  view.build(state, colors(), mode === 'online' ? localId : -1, mode === 'survival' ? spec.sector : 1);
+  // Each arena takes its sector's look (src/config/sectors.json); the classic arena uses sector 1's.
+  view.build(state, colors(), mode === 'online' ? localId : -1, lookOf(state));
   view.rig.reset();
   screens.hideBanner();
   screens.hideLevelCard();
@@ -456,7 +462,7 @@ function catchUp() {
   quiet = true;
   while (net && state.status === 'playing' && net.sync.ready()) onlineStep();
   quiet = false;
-  view.build(state, colors(), localId);
+  view.build(state, colors(), localId, lookOf(state));
 }
 
 /** Per frame: aim this browser's command at the server, and watch the connection. */

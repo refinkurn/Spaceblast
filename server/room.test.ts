@@ -44,9 +44,30 @@ describe('room: seats and settings', () => {
     const a = peer(), b = peer();
     room.connect(a, req({ create: true }));
     room.message(0, msg({ t: 'settings', s: { time: 999, maze: 'yes', blackout: true, bots: 9, botLevel: 'godlike', match: 'bo99' } }));
-    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 3, botLevel: 'normal', match: 'ft3' } });
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 3, botLevel: 'normal', match: 'ft3', arena: 'random' } });
     room.connect(b, req());
-    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 2, botLevel: 'normal', match: 'ft3' } });
+    expect(a.got.at(-1)).toEqual({ t: 'settings', s: { time: 120, maze: false, blackout: true, bots: 2, botLevel: 'normal', match: 'ft3', arena: 'random' } });
+  });
+
+  it('the arena setting is 1-4 or random; anything else (or an older page sending none) is random', () => {
+    const room = new Room();
+    const a = peer();
+    room.connect(a, req({ create: true }));
+    const arena = () => { const m = a.got.at(-1); return m?.t === 'settings' ? m.s.arena : undefined; };
+    room.message(0, msg({ t: 'settings', s: { time: 60, arena: 3 } }));
+    expect(arena()).toBe(3);
+    for (const bad of [0, 5, '2', 2.5, null, 'classic']) {
+      room.message(0, msg({ t: 'settings', s: { time: 60, arena: bad } }));
+      expect(arena(), String(bad)).toBe('random');
+    }
+    room.message(0, msg({ t: 'settings', s: { time: 60, arena: 4 } }));
+    room.message(0, msg({ t: 'settings', s: { time: 60 } }));
+    expect(arena()).toBe('random');
+    // The round's start message carries it, so every browser builds the same layout.
+    room.message(0, msg({ t: 'settings', s: { time: 60, bots: 1, arena: 2 } }));
+    room.message(0, msg({ t: 'start', seed: 9 }));
+    const start = a.got.at(-1);
+    expect(start?.t === 'start' && start.settings.arena).toBe(2);
   });
 
   it('the host can start alone with bots, but not alone without', () => {

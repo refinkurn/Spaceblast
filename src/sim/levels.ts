@@ -7,10 +7,12 @@ import { BossKind, Kind } from './constants';
 // new Martian species and one new scenario (hazard), introduced by Kit's
 // briefing, with the Martian count rising steadily inside each sector.
 //
-//   Sector 1  Outpost Surface   (1-5)   new: Gooplings; no scenario, no hazards
-//   Sector 2  Deep Shafts       (6-10)  new: Sniffers (6), Blackout (7)
-//   Sector 3  Tectonic Core     (11-15) new: Phasers + Maze Shift (11); Blackout returns (13), gate drifts (14)
-//   Sector 4  Rogue Facility    (16-20) new: Builders + the Hunt (16); then every hazard together
+//   Sector 1  Duststorm Valley         (1-5)   new: Gooplings; no scenario, no hazards
+//   Sector 2  Abandoned Mining Colony  (6-10)  new: Sniffers (6), Blackout (7)
+//   Sector 3  Crystal Core             (11-15) new: Phasers + Maze Shift (11); Blackout returns (13), gate drifts (14)
+//   Sector 4  Underground Bio-Lab      (16-20) new: Builders + the Hunt (16); then every hazard together
+//
+// Each sector also has its own arena layout (arenas.ts, id = sector number).
 
 export const LEVEL_COUNT = 20;
 
@@ -37,6 +39,8 @@ export interface LevelSpec {
   boss: BossKind;
   /** Level 20: a 1v1 duel against the Renegade Pilot (a bot astronaut). */
   rival: boolean;
+  /** Arena layout (arenas.ts): each sector has its own, so this is the sector number. */
+  arena: number;
 }
 
 const { Goopling: G, Sniffer: S, Phaser: P, Builder: B } = Kind;
@@ -53,25 +57,25 @@ const HUNT: Partial<LevelRules> = { ...DRIFT, aggressive: true };
  * The comment is the level's intent (Kit's briefing in story.ts matches it).
  */
 const LEVELS: { roster: Kind[]; rules?: Partial<LevelRules> }[] = [
-  // Sector 1: Outpost Surface. Gooplings only, no hazards: learn the basics.
+  // Sector 1: Duststorm Valley. Gooplings only, no hazards: learn the basics.
   { roster: [G, G] }, //                         1  tutorial: two slow Gooplings
   { roster: [G, G, G] }, //                      2  more Gooplings
   { roster: [G, G, G, G] }, //                   3  a crowd of Gooplings
   { roster: [G, G, G, G, G] }, //                4  the sector's peak
   { roster: [] }, //                             5  Goopling Hive
-  // Sector 2: Deep Shafts. New: Sniffers, then Blackouts (the only hazard here).
+  // Sector 2: Abandoned Mining Colony. New: Sniffers, then Blackouts (the only hazard here).
   { roster: [G, G, S] }, //                      6  first Sniffer; no hazards yet
   { roster: [G, G, S, S], rules: { ...DARK, blackoutFirst: true } }, // 7  first Blackout (Kit warns: it comes first)
   { roster: [G, G, S, S, S], rules: DARK }, //   8  Blackouts, more Sniffers
   { roster: [G, G, G, S, S, S], rules: DARK }, // 9  the sector's peak
   { roster: [] }, //                             10 Darkness Hive
-  // Sector 3: Tectonic Core. New: Phasers and Maze Shift; then old hazards return.
+  // Sector 3: Crystal Core. New: Phasers and Maze Shift; then old hazards return.
   { roster: [G, S, S, P], rules: MAZE }, //      11 first Phaser, first Maze Shift
   { roster: [G, S, S, P, P], rules: MAZE }, //   12 more Phasers, walls keep moving
   { roster: [G, G, S, S, P, P], rules: CORE }, //   13 Blackout returns, events twice as often
   { roster: [G, S, S, P, P, P], rules: DRIFT }, //  14 the gate starts to wander
   { roster: [] }, //                             15 Maze Master
-  // Sector 4: Rogue Facility. New: Builders and the Hunt; then every hazard.
+  // Sector 4: Underground Bio-Lab. New: Builders and the Hunt; then every hazard.
   { roster: [G, G, S, P, B], rules: STALK }, //            16 first Builder, Martians start hunting
   { roster: [G, S, S, P, P, B, B], rules: HUNT }, //       17 full Hunt: every hazard
   { roster: [G, G, S, S, P, P, B, B], rules: HUNT }, //    18 full Hunt
@@ -99,6 +103,7 @@ export function levelSpec(level: number): LevelSpec {
     rules: rulesFor(n),
     boss: BOSSES[n] ?? BossKind.None,
     rival: n === LEVEL_COUNT,
+    arena: sectorOf(n),
   };
 }
 
