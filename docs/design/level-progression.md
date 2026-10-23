@@ -10,10 +10,10 @@ Decided by Refindo, 2026-10-22: the mechanics follow the story journey, and diff
 
 | Sector | New species | New scenario | Boss | Story reason |
 |---|---|---|---|---|
-| 1 Outpost Surface | Goopling | none (basics) | Goopling Hive | learn on the surface |
-| 2 Deep Shafts | Sniffer | Blackout | Darkness Hive | the shafts' power is failing; Sniffers find you by smell |
-| 3 Tectonic Core | Phaser | Maze Shift (gate drifts from 3-4) | Maze Master | the crystal cavern reshapes itself, then you meet what moves it |
-| 4 Rogue Facility | Builder | Hunt (Ducking's signal) | Ducking duel | his crew fortifies the base; his signal is at full strength |
+| 1 Duststorm Valley | Goopling | none (basics) | Goopling Hive | learn on the surface |
+| 2 Abandoned Mining Colony | Sniffer | Blackout | Darkness Hive | the shafts' power is failing; Sniffers find you by smell |
+| 3 Crystal Core | Phaser | Maze Shift (gate drifts from 3-4) | Maze Master | the crystal cavern reshapes itself, then you meet what moves it |
+| 4 Underground Bio-Lab | Builder | Hunt (Ducking's signal) | Ducking duel | his crew fortifies the base; his signal is at full strength |
 
 ## Martian types
 | Type | Behaviour | First seen |
@@ -26,22 +26,22 @@ Decided by Refindo, 2026-10-22: the mechanics follow the story journey, and diff
 ## The 20 levels
 | Level | Sector | Martians | Count | Hazards | Kit says |
 |---|---|---|---|---|---|
-| 1-1 (1) | Outpost Surface | G G | 2 | none | Clear a path through the rocks. (tutorial) |
+| 1-1 (1) | Duststorm Valley | G G | 2 | none | Clear a path through the rocks. (tutorial) |
 | 1-2 (2) | | G G G | 3 | none | Small creatures. Keep your distance. |
 | 1-3 (3) | | G G G G | 4 | none | More Gooplings. Lure them into your blasts. |
 | 1-4 (4) | | G G G G G | 5 | none | The whole herd is out. (sector exam) |
 | 1-5 (5) | | **Goopling Hive** | 3 per wave | waves 44 → 22 → 11 s | outlast 3 waves |
-| 2-1 (6) | Deep Shafts | G G S | 3 | none | New readings: Sniffers. (first Sniffer) |
+| 2-1 (6) | Abandoned Mining Colony | G G S | 3 | none | New readings: Sniffers. (first Sniffer) |
 | 2-2 (7) | | G G S S | 4 | **Blackout** (first event always a Blackout) | The power down here is failing. |
 | 2-3 (8) | | G G S S S | 5 | Blackout | Sniffers hunt by smell. The dark doesn't slow them down. |
 | 2-4 (9) | | G G G S S S | 6 | Blackout | Blackouts come more often now. (sector peak) |
 | 2-5 (10) | | **Darkness Hive** | 3 per wave + Blackout | waves 40 → 20 → 10 s | outlast 3 waves |
-| 3-1 (11) | Tectonic Core | G S S P | 4 | **Maze Shift** | Phasers ahead... And these walls move. (first Phaser) |
+| 3-1 (11) | Crystal Core | G S S P | 4 | **Maze Shift** | Phasers ahead... And these walls move. (first Phaser) |
 | 3-2 (12) | | G S S P P | 5 | Maze Shift | Those walls moved on purpose. |
 | 3-3 (13) | | G G S S P P | 6 | Maze Shift + Blackout, events twice as often | Shifts and blackouts together now. |
 | 3-4 (14) | | G S S P P P | 6 | same + **Warp Gate drifts** | The gate drifts with the walls. |
 | 3-5 (15) | | **Maze Master** | 3 per wave + Maze Shift + cross blast | waves 36 → 18 → 9 s | outlast 3 waves |
-| 4-1 (16) | Rogue Facility | G G S P B | 5 | Maze Shift + Blackout + **Martians hunt you** | Builders, fortifying the base. (first Builder) |
+| 4-1 (16) | Underground Bio-Lab | G G S P B | 5 | Maze Shift + Blackout + **Martians hunt you** | Builders, fortifying the base. (first Builder) |
 | 4-2 (17) | | G S S P P B B | 7 | everything | These attacks aren't random anymore. |
 | 4-3 (18) | | G G S S P P B B | 8 | everything | The control room should be close. |
 | 4-4 (19) | | G S S S P P P B B | 9 | everything | Last stretch. (the hardest level) |

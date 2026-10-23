@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { RockStyle } from './rock_mesh';
 import { AdaptiveQuality } from './quality';
 import { GRID_H, GRID_W, TILE } from '../sim/constants';
 import type { GameState, SimEvent } from '../sim/state';
@@ -86,7 +87,7 @@ export class GameView {
     this.colors = colors;
     this.you = local >= 0 ? local : 0;
     const look = sectorLook(sector);
-    this.board.build(state, look.arena);
+    this.board.build(state, look.arena, look.mapTheme as RockStyle);
     if (this.propsSector !== sector) {
       disposeProps(this.props);
       this.props.add(buildProps(look.arena, look.props));

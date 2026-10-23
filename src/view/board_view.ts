@@ -4,6 +4,7 @@ import { cellAt } from '../sim/grid';
 import type { GameState } from '../sim/state';
 import { tileToWorld } from './coords';
 import { sectorLook, type ArenaLook } from './sector_look';
+import { rockGeometry, rockMatrix, type RockStyle } from './rock_mesh';
 
 // Draws the arena with one InstancedMesh per kind of tile (a handful of draw
 // calls in total, which matters on phones). Reads sim state, never writes it.
@@ -24,10 +25,12 @@ export class BoardView {
   private falling: { i: number; tx: number; ty: number; t: number }[] = [];
   private width = 0;
   private look: ArenaLook = sectorLook(1).arena;
+  private rockStyle: RockStyle = 'surface';
 
-  build(state: GameState, look: ArenaLook = sectorLook(1).arena): void {
+  build(state: GameState, look: ArenaLook = sectorLook(1).arena, rockStyle: RockStyle = 'surface'): void {
     this.dispose();
     this.look = look;
+    this.rockStyle = rockStyle;
     const { w, h } = state.grid;
     const pillars: [number, number][] = [];
     const rocks: [number, number][] = [];
@@ -48,8 +51,8 @@ export class BoardView {
     this.group.add(this.cubes(border, 1.0, look.wall));
     const allCells: [number, number][] = [];
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) allCells.push([x, y]);
-    this.rockMesh = this.cubes(allCells, 0.88, look.rock);
     this.width = w;
+    this.rockMesh = this.rocks(allCells);
     for (const [x, y] of allCells) if (!rocks.some(([rx, ry]) => rx === x && ry === y)) this.breakRock(x, y);
     this.group.add(this.rockMesh);
     this.collapseMesh = this.cubes(allCells, 1.0, look.collapse);
@@ -87,7 +90,7 @@ export class BoardView {
   /** Shows a rock the sim has added (Builder, Maze Shift). */
   addRock(tx: number, ty: number): void {
     if (!this.rockMesh) return;
-    this.rockMesh.setMatrixAt(ty * this.width + tx, new THREE.Matrix4().makeTranslation(tileToWorld(tx, ty, 0.44)));
+    this.rockMesh.setMatrixAt(ty * this.width + tx, rockMatrix(this.rockStyle, tx, ty, tileToWorld(tx, ty, 0)));
     this.rockMesh.instanceMatrix.needsUpdate = true;
   }
 
@@ -105,6 +108,18 @@ export class BoardView {
         mesh.setColorAt(i, color.setHex((x + y) % 2 === 0 ? this.look.floorA : this.look.floorB));
       }
     }
+    mesh.receiveShadow = true;
+    return mesh;
+  }
+
+  /** One low-poly rock per cell in the sector's style (view/rock_mesh.ts). */
+  private rocks(tiles: [number, number][]): THREE.InstancedMesh {
+    const mat = new THREE.MeshLambertMaterial({ color: this.look.rock, flatShading: true });
+    const mesh = new THREE.InstancedMesh(rockGeometry(this.rockStyle), mat, tiles.length);
+    const m = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    tiles.forEach(([x, y], i) => mesh.setMatrixAt(i, rockMatrix(this.rockStyle, x, y, tileToWorld(x, y, 0, pos), m)));
+    mesh.castShadow = true;
     mesh.receiveShadow = true;
     return mesh;
   }

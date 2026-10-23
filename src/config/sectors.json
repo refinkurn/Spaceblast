@@ -1,7 +1,7 @@
 {
   "sectors": [
     {
-      "id": "sector_1_outpost_surface",
+      "id": "sector_1_duststorm_valley",
       "mapTheme": "surface",
       "palette": {
         "primary": "#C84B31",
@@ -35,7 +35,7 @@
       ]
     },
     {
-      "id": "sector_2_deep_shafts",
+      "id": "sector_2_abandoned_mining_colony",
       "mapTheme": "shafts",
       "palette": {
         "primary": "#2D3748",
@@ -69,7 +69,7 @@
       ]
     },
     {
-      "id": "sector_3_tectonic_core",
+      "id": "sector_3_crystal_core",
       "mapTheme": "core",
       "palette": {
         "primary": "#00F5FF",
@@ -102,7 +102,7 @@
       ]
     },
     {
-      "id": "sector_4_rogue_facility",
+      "id": "sector_4_underground_bio_lab",
       "mapTheme": "facility",
       "palette": {
         "primary": "#E2E8F0",

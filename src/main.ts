@@ -25,6 +25,7 @@ import { installMultiTouchTaps } from './flow/taps';
 import { fadeThrough } from './flow/transition';
 import { Tutorial, randomTip } from './flow/tutorial';
 import { BATTLE_TIPS } from './flow/tutorial_script';
+import { BossCountdown } from './flow/boss_countdown';
 import { Bot } from './input/bot';
 import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
@@ -72,6 +73,8 @@ let lastWinner = -1;
 let devRun = false;
 
 const screens = new Screens(startMode, openMenu, pauseButton);
+/** The boss level's final 15 s stopwatch. */
+const bossClock = new BossCountdown();
 const hud = new Hud();
 // Static labels in index.html take their words from src/config/locales.json.
 applyDom();
@@ -668,6 +671,7 @@ view.renderer.setAnimationLoop((now: number) => {
   const keyList = playerKeys();
   const mine = score.of(keyList[localId] ?? '');
   const best = Math.max(0, ...keyList.filter((_, i) => i !== localId).map((k) => score.of(k)));
+  bossClock.update(state, mode !== 'survival' || paused || pause.open || cine.active || cutscene.active);
   hud.update(state, {
     mode, level: story.level, sector: levelSpec(story.level).sector, round: score.round,
     score: [score.of('p0'), score.of('p1')], local: localId, online: { mine, best },

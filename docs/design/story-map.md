@@ -13,7 +13,7 @@ The map replaces the current Story level grid (`#story-hub`, `renderHub()` in `s
 - Canon: Bosco is on foot. Kit is radio only, so she is never drawn on the map. Bosses can't be destroyed.
 
 ## 1. Header bar (fixed at the top)
-- **Left:** sector title, e.g. `SECTOR 2 · DEEP SHAFTS`. It follows the sector currently centred on screen.
+- **Left:** sector title, e.g. `SECTOR 2 · ABANDONED MINING COLONY`. It follows the sector currently centred on screen.
 - **Centre:** the **Core signal** gauge. Kit's scanner locks on as Bosco gets closer to the stolen cores.
   - 20 segments; filled = levels cleared (`unlocked - 1`, or 20 once `finished`).
   - Label: `CORE SIGNAL 7/20`.
@@ -24,10 +24,10 @@ The map replaces the current Story level grid (`#story-hub`, `renderHub()` in `s
 ## 2. The track
 - One horizontal scrolling strip with all 4 sectors side by side. Each sector is about one screen wide, has its own backdrop, and has a short gap or "warp" divider between it and the next.
 - **Sector backdrops**, using CSS gradients and simple shapes, no big images:
-  - **1 Outpost Surface:** red dusty surface under a dark sky, the crashed Biscuit at the start, a dirt trail.
-  - **2 Deep Shafts:** rusty mine-cart rails in dark red caverns, old support beams. This is the first underground sector.
-  - **3 Tectonic Core:** cracked rock with lava-orange glow lines.
-  - **4 Rogue Facility:** metal walkways patched with green-violet alien biotech. A few wrecked ship hulls sit in the background (the ship graveyard, left unexplained).
+  - **1 Duststorm Valley:** red dusty surface under a dark sky, the crashed Biscuit at the start, a dirt trail.
+  - **2 Abandoned Mining Colony:** rusty mine-cart rails in dark red caverns, old support beams. This is the first underground sector.
+  - **3 Crystal Core:** cracked rock with lava-orange glow lines.
+  - **4 Underground Bio-Lab:** metal walkways patched with green-violet alien biotech. A few wrecked ship hulls sit in the background (the ship graveyard, left unexplained).
 - **Nodes:** 5 per sector, joined by the trail.
   - **Level node:** a round chamber marker with the level's `1-3` style number. Up to 3 stars sit above it (gold earned, dim not earned), and a small Warp Gate glyph beside it.
   - **Boss node:** the last one in each sector (levels 5, 10 and 15; level 20 is the Ducking duel). It is bigger, with a red or gold ring and the boss name underneath: Goopling Hive, Darkness Hive, Maze Master, Ducking.

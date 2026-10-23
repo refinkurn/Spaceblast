@@ -1,4 +1,5 @@
 import { AudioEngine, type SoundSetting } from '../audio/engine';
+import { bossWaveCount } from '../sim/boss';
 import { Music } from '../audio/music';
 import { Sfx } from '../audio/sfx';
 import { enterFullscreen } from './fullscreen';
@@ -87,6 +88,9 @@ export class GameAudio {
       if (state.timeLeft > 0 && state.timeLeft <= 180 && state.timeLeft % 60 === 0) this.sfx.beep();
       if (state.timeLeft === 0 && state.collapseTicks === 1) this.sfx.beep(true);
     }
+    // Story boss: a beep on each of the final wave's last 5 seconds (the stopwatch shows 15).
+    const b = state.boss;
+    if (b && b.alive && state.status === 'playing' && b.wave >= bossWaveCount(b) && b.timer > 0 && b.timer <= 300 && b.timer % 60 === 0) this.sfx.beep(b.timer === 60);
   }
 
   private event(e: SimEvent, local: number): void {

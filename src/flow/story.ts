@@ -15,20 +15,20 @@ export interface SectorStory {
  */
 export const SECTORS: SectorStory[] = [
   {
-    name: 'Outpost Surface',
+    name: 'Duststorm Valley',
     story: "The Biscuit crash-lands on Mars and its power cores are stolen. Bosco heads out to get them back, with Captain Kit on the radio.",
   },
   {
-    name: 'Deep Shafts',
+    name: 'Abandoned Mining Colony',
     story: 'Shafts centuries old, yet swept and lit. Somebody is maintaining them. But the power down here is failing.',
   },
   {
-    name: 'Tectonic Core',
+    name: 'Crystal Core',
     story: 'The heart of Mars: a crystal cavern that reshapes itself. Something down here is moving the walls.',
   },
   {
-    name: 'Rogue Facility',
-    story: 'A command center hidden inside Mars, running the whole hive network. Whoever is in charge knows Bosco is coming.',
+    name: 'Underground Bio-Lab',
+    story: 'A bio-lab hidden inside Mars, running the whole hive network. Whoever is in charge knows Bosco is coming.',
   },
 ];
 

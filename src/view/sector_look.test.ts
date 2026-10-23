@@ -21,10 +21,10 @@ const contrast = (a: number, b: number) => {
 describe('sector looks (src/config/sectors.json)', () => {
   it('has the four sectors with the spec ids and palettes', () => {
     expect(SECTOR_LOOKS.map((s) => s.id)).toEqual([
-      'sector_1_outpost_surface',
-      'sector_2_deep_shafts',
-      'sector_3_tectonic_core',
-      'sector_4_rogue_facility',
+      'sector_1_duststorm_valley',
+      'sector_2_abandoned_mining_colony',
+      'sector_3_crystal_core',
+      'sector_4_underground_bio_lab',
     ]);
     expect(SECTOR_LOOKS.map((s) => [s.palette.primary, s.palette.secondary, s.palette.accent])).toEqual([
       ['#C84B31', '#EC9B3B', '#FFE3A1'],
@@ -77,7 +77,7 @@ describe('sector looks (src/config/sectors.json)', () => {
   });
 
   it('falls back to sector 1 out of range (Battle and online use it)', () => {
-    expect(sectorLook(0).id).toBe('sector_1_outpost_surface');
-    expect(sectorLook(9).id).toBe('sector_1_outpost_surface');
+    expect(sectorLook(0).id).toBe('sector_1_duststorm_valley');
+    expect(sectorLook(9).id).toBe('sector_1_duststorm_valley');
   });
 });

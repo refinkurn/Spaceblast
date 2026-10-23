@@ -6,7 +6,7 @@ describe('level card', () => {
   it('level 1 is 1-1 with the gate goal and a Kit line', () => {
     const c = levelCard(levelSpec(1));
     expect(c.title).toBe('1-1');
-    expect(c.sector).toBe('OUTPOST SURFACE');
+    expect(c.sector).toBe('DUSTSTORM VALLEY');
     expect(c.goal).toEqual({ icon: 'gate', text: 'Find the Warp Gate' });
     expect(c.briefing).not.toBe('');
   });

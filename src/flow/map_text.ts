@@ -15,7 +15,7 @@ export function coreSignal(unlocked: number, finished: boolean): { filled: numbe
   return { filled, label: finished ? t('map.coresRecovered') : t('map.coreSignal', { n: filled, total: LEVEL_COUNT }), done: finished };
 }
 
-/** "SECTOR 2 · DEEP SHAFTS". */
+/** "SECTOR 2 · ABANDONED MINING COLONY". */
 export function sectorTitle(sector: number): string {
   return t('map.sectorTitle', { n: sector, name: SECTORS[sector - 1].name.toUpperCase() });
 }

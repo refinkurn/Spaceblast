@@ -1247,3 +1247,18 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
   image-rendering: pixelated;
   overflow: hidden;
 }
+
+/* Boss levels: the last 15 s of the final wave (flow/boss_countdown.ts). */
+.boss-clock { position: fixed; z-index: 4; left: 50%; top: calc(var(--hud) + 52px); transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
+  padding: 6px 18px 6px 12px; border-radius: 999px; background: #0e1118e0; border: 2px solid #ffd23f; color: #ffe9a8; pointer-events: none; box-shadow: 0 6px 24px #0008; }
+.boss-clock[hidden] { display: none; }
+.boss-clock-icon { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.boss-clock-time { font: 800 34px system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; line-height: 1; }
+.boss-clock-label { font: 800 12px system-ui, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85; }
+.boss-clock.urgent { border-color: #ff5a4a; color: #ffd0c8; }
+.boss-clock.tick { animation: boss-tick 0.45s ease-out; }
+.boss-clock.urgent.tick { animation: boss-tick-urgent 0.45s ease-out; }
+@keyframes boss-tick { 0% { transform: translateX(-50%) scale(1.12); } }
+@keyframes boss-tick-urgent { 0% { transform: translateX(-50%) scale(1.22); box-shadow: 0 0 28px #ff5a4a; } }
+body.scene .boss-clock { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .boss-clock.tick, .boss-clock.urgent.tick { animation: none; } }

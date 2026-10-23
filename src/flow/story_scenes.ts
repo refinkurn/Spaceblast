@@ -72,7 +72,7 @@ export const INTRO_SCENES: Record<number, Shot[]> = {
     { focus: 'hero', ...KIT, pose: 'neutral', text: "The radiation burned out long ago. Safe to breathe, safe to walk." },
     { focus: 'hero', ...BOSCO, pose: 'happy', text: "Good. I'd hate to be the only thing lighting up the place." },
     { focus: 'hero', ...KIT, pose: 'determined', text: "My scanners found the colony's old warp lines under the surface. Find the Warp Gate in each area. It's your way down." },
-    { focus: 'arena', reveal: "SECTOR 1 · OUTPOST SURFACE", text: "Bosco steps into the Martian dust. Red sand stretches endlessly. Glowing eyes watch from the distance." },
+    { focus: 'arena', reveal: "SECTOR 1 · DUSTSTORM VALLEY", text: "Bosco steps into the Martian dust. Red sand stretches endlessly. Glowing eyes watch from the distance." },
     { focus: 'hero', ...KIT, pose: 'worried', text: "Movement detected. Be careful." },
   ],
 
@@ -91,7 +91,7 @@ export const INTRO_SCENES: Record<number, Shot[]> = {
   ],
 
   6: [
-    { focus: 'arena', fade: true, reveal: "SECTOR 2 · DEEP SHAFTS", text: "Bosco descends into a deep shaft carved through solid rock. The walls are smooth, the floor swept, the lamps glowing." },
+    { focus: 'arena', fade: true, reveal: "SECTOR 2 · ABANDONED MINING COLONY", text: "Bosco descends into a deep shaft carved through solid rock. The walls are smooth, the floor swept, the lamps glowing." },
     { focus: 'hero', ...KIT, pose: 'worried', text: "Bosco, these shafts are centuries old. But look at them." },
     { focus: 'hero', ...BOSCO, pose: 'neutral', text: "Very clean for an abandoned mine." },
     { focus: 'hero', ...KIT, pose: 'determined', text: "Too clean. Somebody is maintaining them. Recently." },
@@ -112,7 +112,7 @@ export const INTRO_SCENES: Record<number, Shot[]> = {
     { focus: 'boss', shake: true, pose: 'attacking', text: "The hive unleashes a wave of creatures." },
   ],
   11: [
-    { focus: 'arena', fade: true, reveal: "SECTOR 3 · TECTONIC CORE", text: "Bosco enters a massive cavern at the heart of Mars. Crystals as tall as ships glow in the rock, and old colony drill rigs stand where the miners left them." },
+    { focus: 'arena', fade: true, reveal: "SECTOR 3 · CRYSTAL CORE", text: "Bosco enters a massive cavern at the heart of Mars. Crystals as tall as ships glow in the rock, and old colony drill rigs stand where the miners left them." },
     { focus: 'hero', ...BOSCO, pose: 'surprised', text: "This is the planet's core. We're in the heart of Mars." },
     { focus: 'arena', shake: true, text: "The cavern moves. Walls rebuild. A maze forms and reforms in real time." },
     { focus: 'hero', ...BOSCO, pose: 'neutral', text: "The walls… are moving. Walls shouldn't move." },
@@ -132,11 +132,11 @@ export const INTRO_SCENES: Record<number, Shot[]> = {
   ],
 
   16: [
-    { focus: 'arena', fade: true, reveal: "SECTOR 4 · ROGUE FACILITY", text: "The tunnel opens onto a graveyard of ships: old hulls with colony and Council markings, rusted and crumpled. A few are not old at all." },
+    { focus: 'arena', fade: true, reveal: "SECTOR 4 · UNDERGROUND BIO-LAB", text: "The tunnel opens onto a graveyard of ships: old hulls with colony and Council markings, rusted and crumpled. A few are not old at all." },
     { focus: 'hero', ...BOSCO, pose: 'surprised', text: "Captain… those are ships. A lot of ships." },
     { focus: 'hero', ...KIT, pose: 'worried', text: "I see them. Don't touch anything. Keep walking." },
     { focus: 'hero', ...BOSCO, pose: 'neutral', text: "Wasn't planning to." },
-    { focus: 'arena', text: "Beyond the wrecks lies a facility hidden within Mars itself—a command center. Screens glow with data. Holographic displays show the entire hive network: a web of control spreading across the planet." },
+    { focus: 'arena', text: "Beyond the wrecks lies a bio-lab hidden within Mars itself: vats of green light, and a command center. Screens glow with data. Holographic displays show the entire hive network: a web of control spreading across the planet." },
     { focus: 'hero', ...BOSCO, pose: 'determined', text: "This is it. Central control." },
     { focus: 'hero', ...KIT, pose: 'determined', text: "The signals originate here. Whoever's running this operation, this is their nerve center." },
     { focus: 'hero', ...BOSCO, pose: 'determined', text: "And they know I'm coming." },

@@ -52,7 +52,7 @@ describe('story map text', () => {
   });
 
   it('titles a sector and counts its stars', () => {
-    expect(sectorTitle(2)).toBe('SECTOR 2 · DEEP SHAFTS');
+    expect(sectorTitle(2)).toBe('SECTOR 2 · ABANDONED MINING COLONY');
     const stars: Record<number, number> = { 6: 3, 7: 2, 8: 1, 1: 3 };
     expect(sectorStars(2, (n) => stars[n] ?? 0)).toBe('★ 6/15');
   });
