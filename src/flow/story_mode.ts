@@ -18,6 +18,7 @@ import { ENDING, SECTORS, levelCard, type LevelCardText } from './story';
 import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
 import { randomTip } from './tutorial';
 import { bossClearLine, storySummary } from './summary';
+import { tally } from './match_tally';
 import { t } from '../utils/i18n';
 import { fadeThrough } from './transition';
 
@@ -235,7 +236,7 @@ export class StoryMode {
       const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : t('story.martians', { n: levelRoster(next).length });
       const upNext = isSectorStart(next) ? t('story.sectorComplete', { n: spec.sector, name: SECTORS[spec.sector].name }) : t('story.next', { n: next, goal: nextGoal });
       this.screens.showBanner(spec.boss ? t('banner.survived') : t('banner.levelClear'), `${line}\n${upNext}`, t('banner.nextLevel'), () => fadeThrough(() => this.play(next, true)), t('banner.map'), '', {
-        pose: 'happy', summary: [...storySummary(state, lost, stars), ...scoreRows(score, prevBest)],
+        pose: 'happy', summary: [...scoreRows(score, prevBest), ...storySummary(state, tally, lost, stars)],
         // "Map" goes back to the Story map, where Bosco walks (or warps) on to the next node.
         onMenu: () => fadeThrough(() => {
           this.screens.hideBanner();
@@ -250,7 +251,7 @@ export class StoryMode {
     const level = this.level;
     this.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.map'), randomTip(),
       {
-        pose: 'defeated', summary: storySummary(this.host.state, Math.min(this.livesLost, START_LIVES), 0),
+        pose: 'defeated', summary: storySummary(this.host.state, tally, this.livesLost, 0),
         // "Map" goes back to the Story map, not the main menu.
         onMenu: () => fadeThrough(() => {
           this.screens.hideBanner();

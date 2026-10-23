@@ -354,12 +354,16 @@ body.scene .net-stats { visibility: hidden; }
 #banner-text { color: var(--ink-quiet); font-size: 14px; white-space: pre-line; }
 /* The stats scroll inside the card if they ever don't fit, so the buttons below always stay on screen. */
 .banner-card > * { flex: none; }
-.banner-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin: 0; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+/* Stats as a column list (label left, value right, hairlines between rows); the first row (Score) stands out. */
+.banner-summary { display: grid; grid-template-columns: 1fr; column-gap: 24px; margin: 0; padding: 2px 0; flex: 0 1 auto; min-height: 0; overflow-y: auto;
+  border-top: 1px solid #5ad1ff40; border-bottom: 1px solid #5ad1ff40; text-align: left; }
 .banner-summary[hidden] { display: none; }
 .banner-summary .wide { grid-column: 1 / -1; }
-.banner-summary div { padding: 4px 8px; border-radius: 8px; background: #ffffff10; }
-.banner-summary dt { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-quiet); }
-.banner-summary dd { margin: 0; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.banner-summary div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 5px 4px; border-bottom: 1px solid #ffffff12; }
+.banner-summary div:last-child { border-bottom: 0; }
+.banner-summary dt { font-size: 14px; color: var(--ink-quiet); }
+.banner-summary dd { margin: 0; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.banner-summary div:first-child dd { font-size: 18px; color: var(--accent); }
 #banner .actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 #banner button {
   min-height: 48px;
@@ -372,13 +376,13 @@ body.scene .net-stats { visibility: hidden; }
 }
 #banner button.quiet { color: var(--ink); background: #ffffff14; border: 1px solid #ffffff30; }
 /* Short screens (landscape phones, laptops at 150% zoom): a wider card with three
-   stat columns, so a Story clear fits without scrolling. */
+   stat columns of rows, so a Story clear fits without scrolling. */
 @media (max-height: 700px) {
   .banner-card { width: min(560px, 92vw); gap: 5px; padding: 8px 16px 10px; }
   .banner-sprite { width: 48px; height: 48px; }
   #banner-title { font-size: 26px; }
-  .banner-summary { grid-template-columns: repeat(3, 1fr); gap: 4px 8px; }
-  .banner-summary div { padding: 2px 8px; }
+  .banner-summary { grid-template-columns: 1fr 1fr; }
+  .banner-summary div { padding: 3px 4px; }
   .banner-summary dd { font-size: 15px; }
   #banner .actions { flex-direction: row; }
   #banner .actions button { flex: 1; }

@@ -1,5 +1,7 @@
 import { BossKind } from '../sim/constants';
+import { START_LIVES } from '../sim/constants';
 import type { GameState } from '../sim/state';
+import type { MatchTally } from './match_tally';
 import { BOSS_NAMES } from './story';
 import { t } from '../utils/i18n';
 
@@ -21,20 +23,29 @@ export const fmtTime = (ticks: number) => {
 
 export const starText = (n: number) => '★'.repeat(n) + '☆'.repeat(3 - n);
 
-/** Story: time, lives lost, stars and Martians cleared. */
-export function storySummary(state: GameState, livesLost: number, stars: number): [string, string][] {
-  const dead = state.martians.filter((m) => !m.alive).length;
-  return [
-    [t('summary.time'), fmtTime(state.tick)],
-    [t('summary.livesLost'), String(livesLost)],
-    [t('summary.stars'), stars > 0 ? starText(stars) : '–'],
-    [t('summary.martiansCleared'), `${dead} / ${state.martians.length}`],
-  ];
+/** What you did on the map: Martians defeated, rocks destroyed, power-ups picked up. */
+function impact(m: MatchTally, withMartians: boolean): [string, string][] {
+  const rows: [string, string][] = [];
+  if (withMartians) rows.push([t('summary.martians'), String(m.martians)]);
+  rows.push([t('summary.rocks'), String(m.rocks)], [t('summary.powerups'), String(m.powerups)]);
+  return rows;
 }
 
-/** Battle and online: the round time and the score. */
-export function battleSummary(state: GameState, tally: string): [string, string][] {
-  return [[t('summary.roundTime'), fmtTime(state.tick)], [t('summary.score'), tally]];
+/**
+ * Story, one row each: stars (a clear only), time, hearts left, then the impact
+ * rows. `stars` is 0 on a game over.
+ */
+export function storySummary(state: GameState, m: MatchTally, livesLost: number, stars: number): [string, string][] {
+  const rows: [string, string][] = [];
+  if (stars > 0) rows.push([t('summary.stars'), starText(stars)]);
+  rows.push([t('summary.time'), fmtTime(state.tick)]);
+  if (stars > 0) rows.push([t('summary.hearts'), `${START_LIVES - Math.min(livesLost, START_LIVES)} / ${START_LIVES}`]);
+  return [...rows, ...impact(m, true)];
+}
+
+/** Battle and online: the score, the round time, then rocks and power-ups (no Martians there). */
+export function battleSummary(state: GameState, m: MatchTally, score: string): [string, string][] {
+  return [[t('summary.score'), score], [t('summary.roundTime'), fmtTime(state.tick)], ...impact(m, false)];
 }
 
 /** Boss levels never say "destroyed" (docs/story/canon.md): hives rupture, the Maze Master is survived. */

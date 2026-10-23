@@ -20,8 +20,6 @@ const WARP_MS = 800;
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const icon = (body: string, cls: string) =>
   `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
-const PADLOCK = icon('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 'map-lock');
-const GATE = icon('<ellipse cx="12" cy="12" rx="5" ry="9"/>', 'map-gate');
 const TICK = icon('<path d="M5 12l5 5 9-10"/>', 'map-tick');
 
 /** Bosco just cleared `from`: he walks (or warps) on to the next node. */
@@ -166,10 +164,15 @@ export class StoryMap {
     b.classList.toggle('cleared', stars > 0);
     b.style.left = `${node.x}%`;
     b.style.top = `${node.y}%`;
-    const starRow = [1, 2, 3].map((n) => `<b class="${n <= stars ? 'on' : ''}">★</b>`).join('');
-    b.innerHTML = `<span class="map-node-stars" aria-hidden="true">${starRow}</span>`
-      + `<span class="map-node-num">${card.title.replace(' BOSS', '')}</span>`
-      + (locked ? PADLOCK : boss === null ? GATE : '')
+    // A glass hexagon badge (rim, face, shine) in the sector's tier colour; bosses red, the duel gold,
+    // locked levels dark with a "?". Earned stars glow inside it, one on top and two below.
+    b.classList.add(`tier-${node.sector}`);
+    const star = (n: number) => `<b class="${n <= stars ? 'on' : ''}">★</b>`;
+    const face = locked
+      ? '<span class="map-node-q" aria-hidden="true">?</span>'
+      : `<span class="map-node-stars" aria-hidden="true"><i>${star(1)}</i><i>${star(2)}${star(3)}</i></span>`;
+    b.innerHTML = '<span class="hex hex-rim"></span><span class="hex hex-face"></span><span class="hex hex-shine"></span>'
+      + `<span class="map-node-body">${face}<span class="map-node-num">${card.title.replace(' BOSS', '')}</span></span>`
       + (boss ? `<span class="map-node-name">${boss}</span>` : '');
     b.setAttribute('aria-label', t('map.aria.level', { title: card.title }) + (boss ? `, ${boss}` : '') + (stars ? t('map.aria.stars', { n: stars }) : '') + (locked ? t('map.aria.locked') : ''));
     b.addEventListener('click', () => { if (!b.classList.contains('locked')) this.openCard(level); });
@@ -234,7 +237,8 @@ export class StoryMap {
     if (!b || !b.classList.contains('locked') || level > this.progress.unlocked) return;
     b.classList.remove('locked');
     b.classList.add('current', 'pop');
-    b.querySelector('.map-lock')?.replaceWith(document.createRange().createContextualFragment(bossLabel(level) ? '' : GATE));
+    // The "?" turns into its (empty) star badge.
+    b.querySelector('.map-node-q')?.replaceWith(document.createRange().createContextualFragment('<span class="map-node-stars" aria-hidden="true"><i><b>★</b></i><i><b>★</b><b>★</b></i></span>'));
     b.setAttribute('aria-label', (b.getAttribute('aria-label') ?? '').replace(t('map.aria.locked'), ''));
   }
 

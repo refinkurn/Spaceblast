@@ -12,6 +12,7 @@ import { Countdown } from './flow/countdown';
 import { RadioToasts } from './flow/radio_toast';
 import { PauseMenu } from './flow/pause';
 import { battleSummary, type BannerExtra } from './flow/summary';
+import { tally as matchTally } from './flow/match_tally';
 import { OnlineRoom, type RoundStart } from './flow/online';
 import { MatchScore, OnlineRound } from './flow/online_match';
 import { Predictor } from './net/predict';
@@ -258,6 +259,7 @@ function runTick(cmds: PlayerCommand[]) {
     if (!quiet) view.effect(e, state);
     onEvent(e);
   }
+  matchTally.track(state, state.events, localId);
   if (!quiet) audio.events(state, localId);
   if (mode === 'survival') {
     tutorial.tick(state);
@@ -347,7 +349,7 @@ function tally(): string {
 function showRoundScore() {
   const line = lastWinner < 0 ? t('battle.roundDraw') : lastWinner === localId ? t('battle.youWinRound') : t('battle.winsRound', { name: playerName(lastWinner) });
   const big = lastWinner < 0 ? t('banner.draw') : lastWinner === localId ? t('banner.victory') : t('banner.defeated');
-  const extra: BannerExtra = { pose: lastWinner < 0 ? 'neutral' : lastWinner === localId ? 'happy' : 'defeated', summary: battleSummary(state, tally()) };
+  const extra: BannerExtra = { pose: lastWinner < 0 ? 'neutral' : lastWinner === localId ? 'happy' : 'defeated', summary: battleSummary(state, matchTally, tally()) };
   const goal = t('battle.firstTo', { n: winsNeeded() });
   const menu = t('banner.mainMenu');
   if (mode !== 'online') {

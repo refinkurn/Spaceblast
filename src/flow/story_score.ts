@@ -8,15 +8,9 @@ import { t } from '../utils/i18n';
 
 const num = (n: number) => n.toLocaleString('en-US');
 
-/** End-of-level score rows: the total (with your earlier best) and the breakdown. */
+/** The score row: the total, with your earlier best or "new best". */
 export function scoreRows(s: ScoreBreakdown, prevBest: number): [string, string][] {
-  const parts = [t('score.clear', { n: num(s.clear) }), t('score.martians', { n: num(s.martians) })];
-  if (s.time > 0) parts.push(t('score.time', { n: num(s.time) }));
-  parts.push(t('score.hearts', { n: num(s.hearts) }));
-  return [
-    [t('summary.score'), prevBest >= s.total ? t('score.withBest', { total: num(s.total), best: num(prevBest) }) : prevBest > 0 ? t('score.newBest', { total: num(s.total) }) : num(s.total)],
-    [t('summary.bonus'), parts.join(' · ')],
-  ];
+  return [[t('summary.score'), prevBest >= s.total ? t('score.withBest', { total: num(s.total), best: num(prevBest) }) : prevBest > 0 ? t('score.newBest', { total: num(s.total) }) : num(s.total)]];
 }
 
 /** `cardOpen` says whether the end-of-level card is still up when the rank arrives. */

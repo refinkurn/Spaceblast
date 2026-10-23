@@ -88,38 +88,47 @@
 .theme-core .map-trail polyline { stroke-dasharray: none; stroke-width: 4; }
 .theme-facility .map-trail polyline { stroke-dasharray: 18 8; stroke-width: 5; }
 
-/* Nodes. */
+/* Nodes: glass hexagon badges (flat top), coloured by tier like difficulty badges:
+   sector 1 green, 2 blue, 3 violet, 4 magenta; bosses red, the duel gold, locked dark with a "?". */
 .map-node {
+  --rim: #b6f25a; --c1: #5fae2a; --c2: #1f4d10;
   position: absolute; z-index: 1;
-  width: 52px; height: 52px; padding: 0;
+  width: 72px; height: 62px; padding: 0;
   transform: translate(-50%, -50%);
   display: grid; place-items: center;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #2a3140, #0e1118);
-  border: 3px solid #ffffff66;
+  background: none; border: 0;
   color: #fff; font: 800 14px system-ui, sans-serif;
-  box-shadow: 0 4px 0 #0008;
+  filter: drop-shadow(0 4px 0 #0009);
 }
-.map-node.cleared { border-color: #5ad1ff; }
-.map-node.boss { width: 66px; height: 66px; border-color: #ff5a4a; font-size: 16px; }
-.map-node.duel { border-color: #ffd23f; }
-.map-node.locked { opacity: 0.6; }
+.map-node.tier-2 { --rim: #4fb3ff; --c1: #1f7fb8; --c2: #0b2f4d; }
+.map-node.tier-3 { --rim: #a98bff; --c1: #6a45d8; --c2: #261257; }
+.map-node.tier-4 { --rim: #ff7be0; --c1: #b0379b; --c2: #43103c; }
+.map-node.boss { --rim: #ff6a5a; --c1: #c9302a; --c2: #4a0c0c; width: 90px; height: 78px; font-size: 15px; }
+.map-node.duel { --rim: #ffd23f; --c1: #c98a12; --c2: #4a3006; }
+.map-node.locked { --rim: #8a93a6; --c1: #2a2f3a; --c2: #0e1118; }
+.hex { position: absolute; inset: 0; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); pointer-events: none; }
+.hex-rim { background: var(--rim); }
+.hex-face { inset: 3px; background: linear-gradient(160deg, var(--c1), var(--c2)); }
+/* Glass: a lighter inner hexagon and a diagonal shine. */
+.hex-shine { inset: 9px 13px; background: linear-gradient(115deg, #ffffff38 0 38%, #ffffff10 38% 62%, #ffffff06 62%); }
+.map-node-body { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; line-height: 1; text-shadow: 0 1px 2px #0009; }
+.map-node-stars { display: flex; flex-direction: column; align-items: center; font-size: 14px; line-height: 0.95; }
+.map-node.boss .map-node-stars { font-size: 17px; }
+.map-node-stars b { color: #ffffff38; font-weight: 400; }
+.map-node-stars b.on { color: #ffe066; text-shadow: 0 0 5px #ffd23f; }
+.map-node-num { margin-top: 2px; letter-spacing: 0.04em; }
+.map-node-q { font-size: 24px; font-weight: 900; line-height: 1; color: #e6ebf5; }
+.map-node.locked .map-node-num { color: #b8c0d0; font-size: 10px; }
 .map-node.current { animation: node-pulse 1.3s ease-in-out infinite; }
 .map-node.pop { animation: node-pop 0.45s cubic-bezier(.2, 1.6, .4, 1), node-pulse 1.3s ease-in-out 0.45s infinite; }
 .map-node:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-@keyframes node-pulse { 50% { box-shadow: 0 4px 0 #0008, 0 0 0 8px #5ad1ff55; } }
+@keyframes node-pulse { 50% { filter: drop-shadow(0 4px 0 #0009) drop-shadow(0 0 8px var(--rim)); } }
 @keyframes node-pop { 0% { transform: translate(-50%, -50%) scale(0.5); } }
-.map-node-stars { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 2px; font-size: 12px; letter-spacing: 1px; white-space: nowrap; }
-.map-node-stars b { color: #ffffff30; font-weight: 400; }
-.map-node-stars b.on { color: #ffd23f; text-shadow: 0 0 4px #000; }
-.map-node.locked .map-node-stars { visibility: hidden; }
-.map-gate { position: absolute; right: -12px; top: -4px; width: 16px; height: 16px; color: #8fd6ff; }
-.map-lock { position: absolute; right: -8px; bottom: -6px; width: 20px; height: 20px; padding: 2px; color: #cfd6e4; background: #0e1118; border-radius: 50%; }
-.map-node-name { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 5px; font: 700 11px system-ui, sans-serif; letter-spacing: 0.04em; white-space: nowrap; color: #ffd0c8; text-shadow: 0 1px 3px #000; }
+.map-node-name { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; font: 700 11px system-ui, sans-serif; letter-spacing: 0.04em; white-space: nowrap; color: #ffd0c8; text-shadow: 0 1px 3px #000; }
 
 /* Bosco's 2D sprite, standing on a node. */
-.map-pawn { position: absolute; z-index: 2; width: 60px; height: 60px; pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); }
-.map-pawn.flip { transform: translate(-50%, calc(-100% - 14px)) scaleX(-1); }
+.map-pawn { position: absolute; z-index: 2; width: 60px; height: 60px; pointer-events: none; transform: translate(-50%, calc(-100% - 26px)); }
+.map-pawn.flip { transform: translate(-50%, calc(-100% - 26px)) scaleX(-1); }
 .map-pawn.walking { transition: left 0.6s linear, top 0.6s linear; }
 
 /* Neon warp after a boss. */
@@ -155,7 +164,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-node.current, .map-node.pop { animation: none; box-shadow: 0 4px 0 #0008, 0 0 0 6px #5ad1ff55; }
+  .map-node.current, .map-node.pop { animation: none; filter: drop-shadow(0 4px 0 #0009) drop-shadow(0 0 6px var(--rim)); }
   .map-pawn.walking { transition: none; }
   .map-warp.on { animation: warp-fade 0.3s ease-in-out; }
   .map-card { animation: none; }
