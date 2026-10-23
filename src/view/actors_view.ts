@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { FROZEN, GATE_OPEN, MARTIAN_COLOR } from './play_colors';
 import { Cell, Kind, LevelEvent, PORTAL_TICKS } from '../sim/constants';
 import { gateOpen } from '../sim/items';
 import type { GameState, Martian } from '../sim/state';
@@ -37,21 +38,14 @@ export class GateView {
     tileToWorld(gate % grid.w, Math.floor(gate / grid.w), 0.08, this.group.position);
     const open = gateOpen(state);
     const mat = this.ring.material as THREE.MeshStandardMaterial;
-    mat.color.setHex(open ? 0x7dffd8 : 0x6d5a8f);
-    mat.emissive.setHex(open ? 0x7dffd8 : 0x6d5a8f);
+    mat.color.setHex(open ? GATE_OPEN : 0x6d5a8f);
+    mat.emissive.setHex(open ? GATE_OPEN : 0x6d5a8f);
     mat.emissiveIntensity = open ? 0.8 + 0.4 * Math.sin(time * 5) : 0.2;
     (this.disc.material as THREE.MeshBasicMaterial).opacity = open ? 0.35 + 0.15 * Math.sin(time * 5) : 0;
     this.ring.rotation.z = time * (open ? 2.5 : 0.4);
   }
 }
 
-/** Body colour per Martian kind (frozen ones turn icy blue). */
-const MARTIAN_COLOR: Record<number, number> = {
-  [Kind.Goopling]: 0x6fd14f,
-  [Kind.Sniffer]: 0xa66bff,
-  [Kind.Phaser]: 0x7f8cff,
-  [Kind.Builder]: 0xc6e33a,
-};
 
 function eyes(g: THREE.Group, y: number, spread: number, z: number) {
   const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -152,7 +146,7 @@ export class MartiansView {
       body.scale.set(1 + wobble, squash - wobble, 1 + wobble);
       if (m.kind === Kind.Phaser) v.position.y = 0.06 + Math.sin(time * 3 + m.id) * 0.05; // hovers
       const mat = body.material as THREE.MeshStandardMaterial;
-      mat.color.setHex(frozen ? 0x9fd8ff : MARTIAN_COLOR[m.kind]);
+      mat.color.setHex(frozen ? FROZEN : MARTIAN_COLOR[m.kind]);
       // In a Blackout only the eyes should give a Martian away.
       mat.emissiveIntensity = state.event === LevelEvent.Blackout && state.eventActive > 0 ? 0 : 0.15;
     }

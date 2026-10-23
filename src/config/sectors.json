@@ -3,78 +3,136 @@
     {
       "id": "sector_1_outpost_surface",
       "mapTheme": "surface",
-      "palette": { "primary": "#C84B31", "secondary": "#EC9B3B", "accent": "#FFE3A1" },
-      "map": { "sky": "#1a0f16", "skyLow": "#3b1b1c", "ground": "#C84B31", "groundDeep": "#7c2b1b", "trail": "#EC9B3B", "deco": "#6e2a17" },
+      "palette": {
+        "primary": "#C84B31",
+        "secondary": "#EC9B3B",
+        "accent": "#FFE3A1"
+      },
+      "map": {
+        "sky": "#1a0f16",
+        "skyLow": "#3b1b1c",
+        "ground": "#C84B31",
+        "groundDeep": "#7c2b1b",
+        "trail": "#EC9B3B",
+        "deco": "#6e2a17"
+      },
       "arena": {
         "background": "#22130f",
         "ground": "#7a3320",
-        "floorA": "#C84B31",
-        "floorB": "#B7432B",
-        "rock": "#EC9B3B",
+        "floorA": "#8F4632",
+        "floorB": "#83402E",
+        "rock": "#E6B77C",
         "pillar": "#5b3a2c",
         "wall": "#3b241b",
         "collapse": "#6e4a3a",
         "skyLight": "#ffe9cc",
         "groundLight": "#8a3a1f"
       },
-      "props": ["landing_gear", "solar_panel", "dust_rock"]
+      "props": [
+        "landing_gear",
+        "solar_panel",
+        "dust_rock"
+      ]
     },
     {
       "id": "sector_2_deep_shafts",
       "mapTheme": "shafts",
-      "palette": { "primary": "#2D3748", "secondary": "#DD6B20", "accent": "#D69E2E" },
-      "map": { "sky": "#11151d", "skyLow": "#1d2533", "ground": "#2D3748", "groundDeep": "#1a202c", "trail": "#D69E2E", "deco": "#DD6B20" },
+      "palette": {
+        "primary": "#2D3748",
+        "secondary": "#DD6B20",
+        "accent": "#D69E2E"
+      },
+      "map": {
+        "sky": "#11151d",
+        "skyLow": "#1d2533",
+        "ground": "#2D3748",
+        "groundDeep": "#1a202c",
+        "trail": "#D69E2E",
+        "deco": "#DD6B20"
+      },
       "arena": {
         "background": "#10141b",
         "ground": "#1f2633",
         "floorA": "#3d4a60",
         "floorB": "#35415a",
-        "rock": "#DD6B20",
+        "rock": "#C9773A",
         "pillar": "#1a202c",
         "wall": "#141922",
         "collapse": "#4a3a2e",
         "skyLight": "#ffe7c2",
         "groundLight": "#3a2a1c"
       },
-      "props": ["gantry", "floodlight", "hazard_plank"]
+      "props": [
+        "gantry",
+        "floodlight",
+        "hazard_plank"
+      ]
     },
     {
       "id": "sector_3_tectonic_core",
       "mapTheme": "core",
-      "palette": { "primary": "#00F5FF", "secondary": "#2A085C", "accent": "#10B981" },
-      "map": { "sky": "#0b0320", "skyLow": "#1a0640", "ground": "#2A085C", "groundDeep": "#14042e", "trail": "#00F5FF", "deco": "#10B981" },
+      "palette": {
+        "primary": "#00F5FF",
+        "secondary": "#2A085C",
+        "accent": "#10B981"
+      },
+      "map": {
+        "sky": "#0b0320",
+        "skyLow": "#1a0640",
+        "ground": "#2A085C",
+        "groundDeep": "#14042e",
+        "trail": "#00F5FF",
+        "deco": "#10B981"
+      },
       "arena": {
         "background": "#0a0318",
         "ground": "#1a0640",
-        "floorA": "#3a1478",
-        "floorB": "#32106a",
-        "rock": "#0f9a6f",
+        "floorA": "#1D2C38",
+        "floorB": "#192733",
+        "rock": "#C98A3C",
         "pillar": "#130535",
         "wall": "#0d0326",
         "collapse": "#2c1d4a",
         "skyLight": "#d9f6ff",
         "groundLight": "#2A085C"
       },
-      "props": ["crystal", "drill_rig"]
+      "props": [
+        "crystal",
+        "drill_rig"
+      ]
     },
     {
       "id": "sector_4_rogue_facility",
       "mapTheme": "facility",
-      "palette": { "primary": "#E2E8F0", "secondary": "#22C55E", "accent": "#EF4444" },
-      "map": { "sky": "#0f141c", "skyLow": "#1c2430", "ground": "#94a3b8", "groundDeep": "#334155", "trail": "#22C55E", "deco": "#EF4444" },
+      "palette": {
+        "primary": "#E2E8F0",
+        "secondary": "#22C55E",
+        "accent": "#EF4444"
+      },
+      "map": {
+        "sky": "#0f141c",
+        "skyLow": "#1c2430",
+        "ground": "#94a3b8",
+        "groundDeep": "#334155",
+        "trail": "#22C55E",
+        "deco": "#EF4444"
+      },
       "arena": {
         "background": "#0f141c",
-        "ground": "#475569",
-        "floorA": "#E2E8F0",
-        "floorB": "#cbd5e1",
-        "rock": "#2f9e5a",
+        "ground": "#2f3846",
+        "floorA": "#5D6878",
+        "floorB": "#556070",
+        "rock": "#B98B4E",
         "pillar": "#334155",
         "wall": "#1e293b",
         "collapse": "#64748b",
         "skyLight": "#f1f5f9",
         "groundLight": "#334155"
       },
-      "props": ["vat", "alarm_bar"]
+      "props": [
+        "vat",
+        "alarm_bar"
+      ]
     }
   ]
 }

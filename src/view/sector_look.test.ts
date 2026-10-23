@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RESERVED, colorsClash } from './play_colors';
 import { MAP_SECTORS } from '../flow/map_layout';
 import { GRID_H, GRID_W } from '../sim/constants';
 import { SECTOR_LOOKS, sectorLook } from './sector_look';
@@ -46,6 +47,22 @@ describe('sector looks (src/config/sectors.json)', () => {
       // The floor checker is two close shades, not a loud pattern.
       expect(contrast(a.floorA, a.floorB), `${s.id} checker`).toBeLessThan(1.35);
     }
+  });
+
+  it('never paints the floor or rocks like a blast, a Martian, a warning or the open gate', () => {
+    for (const s of SECTOR_LOOKS) {
+      for (const surface of ['floorA', 'floorB', 'rock'] as const) {
+        for (const [name, color] of Object.entries(RESERVED)) {
+          expect(colorsClash(s.arena[surface], color), `${s.id} ${surface} looks like ${name}`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('flags look-alikes (the check itself)', () => {
+    expect(colorsClash(0x3a1478, 0xa66bff)).toBe(true); // violet floor vs Sniffer
+    expect(colorsClash(0xe2e8f0, 0xe9fbff)).toBe(true); // white floor vs beam core
+    expect(colorsClash(0x1d2c38, 0xa66bff)).toBe(false);
   });
 
   it('gives every sector props of known kinds, standing outside the arena walls', () => {

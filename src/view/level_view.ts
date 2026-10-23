@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { WARN_ADD, WARN_REMOVE } from './play_colors';
 import { GATE_FLICKER_TICKS, GATE_WAIT_TICKS, LevelEvent } from '../sim/constants';
 import type { GameState } from '../sim/state';
 import { tileToWorld } from './coords';
@@ -16,8 +17,8 @@ export class ShiftPreviewView {
 
   constructor(maxTiles: number) {
     const geo = new THREE.BoxGeometry(0.96, 0.96, 0.96);
-    this.remove = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: 0xff5a4a, transparent: true, opacity: 0.4, depthWrite: false }), maxTiles);
-    this.add = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: 0xffe25a, transparent: true, opacity: 0.3, depthWrite: false }), maxTiles);
+    this.remove = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: WARN_REMOVE, transparent: true, opacity: 0.4, depthWrite: false }), maxTiles);
+    this.add = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: WARN_ADD, transparent: true, opacity: 0.3, depthWrite: false }), maxTiles);
     this.group.add(this.remove, this.add);
   }
 

@@ -6,7 +6,7 @@ import { tileToWorld } from './coords';
 // Plasma Charges, beams and debris. Reads sim state each frame; never writes it.
 // Placeholder look: swap the geometries/materials here for real models later.
 
-const PLASMA = 0x5ad1ff;
+import { BEAM_CORE, PLASMA } from './play_colors';
 
 export class ChargesView {
   readonly group = new THREE.Group();
@@ -69,7 +69,7 @@ export class BeamsView {
       new THREE.MeshBasicMaterial({ color: PLASMA, transparent: true, opacity: 0.55, depthWrite: false }),
       maxTiles * 2,
     );
-    this.core = new THREE.InstancedMesh(unit, new THREE.MeshBasicMaterial({ color: 0xe9fbff }), maxTiles * 2);
+    this.core = new THREE.InstancedMesh(unit, new THREE.MeshBasicMaterial({ color: BEAM_CORE }), maxTiles * 2);
     this.outer.count = this.core.count = 0;
     this.group.add(this.outer, this.core);
   }
