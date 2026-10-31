@@ -40,8 +40,12 @@ Story map nodes: sector 1 green, 2 blue, 3 violet, 4 magenta, bosses red, the du
 
 ## Type
 
-- **Now:** the system font (`system-ui, -apple-system, 'Segoe UI', sans-serif`) everywhere; numbers in tabular figures (`font-variant-numeric: tabular-nums`).
-- **Open decision (Refindo):** a free pixel or arcade display font (WOFF2, Google Fonts licence) for titles, the level card and dialogue names only, keeping the system font for body text. The asset list (2026-10-18) left this optional.
+- **Decided (Refindo, 2026-10-31): arcade, but galactic, not retro.** Two free faces (SIL Open Font Licence), bundled with the build so the game works offline (never loaded from Google at runtime):
+  - **Russo One** (`--font-display`): the big moments only. Logo and title, level card number (`1-3`), end-of-match title (VICTORY!, LEVEL CLEAR), story and section headings. One weight, so it is never used for small text.
+  - **Chakra Petch 700, some 500** (`--font-label`): the ship-console voice. HUD clock, score and stage chip, menu and dashboard buttons, card labels, dialogue speaker names, lobby seats, settings values, uppercase labels with ~0.06-0.14em letter-spacing.
+  - **System font** (`--font-body`): body text, Kit's dialogue lines, tips, descriptions, long sentences. `system-ui, -apple-system, 'Segoe UI', sans-serif`.
+  - Every face keeps a fallback stack ending in the system font. Numbers that line up (clock, score, stats) use `font-variant-numeric: tabular-nums`.
+  - Preview of the choice: the "Spaceblast Font Lab" artifact. Rejected: Death Star (personal-use licence, Star Wars look), Orbitron (overused, too wide), Audiowide (reads 80s).
 - Sizes: dialogue text 16-20 px, names 13 px, HUD scales with `--hs`. Titles use `clamp()` so they fit 568 px-wide phones.
 
 ## Components

@@ -33,6 +33,12 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
   Want: yellow suit with a dark hazard band or black chest panel, dark grey head feathers, black eyepatch box over one eye, keep the orange bill; match the 2D art palette in src/assets/characters/ducking/ (palette in ducking-sprite-spec.md). Bosco and online players unchanged.
   Done when: level 20 (open with #dev) shows Ducking yellow-and-black with grey feathers and an eyepatch, clearly different from Bosco at phone size; npm test passes; screenshot attached to the Done line.
 
+- **Arcade-galactic type: Russo One + Chakra Petch** (src/style.css, index.html, package.json, server/offline_cache.ts)
+  Now: everything uses the system font (`font-family: system-ui, ...` on body in src/style.css); no web fonts.
+  Want: bundle Russo One (400) and Chakra Petch (500, 700), latin subset, WOFF2, from npm (@fontsource/russo-one, @fontsource/chakra-petch; justified as art assets) or as files in public/fonts with their OFL licence text; add `--font-display`, `--font-label`, `--font-body` tokens and apply them per docs/DESIGN.md "Type" (display: logo/title, level number, end title, headings; label: HUD clock/score/stage chip, menu + dashboard buttons, labels, speaker names, lobby, settings values; body stays system); `font-display: swap`, nothing from fonts.googleapis.com, and the offline service worker caches the font files.
+  Done when: screenshots at 896x414 of menu, level card, HUD and end-of-match show the two faces with no text clipped or overflowing (long labels like ABANDONED MINING COLONY still fit); airplane-mode reload after one visit still shows the fonts; npm test and npm run build pass; main bundle growth noted in Done.
+  Spec: docs/DESIGN.md (Type)
+
 ## In progress
 
 ## Blocked
