@@ -71,7 +71,7 @@ Chat first: I ask the questions, write the spec to `docs/design/`, and split it 
 ### Lanes (who does what)
 
 - Design chat: decides with Refindo, writes specs, queues Ready items, keeps Blocked short. It does not build features or touch src/; a one-line doc fix is fine.
-- Producer (daily 00:44 Jakarta, Sonnet): reads docs/ROADMAP.md and HANDOFF.md, queues up to 4 Ready items for the current milestone, puts open questions under Blocked. Docs only, never code.
+- Producer (daily 00:44 Jakarta, Opus): reads docs/ROADMAP.md and HANDOFF.md, queues up to 4 Ready items for the current milestone, puts open questions under Blocked. Docs only, never code.
 - Nightly run and code session: build only what is in Ready.
 - Refindo: vision, answers to Blocked, and the phone checks in docs/PHONE_TEST.md (only a real phone can clear them).
 - HANDOFF.md Done keeps the last 7 days; older lines move to docs/CHANGELOG.md.

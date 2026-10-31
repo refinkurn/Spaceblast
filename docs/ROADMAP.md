@@ -36,15 +36,17 @@ Spaceblast is Bomberman meets Pac-Man with Nintendo-style storytelling: Bosco th
 - Exit when: 2-4 weeks of data; we know day-1 retention, story level drop-off and online rounds per player.
 
 ### M2. Monetise (CrazyGames Full Launch)
-- CrazyGames SDK: GameplayStart/stop, ads only through the SDK (between levels and after rounds, never mid-play), a rewarded ad for an optional bonus **(decide what the reward is: e.g. an extra heart on a Story retry)**, works with ad blockers.
+- CrazyGames SDK: GameplayStart/stop, ads only through the SDK (between levels and after rounds, never mid-play), a rewarded ad for an optional bonus: one extra heart when retrying a Story level (Refindo, 2026-10-31), works with ad blockers.
 - Multiplayer items they ask for: room info, invite link, instant join, rooms kept across rounds, chat off switch (we have no chat).
 - Account items: use the CrazyGames username for the leaderboard name, progress linked to their account.
+- Login comes before any purchase: today players have no account (a device profile only), so a purchase would be lost with the device. Step 1 is CrazyGames account login (their auto-login, progress saved to the account) inside the portal build. A login of our own for the website comes only if purchases are sold there **(decide then)**.
 - Payout: monthly from EUR 100 by wire or PayPal **(Refindo sets up the account and payment details)**.
 
 ### M3. Grow
 - Weekly metrics report and one experiment per week (ad placement, first-level pacing, rewarded reward).
 - Own site (spaceblast.vercel.app) keeps working for invites and players who find us directly.
 - Apps via Capacitor (postponed item in HANDOFF) once retention justifies the store fees.
+- In-game purchases (cosmetics, not power): only after login works. On CrazyGames purchases are invite-only (Xsolla, after Full Launch), so we apply once the numbers are good **(decide items and prices)**.
 - Paid acquisition only when lifetime value per player is measured **(decide budget)**.
 
 ## Monetisation path
