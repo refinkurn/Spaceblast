@@ -233,3 +233,11 @@ describe('full-height sizing (home-screen launch)', () => {
     expect(css.indexOf('@supports (height: 100dvh)')).toBeGreaterThan(css.indexOf('#game { position: fixed'));
   });
 });
+
+describe('floating joystick zone', () => {
+  it('covers the left half below the HUD in floating mode; fixed keeps the gutter', () => {
+    expect(css).toMatch(/#stick-zone\.floating \{ width: 50%; \}/);
+    expect(rule(css, '#stick-zone')).toMatch(/top: var\(--hud\)/);
+    expect(rule(css, '#stick-zone')).toMatch(/width: calc\(var\(--gutter\)/);
+  });
+});

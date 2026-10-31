@@ -1,7 +1,7 @@
 // Virtual joystick (floating or fixed) in the left gutter plus the charge button in the
 // right gutter. Pointer events cover touch, mouse and pen alike.
 
-import { floatingCenter, restPosition, type JoystickMode } from './stick_geometry';
+import { floatingBounds, floatingCenter, restPosition, type JoystickMode } from './stick_geometry';
 
 export class TouchSource {
   /** Stick vector, screen space (+x right, +y down), length 0..1 after dead zone. */
@@ -25,6 +25,7 @@ export class TouchSource {
     button: HTMLElement,
   ) {
     this.button = button;
+    zone.classList.add('floating');
     zone.addEventListener('pointerdown', (e) => this.start(e));
     zone.addEventListener('pointermove', (e) => this.move(e));
     zone.addEventListener('pointerup', (e) => this.end(e));
@@ -80,8 +81,8 @@ export class TouchSource {
       this.cx = b.left + b.width / 2;
       this.cy = b.top + b.height / 2;
     } else {
-      // The stick appears where the thumb lands, clamped inside the zone.
-      const c = floatingCenter(r, this.radius, e.clientX, e.clientY);
+      // The stick appears exactly under the thumb, clamped only to the screen edges.
+      const c = floatingCenter(floatingBounds(r, window.innerWidth), this.radius, e.clientX, e.clientY);
       this.cx = c.x;
       this.cy = c.y;
       this.base.style.left = `${this.cx - r.left}px`;
@@ -123,6 +124,7 @@ export class TouchSource {
   /** Settings: floating (under the thumb) or fixed (bottom-left of the gutter). Applies at once. */
   setMode(mode: JoystickMode): void {
     this.mode = mode;
+    this.zone.classList.toggle('floating', mode === 'floating');
     this.release();
   }
 

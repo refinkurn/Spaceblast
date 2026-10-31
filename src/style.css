@@ -129,6 +129,8 @@ html, body {
   width: calc(var(--gutter) + env(safe-area-inset-left));
   padding-left: env(safe-area-inset-left);
 }
+/* Floating mode: the whole left half of the screen below the HUD opens the stick (the HUD buttons sit above it). */
+#stick-zone.floating { width: 50%; }
 #stick-base {
   position: absolute;
   width: calc(112px * var(--ctl, 1));

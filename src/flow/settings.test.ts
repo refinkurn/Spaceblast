@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { floatingCenter, restPosition } from '../input/stick_geometry';
+import { floatingBounds, floatingCenter, restPosition } from '../input/stick_geometry';
 import { loadSettings } from './settings';
 
 const store = (data: string | null) => vi.stubGlobal('localStorage', { getItem: () => data, setItem: () => {} });
@@ -37,6 +37,15 @@ describe('joystick geometry', () => {
   it('floating: the base follows the thumb but stays inside the gutter', () => {
     expect(floatingCenter(rect, 56, 60, 200)).toEqual({ x: 60, y: 200 });
     expect(floatingCenter(rect, 56, 5, 355)).toEqual({ x: 56, y: 304 });
+  });
+
+  it('floating (left half): clamps to the screen edges only, so the base opens under the thumb', () => {
+    const b = floatingBounds({ bottom: 414 }, 896);
+    expect(b).toEqual({ left: 0, top: 0, right: 896, bottom: 414 });
+    // near the zone's right edge (the middle line, next to the arena): no shift
+    expect(floatingCenter(b, 56, 440, 200)).toEqual({ x: 440, y: 200 });
+    // near the left screen edge and bottom: kept on screen
+    expect(floatingCenter(b, 56, 4, 410)).toEqual({ x: 56, y: 358 });
   });
 
   it('fixed: the base rests bottom-left of the gutter above the safe area', () => {

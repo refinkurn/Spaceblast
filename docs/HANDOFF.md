@@ -19,11 +19,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
-- **Floating joystick should appear anywhere on the left side** (src/input/touch.ts, src/input/stick_geometry.ts, #stick-zone in src/style.css)
-  Now: the touch zone is only the left gutter (--gutter, set in main.ts) and starts below the HUD, and floatingCenter() keeps the whole base inside that narrow zone, so near its edges the stick does not open under the thumb. On a Meizu phone it feels "not floating".
-  Want: in Floating mode the zone covers the whole left half of the screen below the HUD (it must never block the HUD, pause or menu buttons); the base opens exactly under the thumb, clamped only to the screen edges; Fixed mode unchanged.
-  Done when: stick_geometry tests cover a thumb near the zone edge and near the arena; touching anywhere in the left half opens the stick under the finger in a browser at 896x414; npm test passes. Note in Done: "Refindo to recheck on the Meizu".
-
 - **3D Ducking matches his canon colours** (src/view/astronaut_mesh.ts, level 20 duel)
   Now: the low-poly Ducking wears a dark violet suit (DUCK_SUIT 0x4b2a7a) and has a yellow duck head (the shared `duck` material).
   Want: yellow suit with a dark hazard band or black chest panel, dark grey head feathers, black eyepatch box over one eye, keep the orange bill; match the 2D art palette in src/assets/characters/ducking/ (palette in ducking-sprite-spec.md). Bosco and online players unchanged.
@@ -62,6 +57,7 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 Older entries: docs/CHANGELOG.md.
 
+- 2026-10-31: floating joystick: in Floating mode #stick-zone covers the whole left half below the HUD (HUD buttons sit above it); the base opens under the thumb, clamped only to the screen edges (floatingBounds); Fixed unchanged. Checked at 896x414 (zone 448x370). 452 tests pass. Refindo to recheck on the Meizu.
 - 2026-10-31: iPhone home-screen crop: html/body/#game use 100% with a 100dvh override (@supports), relayout() also on load, pageshow and return to the app, plus after 300 ms and 1 s; layout test covers the rule. 450 tests pass. Refindo to recheck from the iPhone 11 home screen.
 - 2026-10-24: sector arenas (src/sim/arenas.ts, sim-specialist): 1 Duststorm Valley open dunes, 2 Mining Colony corridors, 3 Crystal Core crystal clusters, 4 Bio-Lab rooms with doorways; same 13x11, mirror-symmetric, every tile reachable, boss tile clear; Maze Shift, Builders, gate, collapse, respawn and bots tested on every layout. Story uses its sector's arena; Battle vs Bot a random one per round; Online has an Arena lobby setting (sector or Random, picked from the round seed); each arena wears its sector's look. Needs `npm run deploy` for the room server. 449 tests pass.
 - 2026-10-24: sector names follow the map art: Duststorm Valley, Abandoned Mining Colony, Crystal Core, Underground Bio-Lab (story text, scenes, map, docs). Low-poly rocks per sector (src/view/rock_mesh.ts: boulders, quarried chunks, amber crystal clusters, crates). Boss levels: a stopwatch for the last 15 s of the final wave, beeps on the last 5. 381 tests pass.
