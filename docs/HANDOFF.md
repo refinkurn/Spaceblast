@@ -19,6 +19,15 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
+- **Home-screen launch on iPhone sometimes cuts off the bottom** (index.html, src/style.css, src/main.ts relayout)
+  Now: opened from the iPhone 11 home screen (standalone, black-translucent status bar), the page sometimes starts a little too short, so the bottom is cropped. The page uses height: 100% on html/body and #game, and relayout() runs only on resize, orientationchange (+300 ms) and visualViewport resize, so a height that settles late after launch is missed.
+  Want: full-height sizing that is right in standalone mode (100dvh with a 100% fallback, safe-area bottom padding kept); relayout() also on load, pageshow and after short settle delays (about 300 ms and 1 s) after launch or returning to the app.
+  Done when: in a browser at 896x414 and 812x375 nothing is cut off at the bottom and a layout test covers the dvh/fallback rule; npm test passes. Note in Done: "Refindo to recheck from the iPhone 11 home screen".
+- **Floating joystick should appear anywhere on the left side** (src/input/touch.ts, src/input/stick_geometry.ts, #stick-zone in src/style.css)
+  Now: the touch zone is only the left gutter (--gutter, set in main.ts) and starts below the HUD, and floatingCenter() keeps the whole base inside that narrow zone, so near its edges the stick does not open under the thumb. On a Meizu phone it feels "not floating".
+  Want: in Floating mode the zone covers the whole left half of the screen below the HUD (it must never block the HUD, pause or menu buttons); the base opens exactly under the thumb, clamped only to the screen edges; Fixed mode unchanged.
+  Done when: stick_geometry tests cover a thumb near the zone edge and near the arena; touching anywhere in the left half opens the stick under the finger in a browser at 896x414; npm test passes. Note in Done: "Refindo to recheck on the Meizu".
+
 - **3D Ducking matches his canon colours** (src/view/astronaut_mesh.ts, level 20 duel)
   Now: the low-poly Ducking wears a dark violet suit (DUCK_SUIT 0x4b2a7a) and has a yellow duck head (the shared `duck` material).
   Want: yellow suit with a dark hazard band or black chest panel, dark grey head feathers, black eyepatch box over one eye, keep the orange bill; match the 2D art palette in src/assets/characters/ducking/ (palette in ducking-sprite-spec.md). Bosco and online players unchanged.
