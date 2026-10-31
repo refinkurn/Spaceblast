@@ -9,7 +9,7 @@ Both sides read this first and update it last. Keep it short: finished items mov
 - **Claude Code** takes the top Ready item, moves it to In progress, builds it, runs the qa-runner agent, commits to `main`, and moves it to Done.
 - Anything that needs Refindo's decision goes under Blocked, with the question.
 
-Day-to-day guide: docs/PLAYBOOK.md. Vision and milestones: docs/ROADMAP.md (the Producer queues from it daily, 00:44 Jakarta). Phone checks waiting for Refindo: docs/PHONE_TEST.md. A nightly run (01:52 Jakarta) takes up to 4 Ready items from the top, one at a time (text, UI, input, assets, tests only).
+Day-to-day guide: docs/PLAYBOOK.md. Vision and milestones: docs/ROADMAP.md. Rule numbers: docs/GAME_RULES.md. Look and feel: docs/DESIGN.md (the Producer queues from it daily, 00:44 Jakarta). Phone checks waiting for Refindo: docs/PHONE_TEST.md. A nightly run (01:52 Jakarta) takes up to 4 Ready items from the top, one at a time (text, UI, input, assets, tests only).
 
 Designated build session (main code agent): https://claude.ai/code/session_01XC77HfFWyx7am3DE4jJY5f
 
@@ -43,6 +43,18 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
   - "gameplay_config.json / stages.json": rules live in typed integer constants in src/sim (deterministic for online play); a JSON file is possible later if the design team wants to edit numbers, as long as it stays integers.
   Please decide which parts to keep, in canon terms, and queue a spec; rules changes go to the code session (sim-specialist), not the nightly run.
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
+
+## Known issues
+
+Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
+
+- **Online: the host can restart a round mid-round** (server/room.ts) [code session].
+- **Online: a `profile` message without a name resets the player to "Player N"** (server/room.ts) [code session].
+- **Online: a room mixing an old cached page with a new one desyncs until everyone refreshes** (after a deploy). Needs a version check on join [code session].
+- **Offline cache: a tab left open across a deploy can 404 on a changed art file** (server/offline_cache.ts, src/flow/offline.ts).
+- **Debt: server/room.ts is about 400 lines** (rule: under ~300); split the round clock out [code session].
+- **Debt: Durable Object hibernation for idle lobbies** needs a ping protocol change first (assessed, not built) [code session].
+- **Doc drift: docs/design/powerup-look.md still describes the floor aura** that was removed on 2026-10-22.
 
 ## Done
 
