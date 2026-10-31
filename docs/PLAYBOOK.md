@@ -36,6 +36,7 @@ Assets are data, so no code changes. Folders live in `src/assets/characters/<id>
 
 1. Make or approve the art outside the game (the character pack, `claude/character-assets-handoff.md`).
 2. Hand it to the chat: drop the PNG atlas + JSON in the chat, or put them in a branch or folder in the repo.
+   Art made in the design chat (pixel pipeline, `qa_check.py`) is handed over the same way: the chat queues a Ready item the moment the files exist, naming where they are. Art that is not in Ready does not exist for the build side.
 3. Chat checks the file against the rules (128x128 cells, pivot, 16 colours, indexed PNG, atlas under 1024 px) and queues: `Wire <character> atlas into src/assets/characters/<id>/ and map poses in character.json`.
 4. The build agent copies the files, edits `character.json`, runs the tests (they check every pose used in a scene exists), and ships.
 
@@ -66,6 +67,13 @@ Say it in the chat. Say the line, or the idea. I check it against the game's rul
 ### Something new (a feature)
 
 Chat first: I ask the questions, write the spec to `docs/design/`, and split it into Ready items. If it touches the rules, it goes to the code session for you to watch, not the nightly run.
+
+### Lanes (who does what)
+
+- Design chat: decides with Refindo, writes specs, queues Ready items, keeps Blocked short. It does not build features or touch src/; a one-line doc fix is fine.
+- Nightly run and code session: build only what is in Ready.
+- Refindo: vision, answers to Blocked, and the phone checks in docs/PHONE_TEST.md (only a real phone can clear them).
+- HANDOFF.md Done keeps the last 7 days; older lines move to docs/CHANGELOG.md.
 
 ## Keeping usage low
 
