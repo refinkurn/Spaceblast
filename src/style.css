@@ -27,6 +27,11 @@ html, body {
 }
 
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+/* Standalone (home-screen) launch can start with a short 100%; dvh follows the real visible height. */
+@supports (height: 100dvh) {
+  html, body { height: 100dvh; }
+  #game { height: 100dvh; }
+}
 
 #hud {
   position: fixed;

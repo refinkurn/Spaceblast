@@ -19,10 +19,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
-- **Home-screen launch on iPhone sometimes cuts off the bottom** (index.html, src/style.css, src/main.ts relayout)
-  Now: opened from the iPhone 11 home screen (standalone, black-translucent status bar), the page sometimes starts a little too short, so the bottom is cropped. The page uses height: 100% on html/body and #game, and relayout() runs only on resize, orientationchange (+300 ms) and visualViewport resize, so a height that settles late after launch is missed.
-  Want: full-height sizing that is right in standalone mode (100dvh with a 100% fallback, safe-area bottom padding kept); relayout() also on load, pageshow and after short settle delays (about 300 ms and 1 s) after launch or returning to the app.
-  Done when: in a browser at 896x414 and 812x375 nothing is cut off at the bottom and a layout test covers the dvh/fallback rule; npm test passes. Note in Done: "Refindo to recheck from the iPhone 11 home screen".
 - **Floating joystick should appear anywhere on the left side** (src/input/touch.ts, src/input/stick_geometry.ts, #stick-zone in src/style.css)
   Now: the touch zone is only the left gutter (--gutter, set in main.ts) and starts below the HUD, and floatingCenter() keeps the whole base inside that narrow zone, so near its edges the stick does not open under the thumb. On a Meizu phone it feels "not floating".
   Want: in Floating mode the zone covers the whole left half of the screen below the HUD (it must never block the HUD, pause or menu buttons); the base opens exactly under the thumb, clamped only to the screen edges; Fixed mode unchanged.
@@ -66,6 +62,7 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 Older entries: docs/CHANGELOG.md.
 
+- 2026-10-31: iPhone home-screen crop: html/body/#game use 100% with a 100dvh override (@supports), relayout() also on load, pageshow and return to the app, plus after 300 ms and 1 s; layout test covers the rule. 450 tests pass. Refindo to recheck from the iPhone 11 home screen.
 - 2026-10-24: sector arenas (src/sim/arenas.ts, sim-specialist): 1 Duststorm Valley open dunes, 2 Mining Colony corridors, 3 Crystal Core crystal clusters, 4 Bio-Lab rooms with doorways; same 13x11, mirror-symmetric, every tile reachable, boss tile clear; Maze Shift, Builders, gate, collapse, respawn and bots tested on every layout. Story uses its sector's arena; Battle vs Bot a random one per round; Online has an Arena lobby setting (sector or Random, picked from the round seed); each arena wears its sector's look. Needs `npm run deploy` for the room server. 449 tests pass.
 - 2026-10-24: sector names follow the map art: Duststorm Valley, Abandoned Mining Colony, Crystal Core, Underground Bio-Lab (story text, scenes, map, docs). Low-poly rocks per sector (src/view/rock_mesh.ts: boulders, quarried chunks, amber crystal clusters, crates). Boss levels: a stopwatch for the last 15 s of the final wave, beeps on the last 5. 381 tests pass.
 - 2026-10-24: end-of-match stats as a column list (label left, value right): Score, Stars, Time, Hearts left, Martians defeated, Rocks destroyed, Power-ups; the score breakdown row is gone (src/flow/match_tally.ts counts from sim events). Story map nodes are glass hexagon badges like difficulty badges: sector 1 green, 2 blue, 3 violet, 4 magenta, bosses red, the duel gold, locked dark with a '?'; earned stars glow inside. 379 tests pass.

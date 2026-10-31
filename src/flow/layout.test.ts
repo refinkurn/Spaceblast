@@ -222,3 +222,14 @@ describe('HUD art', () => {
     expect(css).toContain("url('./assets/characters/astropaw/hero_portrait_atlas.png')");
   });
 });
+
+describe('full-height sizing (home-screen launch)', () => {
+  it('uses 100% first, then 100dvh where supported, for html, body and #game', () => {
+    expect(css).toMatch(/html, body \{[^}]*height: 100%/);
+    expect(css).toMatch(/#game \{[^}]*height: 100%/);
+    const dvh = css.match(/@supports \(height: 100dvh\) \{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(dvh).toMatch(/html, body \{ height: 100dvh/);
+    expect(dvh).toMatch(/#game \{ height: 100dvh/);
+    expect(css.indexOf('@supports (height: 100dvh)')).toBeGreaterThan(css.indexOf('#game { position: fixed'));
+  });
+});

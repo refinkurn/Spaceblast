@@ -582,6 +582,11 @@ const relayout = () => layout(true);
 window.addEventListener('resize', relayout);
 window.addEventListener('orientationchange', () => setTimeout(relayout, 300));
 window.visualViewport?.addEventListener('resize', relayout);
+// Home-screen launches can settle their height late: measure again after load, on return to the app, and after short delays.
+const settle = () => { relayout(); setTimeout(relayout, 300); setTimeout(relayout, 1000); };
+window.addEventListener('load', settle);
+window.addEventListener('pageshow', settle);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) settle(); });
 layout(true);
 
 // --- Fixed-timestep loop -----------------------------------------------------------
