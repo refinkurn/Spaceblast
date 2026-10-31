@@ -22,6 +22,9 @@ const GEO = {
   nose: box(0.045, 0.04, 0.04),
   ear: new THREE.ConeGeometry(0.06, 0.12, 4),
   bill: box(0.16, 0.035, 0.12),
+  eyepatch: box(0.075, 0.055, 0.03),
+  chest: box(0.2, 0.14, 0.02),
+  band: box(0.38, 0.06, 0.28),
 };
 const mat = (color: number): THREE.MeshLambertMaterial => new THREE.MeshLambertMaterial({ color });
 const MAT = {
@@ -32,15 +35,16 @@ const MAT = {
   orange: mat(0xe8943a),
   cream: mat(0xf6e6c8),
   dark: mat(0x2a1d1a),
-  duck: mat(0xf4d03f),
+  duck: mat(0x393c41),
+  patch: mat(0x050516),
   bill: mat(0xf08a24),
 };
 
 /** Scale of the finished figure: about 0.9 tile tall with the helmet. */
 export const FIGURE_SCALE = 0.88;
 
-/** Suit colour of Ducking, the level 20 rival (dark violet). */
-export const DUCK_SUIT = 0x4b2a7a;
+/** Suit colour of Ducking, the level 20 rival: canon yellow (palette fbd610), with dark trim and grey feathers. */
+export const DUCK_SUIT = 0xfbd610;
 
 export interface AstronautParts {
   /** The whole figure; feet on y = 0, facing -z. */
@@ -74,8 +78,10 @@ export function setHead(head: THREE.Group, kind: HeadKind): void {
     earR.rotation.z = -0.25;
     head.add(skull, part(GEO.snout, MAT.cream, 0, -0.04, -0.15), part(GEO.nose, MAT.dark, 0, -0.01, -0.21), earL, earR);
   } else {
-    head.add(part(GEO.head, MAT.duck, 0, 0, 0), part(GEO.bill, MAT.bill, 0, -0.03, -0.19));
+    head.add(part(GEO.head, MAT.duck, 0, 0, 0), part(GEO.bill, MAT.bill, 0, -0.03, -0.19), part(GEO.eyepatch, MAT.patch, -0.07, 0.04, -0.15));
   }
+  // Ducking's black chest panel and hazard band belong to the body, shown only with the duck head.
+  head.parent?.getObjectByName('duckTrim')?.traverse((o) => (o.visible = kind === 'duck'));
 }
 
 /** Builds one figure. `suit` is the player's colour; `reduced` drops the backpack light. */
@@ -101,6 +107,10 @@ export function buildAstronaut(color: number, kind: HeadKind, reduced = false): 
   head.position.set(0, 0.76, 0);
   setHead(head, kind);
   const helmet = part(GEO.helmet, MAT.helmet, 0, 0.76, 0);
-  root.add(torso, pack, packLight, armL, armR, legL, legR, head, helmet);
+  const trim = new THREE.Group();
+  trim.name = 'duckTrim';
+  trim.add(part(GEO.chest, MAT.patch, 0, 0.45, -0.135), part(GEO.band, MAT.patch, 0, 0.3, 0));
+  root.add(torso, pack, packLight, armL, armR, legL, legR, head, helmet, trim);
+  trim.visible = kind === 'duck';
   return { root, legL, legR, armL, armR, torso, suit, packLight, head };
 }

@@ -19,11 +19,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
-- **3D Ducking matches his canon colours** (src/view/astronaut_mesh.ts, level 20 duel)
-  Now: the low-poly Ducking wears a dark violet suit (DUCK_SUIT 0x4b2a7a) and has a yellow duck head (the shared `duck` material).
-  Want: yellow suit with a dark hazard band or black chest panel, dark grey head feathers, black eyepatch box over one eye, keep the orange bill; match the 2D art palette in src/assets/characters/ducking/ (palette in ducking-sprite-spec.md). Bosco and online players unchanged.
-  Done when: level 20 (open with #dev) shows Ducking yellow-and-black with grey feathers and an eyepatch, clearly different from Bosco at phone size; npm test passes; screenshot attached to the Done line.
-
 - **Arcade-galactic type: Russo One + Chakra Petch** (src/style.css, index.html, package.json, server/offline_cache.ts)
   Now: everything uses the system font (`font-family: system-ui, ...` on body in src/style.css); no web fonts.
   Want: bundle Russo One (400) and Chakra Petch (500, 700), latin subset, WOFF2, from npm (@fontsource/russo-one, @fontsource/chakra-petch; justified as art assets) or as files in public/fonts with their OFL licence text; add `--font-display`, `--font-label`, `--font-body` tokens and apply them per docs/DESIGN.md "Type" (display: logo/title, level number, end title, headings; label: HUD clock/score/stage chip, menu + dashboard buttons, labels, speaker names, lobby, settings values; body stays system); `font-display: swap`, nothing from fonts.googleapis.com, and the offline service worker caches the font files.
@@ -57,6 +52,7 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 Older entries: docs/CHANGELOG.md.
 
+- 2026-10-31: 3D Ducking in canon colours (astronaut_mesh.ts): yellow suit (fbd610), dark grey head, black eyepatch, black chest panel + hazard band (shown only with the duck head), orange bill kept; Bosco unchanged. Level 20 screenshot: docs/design/shots/ducking-3d.png (small at phone size, Ducking bottom-right). 453 tests pass.
 - 2026-10-31: floating joystick: in Floating mode #stick-zone covers the whole left half below the HUD (HUD buttons sit above it); the base opens under the thumb, clamped only to the screen edges (floatingBounds); Fixed unchanged. Checked at 896x414 (zone 448x370). 452 tests pass. Refindo to recheck on the Meizu.
 - 2026-10-31: iPhone home-screen crop: html/body/#game use 100% with a 100dvh override (@supports), relayout() also on load, pageshow and return to the app, plus after 300 ms and 1 s; layout test covers the rule. 450 tests pass. Refindo to recheck from the iPhone 11 home screen.
 - 2026-10-24: sector arenas (src/sim/arenas.ts, sim-specialist): 1 Duststorm Valley open dunes, 2 Mining Colony corridors, 3 Crystal Core crystal clusters, 4 Bio-Lab rooms with doorways; same 13x11, mirror-symmetric, every tile reachable, boss tile clear; Maze Shift, Builders, gate, collapse, respawn and bots tested on every layout. Story uses its sector's arena; Battle vs Bot a random one per round; Online has an Arena lobby setting (sector or Random, picked from the round seed); each arena wears its sector's look. Needs `npm run deploy` for the room server. 449 tests pass.

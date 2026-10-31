@@ -39,6 +39,21 @@ describe('astronaut figure', () => {
     expect(f.head.children.length).toBe(duckParts);
   });
 
+  it('Ducking is yellow with grey feathers, an eyepatch and dark trim; Bosco has none of it', () => {
+    expect(DUCK_SUIT).toBe(0xfbd610);
+    const f = buildAstronaut(DUCK_SUIT, 'duck');
+    const trim = f.root.getObjectByName('duckTrim')!;
+    expect(trim.visible).toBe(true);
+    const head = f.head.children as THREE.Mesh[];
+    expect((head[0].material as THREE.MeshLambertMaterial).color.getHex()).toBe(0x393c41);
+    expect(head.some((m) => (m.material as THREE.MeshLambertMaterial).color.getHex() === 0x050516)).toBe(true);
+    setHead(f.head, 'corgi');
+    expect(trim.visible).toBe(false);
+    setHead(f.head, 'duck');
+    expect(trim.visible).toBe(true);
+    expect(buildAstronaut(0x3a7bff, 'corgi').root.getObjectByName('duckTrim')!.visible).toBe(false);
+  });
+
   it('can drop the backpack light at reduced quality', () => {
     expect(buildAstronaut(0xffffff, 'corgi', true).packLight.visible).toBe(false);
   });
