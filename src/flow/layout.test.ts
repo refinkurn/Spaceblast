@@ -241,3 +241,15 @@ describe('floating joystick zone', () => {
     expect(rule(css, '#stick-zone')).toMatch(/width: calc\(var\(--gutter\)/);
   });
 });
+
+describe('type faces', () => {
+  it('bundles Russo One and Chakra Petch (WOFF2, swap), no Google fonts, tokens defined', () => {
+    expect(css).toMatch(/--font-display: 'Russo One'/);
+    expect(css).toMatch(/--font-label: 'Chakra Petch'/);
+    expect(css).toMatch(/--font-body: system-ui/);
+    expect((css.match(/font-display: swap/g) ?? []).length).toBe(3);
+    expect(css).not.toMatch(/googleapis|gstatic/);
+    expect(html).not.toMatch(/googleapis|gstatic/);
+    expect(css).toMatch(/#menu h1[^{]*\{ font-family: var\(--font-display\)/);
+  });
+});

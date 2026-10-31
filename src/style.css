@@ -1,9 +1,18 @@
+/* Bundled faces (SIL OFL, licences in public/fonts/LICENSE-*.txt), latin subset, WOFF2 only. */
+@font-face { font-family: 'Russo One'; font-style: normal; font-weight: 400; font-display: swap; src: url('../node_modules/@fontsource/russo-one/files/russo-one-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-style: normal; font-weight: 500; font-display: swap; src: url('../node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-style: normal; font-weight: 700; font-display: swap; src: url('../node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-700-normal.woff2') format('woff2'); }
+
 :root {
   --gutter: 200px;
   --hud: 44px;
   --ink: #e8ecf5;
   --ink-quiet: #9aa3b5;
   --accent: #5ad1ff;
+  /* Type (docs/DESIGN.md): Russo One for big moments, Chakra Petch for the console voice, system for reading text. */
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Russo One', var(--font-body);
+  --font-label: 'Chakra Petch', var(--font-body);
   /* Screen-corner spots shared by Back (top-left) and the sound / pause group (top-right), clear of notches. */
   --edge-top: max(8px, env(safe-area-inset-top));
   --edge-left: max(12px, env(safe-area-inset-left));
@@ -18,7 +27,7 @@ html, body {
   overflow: hidden;
   background: #14161d;
   color: var(--ink);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -1269,3 +1278,14 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 @keyframes boss-tick-urgent { 0% { transform: translateX(-50%) scale(1.22); box-shadow: 0 0 28px #ff5a4a; } }
 body.scene .boss-clock { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .boss-clock.tick, .boss-clock.urgent.tick { animation: none; } }
+
+/* --- Type roles (kept last so they win over the per-component font shorthands) --- */
+#menu h1, #start-screen h1, #menu h2, #banner-title, .announce-title, .cine-title, .congrats-name,
+.story-card h2, .intro-box h2, .pause-list h2, .install-card h2, .ending-card h2, .lb-pick h2,
+.card-box .card-level { font-family: var(--font-display); font-weight: 400; }
+.hud-clock, .hud-chip, .menu-list button, .pause-list button, .quiet-btn, .go-btn, .icon-go,
+#online button, #online .slot, .slot-label, .intro-speaker, .cut-speaker, .coach-label,
+.stepper .step-value, #banner button, #congrats button, #ending-btn, #install-ok,
+.lb-pick button, .lb-form button, .map-card-actions button, .nav-back, .announce-count,
+#map-card-enter { font-family: var(--font-label); }
+.hud-clock, .hud-chip, .cut-speaker, .intro-speaker, .coach-label, .announce-count { font-weight: 700; }

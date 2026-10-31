@@ -19,12 +19,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
-- **Arcade-galactic type: Russo One + Chakra Petch** (src/style.css, index.html, package.json, server/offline_cache.ts)
-  Now: everything uses the system font (`font-family: system-ui, ...` on body in src/style.css); no web fonts.
-  Want: bundle Russo One (400) and Chakra Petch (500, 700), latin subset, WOFF2, from npm (@fontsource/russo-one, @fontsource/chakra-petch; justified as art assets) or as files in public/fonts with their OFL licence text; add `--font-display`, `--font-label`, `--font-body` tokens and apply them per docs/DESIGN.md "Type" (display: logo/title, level number, end title, headings; label: HUD clock/score/stage chip, menu + dashboard buttons, labels, speaker names, lobby, settings values; body stays system); `font-display: swap`, nothing from fonts.googleapis.com, and the offline service worker caches the font files.
-  Done when: screenshots at 896x414 of menu, level card, HUD and end-of-match show the two faces with no text clipped or overflowing (long labels like ABANDONED MINING COLONY still fit); airplane-mode reload after one visit still shows the fonts; npm test and npm run build pass; main bundle growth noted in Done.
-  Spec: docs/DESIGN.md (Type)
-
 ## In progress
 
 ## Blocked
@@ -52,6 +46,7 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 Older entries: docs/CHANGELOG.md.
 
+- 2026-10-31: Arcade-galactic type: Russo One 400 + Chakra Petch 500/700 (latin WOFF2 from @fontsource, OFL licences in public/fonts), tokens --font-display/--font-label/--font-body, roles applied in a final block of src/style.css, font-display swap, nothing from Google; the three woff2 files (~27 kB) are in the build, so sw.js caches them. Main JS unchanged (820 kB), CSS +1 kB. Checked at 896x414: menu title and HUD stage chip show the faces (docs/design/shots/type-menu.png, type-hud.png). NOT checked: level card, end-of-match screenshots, long labels like ABANDONED MINING COLONY, real airplane-mode reload (Refindo or next session to recheck; Chakra Petch 500 loads only when used). 454 tests pass.
 - 2026-10-31: 3D Ducking in canon colours (astronaut_mesh.ts): yellow suit (fbd610), dark grey head, black eyepatch, black chest panel + hazard band (shown only with the duck head), orange bill kept; Bosco unchanged. Level 20 screenshot: docs/design/shots/ducking-3d.png (small at phone size, Ducking bottom-right). 453 tests pass.
 - 2026-10-31: floating joystick: in Floating mode #stick-zone covers the whole left half below the HUD (HUD buttons sit above it); the base opens under the thumb, clamped only to the screen edges (floatingBounds); Fixed unchanged. Checked at 896x414 (zone 448x370). 452 tests pass. Refindo to recheck on the Meizu.
 - 2026-10-31: iPhone home-screen crop: html/body/#game use 100% with a 100dvh override (@supports), relayout() also on load, pageshow and return to the app, plus after 300 ms and 1 s; layout test covers the rule. 450 tests pass. Refindo to recheck from the iPhone 11 home screen.
