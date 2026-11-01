@@ -19,6 +19,12 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
+- **Assets: swap in Ducking v0.3 and Captain Kit v0.2 art** (art team, 2026-11-01). Files are staged in `art-drop/2026-11-01/` (indexed-colour PNGs, pixel-checked). Assets only, no code.
+  1. Copy `art-drop/2026-11-01/ducking/*` over `src/assets/characters/ducking/` and `art-drop/2026-11-01/captain-kit/*` over `src/assets/characters/captain-kit/` (same file names; `character.json` files stay as they are).
+  2. `npm test` (dry run on 2026-11-01: 55 files, 454 tests pass, typecheck clean), commit, then delete `art-drop/2026-11-01/` in the same commit.
+  3. What changes on screen: Ducking's 8 animations and 3 portraits move to his final design (clear helmet, eyepatch, cape, V emblem) at Bosco's height (120 px); Kit's worried and relieved portraits are redrawn. Ducking's attack art has no muzzle flash: `animations.attack.events.fire` in his atlas JSON gives the frame and muzzle point if the view wants to spawn one later (optional, not part of this item).
+  4. Add to docs/PHONE_TEST.md: check Ducking in every cutscene where he speaks (portraits) and in his full-body poses, and Kit's worried and relieved lines.
+
 ## In progress
 
 ## Blocked
