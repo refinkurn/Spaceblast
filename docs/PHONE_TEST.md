@@ -29,6 +29,8 @@ Run 2026-10-31 by Refindo on iPhone 11 (Safari + home screen) and a Meizu phone.
 - [x] Open the game once, then airplane mode: Story and Battle vs Bot still open
 - [x] Installed to home screen (iOS): opens offline too
 
+- [ ] Ducking v0.3 (clear helmet, eyepatch, cape, V emblem): check him in every cutscene where he speaks (portraits) and in his full-body poses; check Kit's worried and relieved portrait lines
+
 ## Found
 - iPhone 11, opened from the home screen: sometimes the bottom of the screen is cropped a little.
 - Meizu: the floating joystick does not open wherever the thumb lands on the left side.

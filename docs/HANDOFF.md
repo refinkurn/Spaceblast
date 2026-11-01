@@ -19,12 +19,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
-- **Assets: swap in Ducking v0.3 and Captain Kit v0.2 art** (art team, 2026-11-01). Files are staged in `art-drop/2026-11-01/` (indexed-colour PNGs, pixel-checked). Assets only, no code.
-  1. Copy `art-drop/2026-11-01/ducking/*` over `src/assets/characters/ducking/` and `art-drop/2026-11-01/captain-kit/*` over `src/assets/characters/captain-kit/` (same file names; `character.json` files stay as they are).
-  2. `npm test` (dry run on 2026-11-01: 55 files, 454 tests pass, typecheck clean), commit, then delete `art-drop/2026-11-01/` in the same commit.
-  3. What changes on screen: Ducking's 8 animations and 3 portraits move to his final design (clear helmet, eyepatch, cape, V emblem) at Bosco's height (120 px); Kit's worried and relieved portraits are redrawn. Ducking's attack art has no muzzle flash: `animations.attack.events.fire` in his atlas JSON gives the frame and muzzle point if the view wants to spawn one later (optional, not part of this item).
-  4. Add to docs/PHONE_TEST.md: check Ducking in every cutscene where he speaks (portraits) and in his full-body poses, and Kit's worried and relieved lines.
-
 ## In progress
 
 ## Blocked
@@ -51,6 +45,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 ## Done
 
 Older entries: docs/CHANGELOG.md.
+
+- 2026-11-01: Ducking v0.3 and Captain Kit v0.2 art swapped into src/assets/characters (final Ducking at 120 px, redrawn Kit worried/relieved portraits); art-drop/2026-11-01 removed; PHONE_TEST check added. 454 tests pass, build clean.
 
 - 2026-10-31: Arcade-galactic type: Russo One 400 + Chakra Petch 500/700 (latin WOFF2 from @fontsource, OFL licences in public/fonts), tokens --font-display/--font-label/--font-body, roles applied in a final block of src/style.css, font-display swap, nothing from Google; the three woff2 files (~27 kB) are in the build, so sw.js caches them. Main JS unchanged (820 kB), CSS +1 kB. Checked at 896x414: menu title and HUD stage chip show the faces (docs/design/shots/type-menu.png, type-hud.png). NOT checked: level card, end-of-match screenshots, long labels like ABANDONED MINING COLONY, real airplane-mode reload (Refindo or next session to recheck; Chakra Petch 500 loads only when used). 454 tests pass.
 - 2026-10-31: 3D Ducking in canon colours (astronaut_mesh.ts): yellow suit (fbd610), dark grey head, black eyepatch, black chest panel + hazard band (shown only with the duck head), orange bill kept; Bosco unchanged. Level 20 screenshot: docs/design/shots/ducking-3d.png (small at phone size, Ducking bottom-right). 453 tests pass.

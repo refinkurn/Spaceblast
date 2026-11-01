@@ -10,9 +10,9 @@
       "h": 128
     },
     "layout": "one row per animation, frames left to right",
-    "faces": "right (same as Bosco). Mirror horizontally when Ducking faces left / opponent side.",
+    "faces": "right (same as Bosco). Mirror horizontally for left-facing.",
     "pivot_note": "bottom-center between the boots; baseline row 123",
-    "status": "v0.1 placeholder-quality, see QA_REPORT.md"
+    "status": "v0.3 - new design for all poses; walk and shocked are placeholders"
   },
   "frames": {
     "ducking_idle_01": {
@@ -305,7 +305,17 @@
         "ducking_attack_02",
         "ducking_attack_03",
         "ducking_attack_04"
-      ]
+      ],
+      "events": {
+        "fire": {
+          "frame": "ducking_attack_02",
+          "muzzle": {
+            "x": 111,
+            "y": 43
+          },
+          "note": "spawn muzzle flash here; the art has no flash"
+        }
+      }
     },
     "shocked": {
       "fps": 8,

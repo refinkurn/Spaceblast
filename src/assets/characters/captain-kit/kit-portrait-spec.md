@@ -2,7 +2,7 @@
 
 **Project:** Spaceblast
 **Asset:** Captain Kit, old sphynx cat, captain of Biscuit
-**Version:** 0.1 (2026-10-19)
+**Version:** 0.2 (2026-10-31)
 **Status:** Portrait-only. Kit speaks by radio, so there are no full-body frames.
 
 ## Use
@@ -20,7 +20,7 @@
 | Facing | Right (3/4 view). Mirror at runtime if he must face left |
 
 ## Palette
-16 colors, `palette/kit_palette.hex` and `.gpl`. Outline #050516 is shared with Bosco and Ducking.
+18 colors, `palette/kit_palette.hex` and `.gpl` (v0.2 added #51330d and #adaeac for the headset and sweat drop). Outline #050516 is shared with Bosco and Ducking.
 Key colors: sphynx skin greys and peaches, gold eyes and trim (#F0C149, #D99C24), purple jacket (#4F2675, #2E0C4E).
 
 ## Portraits
@@ -31,7 +31,12 @@ Key colors: sphynx skin greys and peaches, gold eyes and trim (#F0C149, #D99C24)
 | kit_portrait_worried | Danger, distress calls |
 | kit_portrait_relieved | Mission success, Bosco safe |
 
-## Known issues (accepted for v0.1)
-- Worried has round eyes, unlike the almond eyes of the other three, and no sweat drop.
-- Relieved reads closer to a wink than a smile.
+## Known issues (v0.2)
+- Worried and relieved show a small radio headset by the ear; neutral and stern don't have one. At 1x it is only a few grey pixels.
 - Wrinkle lines are dense; they read as texture at 1x.
+
+## Revision
+| Version | Date | Change |
+|---|---|---|
+| 0.1 | 2026-10-19 | First 4 portraits |
+| 0.2 | 2026-10-31 | Worried (almond eyes, sweat drop) and relieved (both eyes closed, soft smile) redrawn; palette 16 -> 18 colors |
