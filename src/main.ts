@@ -37,6 +37,8 @@ import { hashState, step } from './sim/sim';
 import { createGame, holdLeft, playerTile, type GameState, type SimEvent } from './sim/state';
 import { GameView } from './view/game_view';
 import { applyDom, t } from './utils/i18n';
+import { analytics, installAnalytics } from './services/analytics';
+import { installWebAnalytics } from './services/web_analytics';
 
 // Wiring: game modes (Story, Battle vs bot, online rooms), the round flow and
 // the fixed 60 Hz loop. Rendering lives in view/game_view.ts, online rounds in
@@ -143,6 +145,8 @@ document.addEventListener('visibilitychange', () => {
 });
 setupFullscreen();
 installMultiTouchTaps();
+installAnalytics();
+installWebAnalytics();
 
 /** Developer level select: jump straight to a Story level. */
 function startAtLevel(n: number) {
@@ -327,6 +331,7 @@ function winsNeeded(): number {
 
 /** A round ended: count the win, play the cinematic, then the score or the match result. */
 function roundOver(winner: number) {
+  analytics.track({ name: 'round', mode: mode === 'online' ? 'online' : 'bot', value: Math.round(state.tick / TICK_RATE) });
   if (winner >= 0) score.win(playerKeys()[winner], winsNeeded());
   lastWinner = winner;
   const length = settings.value.cinematic;

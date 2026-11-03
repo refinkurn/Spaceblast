@@ -21,6 +21,7 @@ import { bossClearLine, storySummary } from './summary';
 import { tally } from './match_tally';
 import { t } from '../utils/i18n';
 import { fadeThrough } from './transition';
+import { analytics } from '../services/analytics';
 
 // Story Mode flow: the Story map (flow/story_map.ts), each level's
 // lead-in (sector card, boss cutscene, level card), results, retrying a level
@@ -138,6 +139,7 @@ export class StoryMode {
     this.livesLost = 0;
     const spec = levelSpec(level);
     const state = this.host.newLevel(level);
+    analytics.track({ name: 'level_start', level, mode: 'story' });
     const card = () => {
       if (fromMap) this.host.beginPlay();
       else this.host.showLevelCard(levelCard(spec));
@@ -212,6 +214,7 @@ export class StoryMode {
     const state = this.host.state;
     const level = this.level;
     const spec = levelSpec(level);
+    analytics.track({ name: 'level_clear', level, mode: 'story', value: Math.round(state.tick / 60) });
     // The Ducking duel counts as a boss too.
     if (spec.rival) this.progress.add({ bosses: 1 });
     const lost = Math.min(this.livesLost, START_LIVES);
@@ -249,6 +252,7 @@ export class StoryMode {
   private gameOver(): void {
     this.progress.save();
     const level = this.level;
+    analytics.track({ name: 'level_fail', level, mode: 'story', value: Math.round(this.host.state.tick / 60) });
     this.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.map'), randomTip(),
       {
         pose: 'defeated', summary: storySummary(this.host.state, tally, this.livesLost, 0),

@@ -25,3 +25,10 @@ new_sqlite_classes = ["RoomObject"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["LeaderboardObject"]
+
+# Anonymous game events (server/analytics.ts; queries in docs/ANALYTICS.md).
+# Table schema: server/analytics.ts SCHEMA (already created on this database).
+[[d1_databases]]
+binding = "ANALYTICS"
+database_name = "spaceblast-analytics"
+database_id = "040d058f-2565-4679-ac13-6b82246ac4c6"

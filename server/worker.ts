@@ -1,4 +1,5 @@
 import { isRoomCode } from '../src/net/protocol';
+import { MAX_EVENTS_BODY, parseEvents, storeEvents, type EventsDb } from './analytics';
 import { CORS_HEADERS, JSON_HEADERS, Leaderboard, MAX_BODY, SqlStore, scoresApi } from './leaderboard';
 import { Room, requestFromUrl, type Peer } from './room';
 
@@ -11,6 +12,8 @@ interface Env {
   ROOMS: DurableObjectNamespace;
   LEADERBOARD: DurableObjectNamespace;
   ASSETS: Fetcher;
+  /** D1 database for anonymous game events (server/analytics.ts). */
+  ANALYTICS?: EventsDb;
 }
 
 /**
@@ -28,6 +31,7 @@ export default {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
       return env.LEADERBOARD.get(env.LEADERBOARD.idFromName('global'), { locationHint: ROOM_REGION }).fetch(request);
     }
+    if (url.pathname === '/api/events') return events(request, env);
     const match = url.pathname.match(/\/room\/([A-Z]+)$/);
     if (!match) return env.ASSETS.fetch(request);
     if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected a WebSocket', { status: 426 });
@@ -35,6 +39,20 @@ export default {
     return env.ROOMS.get(env.ROOMS.idFromName(match[1]), { locationHint: ROOM_REGION }).fetch(request);
   },
 };
+
+/** POST /api/events: a small batch of anonymous game events, stored in D1. Always 204 for valid posts. */
+async function events(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
+  if (request.method !== 'POST') return new Response(null, { status: 405, headers: CORS_HEADERS });
+  if (Number(request.headers.get('Content-Length') ?? 0) > MAX_EVENTS_BODY) return new Response(null, { status: 413, headers: CORS_HEADERS });
+  const text = await readCapped(request, MAX_EVENTS_BODY);
+  const rows = text === null ? null : parseEvents(text, Date.now());
+  if (rows === null) return new Response(null, { status: 400, headers: CORS_HEADERS });
+  if (env.ANALYTICS) {
+    try { await storeEvents(env.ANALYTICS, rows); } catch (e) { console.error('analytics:', e); }
+  }
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
 
 /** The data centre this code runs in (e.g. "SIN"), from Cloudflare's trace page; '' if unknown. */
 async function dataCentre(): Promise<string> {
