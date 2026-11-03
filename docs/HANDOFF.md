@@ -21,10 +21,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the nightly run; 3-7 touch server/ or src/net/, so the nightly skips them and the code session (sim-specialist) takes them.
 
-- **Doc drift: power-up look** (docs/design/powerup-look.md)
-  Now: still describes the floor aura removed on 2026-10-22.
-  Want: describe what the game draws today (src/view), no aura.
-  Done when: the doc matches the code; no mention of a floor aura.
 - **Offline cache: a tab open across a deploy 404s on changed art** (server/offline_cache.ts, src/flow/offline.ts)
   Now: an old page asks for a hashed art file the new deploy no longer has.
   Want: on a failed asset load, fall back to the old cache, or reload the page once to the new version (no loop).
@@ -50,6 +46,8 @@ Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the
 
 ## In progress
 
+- **Offline cache: a tab open across a deploy 404s on changed art** (started 2026-11-03)
+
 ## Blocked
 
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
@@ -64,11 +62,12 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 - **Offline cache: a tab left open across a deploy can 404 on a changed art file** (server/offline_cache.ts, src/flow/offline.ts).
 - **Debt: server/room.ts is about 400 lines** (rule: under ~300); split the round clock out [code session].
 - **Debt: Durable Object hibernation for idle lobbies** needs a ping protocol change first (assessed, not built) [code session].
-- **Doc drift: docs/design/powerup-look.md still describes the floor aura** that was removed on 2026-10-22.
 
 ## Done
 
 Older entries: docs/CHANGELOG.md.
+
+- 2026-11-03: doc drift fixed: docs/design/powerup-look.md now describes what src/view draws (clear shell, no floor glow, no idle particles, hoverboard and shield looks, Star Dot); no mention of a floor aura.
 
 - 2026-11-03: balance brief built (Refindo: "execute"). Rock drop table per rock (Story: empty 38, Star Dot 30, Extra Charge 8, Beam Range+ 7, Speed 10, Vest 5, Freeze 2; Battle: empty 68, no dots/freeze), Star Dots (+50 score, survive blasts, golden gem without shell, own stat row, blip sound, first-pickup card), Hungry Goopling "Chaser" (pink, chases within 4 path steps; card + 1-3/1-4 briefings), sector 1 rosters 2G / 3G / 2G+2C / 4C, par 90/80/75/60 s and rock density 50/55/60/65% per stage in every sector; leaderboard check accepts gems (old clients = 0). sim-specialist did src/sim, score, leaderboard. Battle now has ~32% power-up rocks (was ~17%), bots closer in skill. 489 tests pass. Story text for the Chaser/Star Dot is new: story chat may reword.
 - 2026-11-03: analytics live. POST /api/events on the worker stores anonymous events (session start/end, daily retention, Story level start/clear/fail, battle rounds) in D1 `spaceblast-analytics`; queries in docs/ANALYTICS.md. Cloudflare Web Analytics waits for Refindo to set VITE_CF_BEACON_TOKEN in Vercel.

@@ -88,4 +88,4 @@ The 3D Ducking is still violet with a yellow head; fixing it is queued in HANDOF
 
 ## Feature specs (details live there)
 
-`character-animation`, `hud-intro`, `leaderboard`, `level-progression`, `martian-look`, `match-screens`, `menu-dialogue`, `polish-settings-net`, `powerup-look` (its floor aura was later removed), `radio-juice`, `story-map`.
+`character-animation`, `hud-intro`, `leaderboard`, `level-progression`, `martian-look`, `match-screens`, `menu-dialogue`, `polish-settings-net`, `powerup-look`, `radio-juice`, `story-map`.
