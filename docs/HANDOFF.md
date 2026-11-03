@@ -15,7 +15,7 @@ Designated build session (main code agent): https://claude.ai/code/session_01XC7
 
 Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runner` (Haiku, tests and checks), `sim-specialist` (Opus, game rules and online). The main session runs on Sonnet.
 
-Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.app (every push builds it; `main` = live). Rooms + leaderboard on Cloudflare, https://spaceblast.refinkurn.workers.dev: pushing does not update them, so a change in `server/` or `src/net/` also needs `npm run deploy` (by Refindo or the code session, never the nightly run). Fly.io server code is in the repo but not deployed (not free).
+Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.app (every push builds it; `main` = live). Rooms + leaderboard on Cloudflare, https://spaceblast.refinkurn.workers.dev: Cloudflare Workers Builds deploys every push to `main` too, so a pushed server change goes live within minutes (and restarts any live match). Fly.io server code is in the repo but not deployed (not free).
 
 ## Ready
 

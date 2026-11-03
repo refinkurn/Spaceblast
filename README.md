@@ -22,7 +22,7 @@ npm run build    # typecheck + production build in dist/
 ## Deploy
 
 - Game page: Vercel builds every push (`main` = https://spaceblast.vercel.app).
-- Online rooms + leaderboard: Cloudflare, `npm run deploy` (pushing doesn't update them).
+- Online rooms + leaderboard: Cloudflare Workers Builds deploys every push to `main` (`npm run deploy` by hand).
 - Pushing to `main` also runs `.github/workflows/test.yml` (tests + build).
 
 Details in `ONLINE.md`.

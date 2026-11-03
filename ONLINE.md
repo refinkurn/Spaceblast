@@ -84,10 +84,13 @@ Two free services, one for the page and one for the live connections:
   `VITE_API_BASE=https://spaceblast.refinkurn.workers.dev`. They are read at
   build time, so redeploy after changing them.
 - **Rooms + leaderboard: Cloudflare**, https://spaceblast.refinkurn.workers.dev
-  (`server/worker.ts`; it also serves its own copy of the page). Pushing to
-  GitHub does **not** update it: after a change in `server/`, `src/net/` or
-  the score rules, run `npm run deploy`. A change to the messages
-  (`src/net/protocol.ts`) needs both: `npm run deploy` and a push.
+  (`server/worker.ts`; it also serves its own copy of the page). Cloudflare
+  Workers Builds is connected to the GitHub repo: every push to `main` runs
+  `npm run build` then `npx wrangler deploy` (Node 24; preview branches off),
+  so the rooms update a few minutes after the page. Watch builds in the
+  Cloudflare dashboard: Workers & Pages -> spaceblast -> Deployments.
+  A deploy restarts the rooms, so a match in progress ends: push big server
+  changes when nobody is playing. `npm run deploy` still works by hand.
 
 Cloudflare from scratch (free plan, no card):
 
