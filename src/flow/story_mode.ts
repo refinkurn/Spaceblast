@@ -1,4 +1,5 @@
 import { START_LIVES } from '../sim/constants';
+import { gemsCollected } from '../sim/items';
 import { LEVEL_COUNT, isSectorStart, levelRoster, levelSpec } from '../sim/levels';
 import type { GameState, SimEvent } from '../sim/state';
 import type { GameView } from '../view/game_view';
@@ -220,11 +221,12 @@ export class StoryMode {
     const lost = Math.min(this.livesLost, START_LIVES);
     const martians = state.martians.filter((m) => !m.alive).length;
     const heartsLeft = START_LIVES - lost;
-    const score = scoreFor({ level, martians, ticks: state.tick, heartsLeft });
+    const gems = gemsCollected(state);
+    const score = scoreFor({ level, martians, ticks: state.tick, heartsLeft, gems });
     const stars = score.stars;
     const prevBest = this.progress.bestScore(level);
     this.progress.clear(level, stars, score.total);
-    sendScore(level, score, heartsLeft, () => this.screens.bannerOpen);
+    sendScore(level, score, heartsLeft, gems, () => this.screens.bannerOpen);
     // After the duel, the ending scene follows straight on.
     const outro = [...(OUTRO_SCENES[level] ?? []), ...(level >= LEVEL_COUNT ? ENDING_SCENE : [])];
     this.cutscene.play(outro, state, () => {

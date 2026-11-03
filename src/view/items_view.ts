@@ -62,8 +62,9 @@ export class ItemsView {
       const phase = e.tx * 1.7 + e.ty * 2.3;
       e.body.position.y = FLOAT + Math.sin(time * Math.PI + phase) * 0.05; // about 1 cycle per 2 s
       e.body.rotation.y = time * SPIN + phase;
+      // Star Dots have no glass shell.
       const shell = e.root.children[1];
-      shell.position.y = e.body.position.y;
+      if (shell) shell.position.y = e.body.position.y;
       const pop = Math.min(1, (time - e.born) / POP_SECONDS);
       e.root.scale.setScalar(Math.max(pop, 0.001) * ITEM_SCALE);
     }
@@ -81,7 +82,8 @@ export class ItemsView {
   private create(item: number, tx: number, ty: number, time: number): Entry {
     const root = new THREE.Group();
     const body = itemBody(item);
-    root.add(body, shellMesh(item));
+    root.add(body);
+    if (item !== Item.Gem) root.add(shellMesh(item));
     tileToWorld(tx, ty, 0, root.position);
     this.group.add(root);
     return { root, body, item, tx, ty, born: time };

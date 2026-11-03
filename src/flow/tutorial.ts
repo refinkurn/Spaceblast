@@ -1,4 +1,4 @@
-import { Cell, TILE } from '../sim/constants';
+import { Cell, Item, TILE } from '../sim/constants';
 import { playerTile, type GameState } from '../sim/state';
 import type { Kind } from '../sim/constants';
 import { martiansNear } from './encounter';
@@ -74,7 +74,7 @@ export class Tutorial {
     if (!this.level) return;
     for (const e of state.events) {
       if (e.type === 'charge_placed' || e.type === 'rock_broken' || e.type === 'martian_killed' || e.type === 'gate_opened') this.trigger(e.type);
-      if (e.type === 'item_picked' && e.id === 0) this.trigger('item_picked');
+      if (e.type === 'item_picked' && e.id === 0 && e.item !== Item.Gem) this.trigger('item_picked');
       if (this.current?.done === e.type) this.finished = true;
       // Already did what a waiting step would ask for: it's not needed any more.
       for (const b of [this.waitingNear, ...this.queue]) {

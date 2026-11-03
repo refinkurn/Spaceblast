@@ -31,8 +31,8 @@ import { readLocalCommand } from './input/commands';
 import { KeyboardSource } from './input/keyboard';
 import { TouchSource } from './input/touch';
 import type { PlayerCommand } from './sim/command';
-import { GOD_SHIELD, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS, TICK_RATE } from './sim/constants';
-import { levelSpec } from './sim/levels';
+import { GOD_SHIELD, Item, MAX_BOOTS, MAX_CHARGES, MAX_RANGE, TICK_MS, TICK_RATE } from './sim/constants';
+import { levelSpec, storyOptions } from './sim/levels';
 import { hashState, step } from './sim/sim';
 import { createGame, holdLeft, playerTile, type GameState, type SimEvent } from './sim/state';
 import { GameView } from './view/game_view';
@@ -222,7 +222,7 @@ function newGame(seed = (Math.random() * 0xffffffff) >>> 0) {
   if (mode === 'online' && net) state = createGame(seed, net.gameOptions());
   // Battle vs Bot: a random sector arena each round (picked from the seed).
   else if (mode === 'battle') state = createGame(seed, { mode: 'battle', arena: 'random' });
-  else state = createGame(seed, { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival, arena: spec.arena });
+  else state = createGame(seed, storyOptions(story.level));
   if (devRun && mode === 'survival') applyCheats();
   bot = mode === 'battle' ? new Bot(1, seed, screens.botLevel) : spec.rival ? new Bot(1, seed, 'hard') : null;
   recorder.reset();
@@ -300,8 +300,8 @@ function onEvent(e: SimEvent) {
       break;
     }
     case 'item_picked':
-      // A light tap when your astronaut grabs a power-up.
-      if (e.id === localId && !quiet) haptics.buzz(15);
+      // A light tap when your astronaut grabs a power-up (not for Star Dots: too many).
+      if (e.id === localId && !quiet && e.item !== Item.Gem) haptics.buzz(15);
       break;
     case 'armor_hit':
       announcer.flash(t('alert.vestHit'));

@@ -9,6 +9,8 @@ export interface ScoreSubmission {
   completion_time_seconds: number;
   hearts_left: number;
   stars: number;
+  /** Gems (Star Dots) in the score; older clients leave it out (= 0). */
+  gems?: number;
 }
 
 export interface ScoreRow {

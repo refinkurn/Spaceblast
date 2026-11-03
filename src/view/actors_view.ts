@@ -108,7 +108,7 @@ export class MartiansView {
       const frozen = state.freeze > 0;
       const parts = v.userData.parts as MartianParts;
       // Goopling jelly wobbles most; the others breathe a little.
-      const amp = m.kind === Kind.Goopling ? 0.08 : 0.03;
+      const amp = m.kind === Kind.Goopling || m.kind === Kind.Chaser ? 0.08 : 0.03;
       const wobble = frozen ? 0 : Math.sin(time * 9 + m.id * 2) * amp;
       parts.body.scale.set(1 + wobble, 1 - wobble, 1 + wobble);
       if (m.kind === Kind.Phaser) v.position.y = 0.06 + Math.sin(time * 3 + m.id) * 0.05; // hovers

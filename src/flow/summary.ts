@@ -28,6 +28,7 @@ function impact(m: MatchTally, withMartians: boolean): [string, string][] {
   const rows: [string, string][] = [];
   if (withMartians) rows.push([t('summary.martians'), String(m.martians)]);
   rows.push([t('summary.rocks'), String(m.rocks)], [t('summary.powerups'), String(m.powerups)]);
+  if (m.gems > 0) rows.push([t('summary.gems'), String(m.gems)]);
   return rows;
 }
 

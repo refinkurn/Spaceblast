@@ -42,14 +42,31 @@ describe('level generation', () => {
     }
   });
 
-  it('puts a power-up under roughly 1 in 6 rocks', () => {
-    let rocks = 0, items = 0;
-    for (let seed = 1; seed <= 100; seed++) {
-      const g = createGame(seed);
-      g.grid.cells.forEach((c, i) => { if (c === Cell.Rock) { rocks++; if (g.items[i]) items++; } });
-    }
-    expect(items / rocks).toBeGreaterThan(0.12);
-    expect(items / rocks).toBeLessThan(0.22);
+  it('rolls the rock drop table: about 30% gems and 32% power-ups in Story, no gems or Freeze in Battle', () => {
+    const count = (mode: 'survival' | 'battle') => {
+      const n = new Map<number, number>();
+      let rocks = 0;
+      for (let seed = 1; seed <= 100; seed++) {
+        const g = createGame(seed, { mode });
+        g.grid.cells.forEach((c, i) => {
+          if (c !== Cell.Rock || i === g.gate) return;
+          rocks++;
+          n.set(g.items[i], (n.get(g.items[i]) ?? 0) + 1);
+        });
+      }
+      return (item: number) => (n.get(item) ?? 0) / rocks;
+    };
+    const story = count('survival');
+    expect(story(Item.Gem)).toBeGreaterThan(0.26);
+    expect(story(Item.Gem)).toBeLessThan(0.34);
+    expect(story(Item.None)).toBeGreaterThan(0.33);
+    expect(story(Item.None)).toBeLessThan(0.43);
+    expect(story(Item.FreezePulse)).toBeGreaterThan(0);
+    const battle = count('battle');
+    expect(battle(Item.Gem)).toBe(0);
+    expect(battle(Item.FreezePulse)).toBe(0);
+    expect(battle(Item.None)).toBeGreaterThan(0.63);
+    expect(battle(Item.None)).toBeLessThan(0.73);
   });
 
   it('spawns 3 Gooplings away from every spawn corner', () => {

@@ -68,8 +68,8 @@ function explode(state: GameState, c: Charge, queue: Charge[]): void {
     beams[i] = BEAM_TICKS;
     state.beamOwner[i] = c.owner + 1;
     state.beamRock[i] = 0;
-    // A beam destroys a power-up that is already lying in the open.
-    if (grid.cells[i] === Cell.Empty && state.items[i] !== Item.None) {
+    // A beam destroys a power-up that is already lying in the open (gems survive).
+    if (grid.cells[i] === Cell.Empty && state.items[i] !== Item.None && state.items[i] !== Item.Gem) {
       state.items[i] = Item.None;
       state.events.push({ type: 'item_destroyed', tx: x, ty: y });
     }

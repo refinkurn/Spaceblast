@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maxScore } from '../src/services/score';
+import { maxGems, maxScore } from '../src/services/score';
 import { DAILY_POSTS, IP_DAILY_POSTS, Leaderboard, MemoryStore, STAGE_CAP, SqlStore, clientKey, scoresApi, validate, type SqlLike, type Store } from './leaderboard';
 import { openSqlite } from './node_sqlite';
 
@@ -21,7 +21,13 @@ const sub = (o: Record<string, unknown> = {}) => ({
 describe('leaderboard: validate', () => {
   it('accepts a good post and ignores extra fields', () => {
     const v = validate({ ...sub(), extra: 'x' });
-    expect(v.ok && v.sub).toEqual(sub());
+    expect(v.ok && v.sub).toEqual({ ...sub(), gems: 0 }); // no gems field (older clients) = 0
+  });
+
+  it('checks the optional gems field against what the level can hold', () => {
+    expect(validate(sub({ gems: 12 }))).toMatchObject({ ok: true, sub: { gems: 12 } });
+    expect(validate(sub({ gems: maxGems(1) }))).toMatchObject({ ok: true });
+    for (const gems of [-1, 1.5, '3', null, maxGems(1) + 1]) expect(validate(sub({ gems }))).toEqual({ ok: false, reason: 'bad_gems' });
   });
 
   it('rejects bad bodies and fields with bad_<field>', () => {
@@ -136,8 +142,17 @@ describe('leaderboard: HTTP route', () => {
 });
 
 describe('leaderboard hardening', () => {
-  // A real level 1 clear: 2,000 + 3 hearts x 1,000 + (75 - 60) s x 20 + 3 Martians x 500 = 6,800, 3 stars.
+  // A level 1 clear from a client before the per-stage pars (still accepted):
+  // 2,000 + 3 hearts x 1,000 + (75 - 60) s x 20 + 3 Martians x 500 = 6,800, 3 stars.
   const real = sub({ score: 6800, completion_time_seconds: 60, hearts_left: 3, stars: 3 });
+
+  it('accepts a clear with gems when the gems field says so', () => {
+    const lb = new Leaderboard(new MemoryStore());
+    // Today: 2,000 + 3,000 hearts + (90 - 60) s x 20 + 2 Martians x 500 + 7 gems x 50 = 6,950.
+    expect(lb.submit(sub({ score: 6950, gems: 7 }), 0)).toMatchObject({ ok: true, best: 6950 });
+    expect(lb.submit(sub({ device_uuid: uuid(2), score: 6950 }), 0)).toEqual({ ok: false, reason: 'bad_score' }); // gems missing
+    expect(lb.submit(sub({ device_uuid: uuid(3), score: 6950, gems: 8 }), 0)).toEqual({ ok: false, reason: 'bad_score' });
+  });
 
   it('accepts a score a real clear can produce, rejects one it cannot', () => {
     const lb = new Leaderboard(new MemoryStore());

@@ -83,7 +83,7 @@ export function makeMartian(kind: number): THREE.Group {
   g.add(body);
   const parts: MartianParts = { skin, body, tentacles: [], legs: [], claws: [], feelers: [] };
 
-  if (kind === Kind.Goopling) {
+  if (kind === Kind.Goopling || kind === Kind.Chaser) {
     const dome = mesh(G.dome, skin, 0, 0.12, 0);
     dome.scale.y = 0.95;
     body.add(dome, mesh(G.skirt, dark, 0, 0.12, 0));
@@ -193,7 +193,7 @@ export const SLAP_SECONDS = 0.25;
 export function animateMartian(kind: number, parts: MartianParts, t: number, seed: number, moving: boolean, frozen: boolean, slap = 0): void {
   if (frozen) return;
   const s = t + seed;
-  if (kind === Kind.Goopling) {
+  if (kind === Kind.Goopling || kind === Kind.Chaser) {
     parts.tentacles.forEach((p, i) => { p.rotation.z = Math.sin(s * (moving ? 9 : 4) + i * 1.3) * 0.35; });
   } else if (kind === Kind.Sniffer) {
     if (parts.snout) parts.snout.rotation.set(Math.sin(s * 11) * 0.08, Math.sin(s * 7) * 0.12, 0);

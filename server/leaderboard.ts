@@ -1,5 +1,5 @@
 import { cleanName, defaultName } from '../src/services/name_filter';
-import { levelOfStage, maxScore, scoreConsistent } from '../src/services/score';
+import { levelOfStage, maxGems, maxScore, scoreConsistent } from '../src/services/score';
 import { UUID_RE, type ScoreRow, type ScoreSubmission, type SubmitReply, type TopScores } from '../src/services/leaderboard_types';
 import { type Row, type Store } from './leaderboard_store';
 
@@ -41,6 +41,9 @@ export function validate(body: unknown): Validated {
   if (!intIn(b.completion_time_seconds, 5, 3600)) return { ok: false, reason: 'bad_time' };
   if (!intIn(b.hearts_left, 1, 3)) return { ok: false, reason: 'bad_hearts' };
   if (!intIn(b.stars, 1, 3)) return { ok: false, reason: 'bad_stars' };
+  // Older clients send no gems field: their scores have none.
+  const gems = b.gems === undefined ? 0 : b.gems;
+  if (!intIn(gems, 0, maxGems(level))) return { ok: false, reason: 'bad_gems' };
   const clean = cleanName(b.display_name);
   return {
     ok: true,
@@ -53,6 +56,7 @@ export function validate(body: unknown): Validated {
       completion_time_seconds: b.completion_time_seconds,
       hearts_left: b.hearts_left,
       stars: b.stars,
+      gems,
     },
   };
 }
@@ -104,7 +108,7 @@ export class Leaderboard {
     const s = v.sub;
     const device = s.device_uuid;
     // The score, time, hearts and stars must fit together the way the game computes them.
-    if (this.checkScores && !scoreConsistent(levelOfStage(s.stage_id)!, s.score, s.completion_time_seconds, s.hearts_left, s.stars)) {
+    if (this.checkScores && !scoreConsistent(levelOfStage(s.stage_id)!, s.score, s.completion_time_seconds, s.hearts_left, s.stars, s.gems ?? 0)) {
       return { ok: false, reason: 'bad_score' };
     }
 

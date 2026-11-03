@@ -45,3 +45,11 @@ describe('particle pool', () => {
     expect(p.alive).toBe(0);
   });
 });
+
+describe('Star Dot (gem)', () => {
+  it('has a look and a body, apart from the power-ups', () => {
+    expect(ITEM_LOOK[Item.Gem].name).toBe('Star Dot');
+    expect(itemBody(Item.Gem).children.length).toBeGreaterThan(0);
+    expect(ITEM_KINDS).not.toContain(Item.Gem);
+  });
+});

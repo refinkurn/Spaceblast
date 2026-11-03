@@ -52,11 +52,6 @@ Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the
 
 ## Blocked
 
-- **Design chat: gameplay balance proposal** (from Refindo's "production readiness" brief, 2026-10-22). Not built: it changes rules and canon, so it needs a spec that fits the game first. The brief asked for:
-  - Rock drop table: empty 40%, "dot gem" 30%, extra charge 15%, speed boots 10%, oxygen vest 5%. Today: 1 rock in 6 hides a power-up (about 83% empty); items are Beam Range+, Extra Charge, Speed Boost, Freeze Pulse, Oxygen Vest; there is no gem (it would need a purpose: score? currency?).
-  - Stages 1-1..1-4 with "Roamer"/"Chaser" Martians (1-3: 2 Roamers + 2 Chasers; 1-4: 4 Chasers), par 90/80/75/60 s, low-to-high rock density per stage. Today: Gooplings and Sniffers in sector 1, only sector 4 Martians hunt (canon), par 75 s on every normal level, one rock density (60%), and 1-4 is a normal level before the 1-5 boss.
-  - "gameplay_config.json / stages.json": rules live in typed integer constants in src/sim (deterministic for online play); a JSON file is possible later if the design team wants to edit numbers, as long as it stays integers.
-  Please decide which parts to keep, in canon terms, and queue a spec; rules changes go to the code session (sim-specialist), not the nightly run.
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
 
 ## Known issues
@@ -74,6 +69,9 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 ## Done
 
 Older entries: docs/CHANGELOG.md.
+
+- 2026-11-03: balance brief built (Refindo: "execute"). Rock drop table per rock (Story: empty 38, Star Dot 30, Extra Charge 8, Beam Range+ 7, Speed 10, Vest 5, Freeze 2; Battle: empty 68, no dots/freeze), Star Dots (+50 score, survive blasts, golden gem without shell, own stat row, blip sound, first-pickup card), Hungry Goopling "Chaser" (pink, chases within 4 path steps; card + 1-3/1-4 briefings), sector 1 rosters 2G / 3G / 2G+2C / 4C, par 90/80/75/60 s and rock density 50/55/60/65% per stage in every sector; leaderboard check accepts gems (old clients = 0). sim-specialist did src/sim, score, leaderboard. Battle now has ~32% power-up rocks (was ~17%), bots closer in skill. 489 tests pass. Story text for the Chaser/Star Dot is new: story chat may reword.
+- 2026-11-03: analytics live. POST /api/events on the worker stores anonymous events (session start/end, daily retention, Story level start/clear/fail, battle rounds) in D1 `spaceblast-analytics`; queries in docs/ANALYTICS.md. Cloudflare Web Analytics waits for Refindo to set VITE_CF_BEACON_TOKEN in Vercel.
 
 - 2026-11-01: Ducking v0.3 and Captain Kit v0.2 art swapped into src/assets/characters (final Ducking at 120 px, redrawn Kit worried/relieved portraits); art-drop/2026-11-01 removed; PHONE_TEST check added. 454 tests pass, build clean.
 

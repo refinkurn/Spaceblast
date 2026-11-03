@@ -13,6 +13,11 @@ export const GRID_H = 11;
 export const PLAYER_SPEED = 67;
 
 export const ROCK_DENSITY_PERCENT = 60;
+/** Story: rock density for stages 1-4 of each sector (bosses and level 20 use ROCK_DENSITY_PERCENT). */
+export const STAGE_ROCK_DENSITY: readonly number[] = [50, 55, 60, 65];
+/** Story: par seconds for stages 1-4 of each sector (bosses have none; level 20 is RIVAL_PAR_SECONDS). */
+export const STAGE_PAR_SECONDS: readonly number[] = [90, 80, 75, 60];
+export const RIVAL_PAR_SECONDS = 60;
 /** Side of the rock-free square around each spawn corner. */
 export const SPAWN_SAFE = 3;
 
@@ -49,10 +54,22 @@ export const START_CHARGES = 1;
 export const RESPAWN_TICKS = 90;
 
 // --- Power-ups ----------------------------------------------------------------
-export const Item = { None: 0, BeamRange: 1, ExtraCharge: 2, JetBoots: 3, FreezePulse: 4, OxygenVest: 5 } as const;
+/** Gem: a Star Dot (Story only), worth score; not a power-up, and beams don't burn it. */
+export const Item = { None: 0, BeamRange: 1, ExtraCharge: 2, JetBoots: 3, FreezePulse: 4, OxygenVest: 5, Gem: 6 } as const;
 export type Item = (typeof Item)[keyof typeof Item];
-/** 1 in N rocks hides a power-up. */
-export const ITEM_ONE_IN = 6;
+/**
+ * What a rock hides, out of 100 (one roll per rock). Battle has no gems (that
+ * share stays empty) and rolls Extra Charge for Freeze Pulse (items.ts).
+ */
+export const ROCK_DROPS: ReadonlyArray<readonly [Item, number]> = [
+  [Item.None, 38],
+  [Item.Gem, 30],
+  [Item.ExtraCharge, 8],
+  [Item.BeamRange, 7],
+  [Item.JetBoots, 10],
+  [Item.OxygenVest, 5],
+  [Item.FreezePulse, 2],
+];
 export const MAX_RANGE = 5;
 export const MAX_CHARGES = 5;
 /** Speed Boost steps (the item is still called JetBoots in code). */
@@ -65,12 +82,15 @@ export const MAX_ARMOR = 3;
 export const FREEZE_TICKS = 180;
 
 // --- Martians and lives ---------------------------------------------------
-export const Kind = { Goopling: 1, Sniffer: 2, Phaser: 3, Builder: 4 } as const;
+/** Chaser: a hungry Goopling (same species) that goes for a nearby astronaut. */
+export const Kind = { Goopling: 1, Sniffer: 2, Phaser: 3, Builder: 4, Chaser: 5 } as const;
 export type Kind = (typeof Kind)[keyof typeof Kind];
 /** Goopling: 2 tiles/s. */
 export const GOOPLING_SPEED = 33;
-/** Movement speed per Kind, in units per tick (Sniffer 3 tiles/s, Builder 1.8). */
-export const MARTIAN_SPEED = [0, GOOPLING_SPEED, 50, 40, 30] as const;
+/** Movement speed per Kind, in units per tick (Sniffer 3 tiles/s, Builder 1.8, Chaser as a Goopling). */
+export const MARTIAN_SPEED = [0, GOOPLING_SPEED, 50, 40, 30, GOOPLING_SPEED] as const;
+/** Chaser: steps towards the nearest astronaut within this many steps (walking path). */
+export const CHASE_RANGE = 4;
 /** Sniffer: notices a charge only once it has been down this long (0.6 s)... */
 export const SNIFF_DELAY_TICKS = 36;
 /** ...and misjudges 1 decision in this many. */

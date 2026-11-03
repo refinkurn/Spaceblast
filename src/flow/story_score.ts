@@ -14,7 +14,7 @@ export function scoreRows(s: ScoreBreakdown, prevBest: number): [string, string]
 }
 
 /** `cardOpen` says whether the end-of-level card is still up when the rank arrives. */
-export function sendScore(level: number, score: ScoreBreakdown, heartsLeft: number, cardOpen: () => boolean): void {
+export function sendScore(level: number, score: ScoreBreakdown, heartsLeft: number, gems: number, cardOpen: () => boolean): void {
   const me = loadProfile();
   void leaderboard.submit({
     device_uuid: me.uuid,
@@ -24,6 +24,7 @@ export function sendScore(level: number, score: ScoreBreakdown, heartsLeft: numb
     completion_time_seconds: Math.max(5, score.seconds),
     hearts_left: heartsLeft,
     stars: score.stars,
+    gems,
   }).then((reply) => {
     if (!reply?.ok || !cardOpen()) return;
     const list = document.getElementById('banner-summary');

@@ -94,7 +94,7 @@ function crossBlast(state: GameState, b: Boss): void {
     if (state.grid.cells[i] === Cell.Rock) {
       state.grid.cells[i] = Cell.Empty;
       state.events.push({ type: 'rock_broken', tx: i % state.grid.w, ty: Math.floor(i / state.grid.w) });
-    } else if (state.items[i] !== Item.None) {
+    } else if (state.items[i] !== Item.None && state.items[i] !== Item.Gem) {
       state.items[i] = Item.None;
       state.events.push({ type: 'item_destroyed', tx: i % state.grid.w, ty: Math.floor(i / state.grid.w) });
     }

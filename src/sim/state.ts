@@ -27,6 +27,8 @@ export interface Player {
   boots: number;
   /** Oxygen Vest armor points: each absorbs one hit, 0..MAX_ARMOR. */
   armor: number;
+  /** Gems (Star Dots) picked up this level, for the Story score. */
+  gems: number;
   /** Place button state last tick, so holding it places only one charge. */
   placeHeld: boolean;
   /** Charges this player is still standing on and may walk off. */
@@ -125,6 +127,11 @@ export interface GameOptions {
   boss?: BossKind;
   /** Survival duel: player 1 is the Renegade Pilot (level 20). */
   rival?: boolean;
+  /**
+   * Story: chance (in %) that a floor tile starts as a rock, instead of the
+   * arena layout's own (levels.ts rockDensity). Ignored in battle.
+   */
+  rockDensity?: number;
   /** Battle: ticks before the arena starts to collapse (default ROUND_TICKS). */
   roundTicks?: number;
   /**
@@ -236,7 +243,7 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
     gateWait: 0,
     events: [],
   };
-  state.grid = generateGrid(state, state.arena);
+  state.grid = generateGrid(state, state.arena, battle ? undefined : options.rockDensity);
   placeItems(state);
   if (bossKind) setupBoss(state, bossKind);
   else if (!battle && !rival) placeGate(state);
@@ -261,6 +268,7 @@ function newPlayer(id: number, lives: number): Player {
     maxCharges: START_CHARGES,
     boots: 0,
     armor: 0,
+    gems: 0,
     placeHeld: false,
     passable: [],
   };

@@ -1,3 +1,4 @@
+import { Item } from '../sim/constants';
 import type { GameState, SimEvent } from '../sim/state';
 
 // What happened this level or round, for the end-of-match stats: rocks
@@ -8,6 +9,7 @@ export class MatchTally {
   rocks = 0;
   martians = 0;
   powerups = 0;
+  gems = 0;
   private state: GameState | null = null;
 
   /** Counts one tick's events. `local` is this browser's player id. */
@@ -16,13 +18,16 @@ export class MatchTally {
     for (const e of events) {
       if (e.type === 'rock_broken') this.rocks++;
       else if (e.type === 'martian_killed') this.martians++;
-      else if (e.type === 'item_picked' && e.id === local) this.powerups++;
+      else if (e.type === 'item_picked' && e.id === local) {
+        if (e.item === Item.Gem) this.gems++;
+        else this.powerups++;
+      }
     }
   }
 
   reset(state: GameState | null = null): void {
     this.state = state;
-    this.rocks = this.martians = this.powerups = 0;
+    this.rocks = this.martians = this.powerups = this.gems = 0;
   }
 }
 

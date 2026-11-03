@@ -30,6 +30,7 @@ Run 2026-10-31 by Refindo on iPhone 11 (Safari + home screen) and a Meizu phone.
 - [x] Installed to home screen (iOS): opens offline too
 
 - [ ] Ducking v0.3 (clear helmet, eyepatch, cape, V emblem): check him in every cutscene where he speaks (portraits) and in his full-body poses; check Kit's worried and relieved portrait lines
+- [ ] Balance (2026-11-03): Star Dots (small golden gems) show under about a third of the rocks in Story and are easy to see on every sector's floor; picking one blips and adds to the score; pink Hungry Gooplings in 1-3/1-4 chase you when close but can still be outrun
 
 ## Found
 - iPhone 11, opened from the home screen: sometimes the bottom of the screen is cropped a little.

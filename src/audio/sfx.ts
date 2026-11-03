@@ -108,6 +108,10 @@ export class Sfx {
 
   private pickup(item: number, mine: boolean): void {
     const vol = mine ? 0.22 : 0.08;
+    if (item === Item.Gem) {
+      this.a.tone({ freq: note(19), type: 'triangle', at: this.a.now, dur: 0.05, vol: vol * 0.6 });
+      return;
+    }
     const steps = item === Item.OxygenVest ? [0, 5, 9] : item === Item.JetBoots ? [0, 4, 7, 11] : [0, 4, 7];
     steps.forEach((s, i) => this.a.tone({ freq: note(s + 12), type: 'square', at: this.a.now + i * 0.05, dur: 0.09, vol }));
   }

@@ -19,6 +19,7 @@ Decided by Refindo, 2026-10-22: the mechanics follow the story journey, and diff
 | Type | Behaviour | First seen |
 |---|---|---|
 | Goopling (G) | slow, wanders, bites on contact | 1 |
+| Hungry Goopling (C, Chaser) | a pink Goopling: chases you within 4 steps (hunger) | 3 |
 | Sniffer (S) | faster; notices charges and dodges blasts (not always) | 6 |
 | Phaser (P) | hides in a burrow (can't be hit), jumps through portals | 11 |
 | Builder (B) | slow, toxic to touch, builds rocks next to itself | 16 |
@@ -28,8 +29,8 @@ Decided by Refindo, 2026-10-22: the mechanics follow the story journey, and diff
 |---|---|---|---|---|---|
 | 1-1 (1) | Duststorm Valley | G G | 2 | none | Clear a path through the rocks. (tutorial) |
 | 1-2 (2) | | G G G | 3 | none | Small creatures. Keep your distance. |
-| 1-3 (3) | | G G G G | 4 | none | More Gooplings. Lure them into your blasts. |
-| 1-4 (4) | | G G G G G | 5 | none | The whole herd is out. (sector exam) |
+| 1-3 (3) | | G G C C | 4 | none | Some Gooplings are hungry. Get close and they come for you. (first Chaser) |
+| 1-4 (4) | | C C C C | 4 | none | The hungry ones are out. Keep moving, keep your distance. (sector exam) |
 | 1-5 (5) | | **Goopling Hive** | 3 per wave | waves 44 → 22 → 11 s | outlast 3 waves |
 | 2-1 (6) | Abandoned Mining Colony | G G S | 3 | none | New readings: Sniffers. (first Sniffer) |
 | 2-2 (7) | | G G S S | 4 | **Blackout** (first event always a Blackout) | The power down here is failing. |
@@ -57,3 +58,5 @@ Event timing (unchanged): first event about 20 s in, then every 25-35 s; "twice 
 - Bosses are faster. The first waits are 44, 40 and 36 s (were 60, 48 and 40). Each wait is still half the one before, and none is over 50 s. The fights now last about 77, 70 and 63 s (were 105, 84 and 70).
 
 - 2026-10-22: one species and one scenario per sector (above). Before, all 4 species and both scenarios had arrived by level 8.
+
+- 2026-11-03 (Refindo's balance brief): sector 1 is 2 Gooplings, 3 Gooplings, 2 Gooplings + 2 Chasers, 4 Chasers. Par per stage 90/80/75/60 s and rock density 50/55/60/65% in every sector. Star Dots (30% of rocks, +50 each).

@@ -1,5 +1,5 @@
 import {
-  BEAM_FADE_TICKS, BITE_REACH, BOSS_OWNER, BUILD_EVERY_TICKS, BUILDER_MAX_ROCKS, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS, Item, Kind,
+  BEAM_FADE_TICKS, BITE_REACH, BOSS_OWNER, BUILD_EVERY_TICKS, BUILDER_MAX_ROCKS, CHASE_RANGE, Cell, DIR_DX, DIR_DY, Dir, FUSE_TICKS, Item, Kind,
   MARTIAN_SPAWN_DISTANCE, MARTIAN_SPEED, PHASER_HIDE_TICKS, PHASER_WANDER_TICKS, PORTAL_TICKS, SNIFF_DELAY_TICKS,
   SNIFF_MISS_ONE_IN, SPAWNS, TILE,
 } from './constants';
@@ -10,6 +10,8 @@ import { playerTile, type GameState, type Martian } from './state';
 
 // Martians move tile to tile on the grid (no physics) and bite astronauts.
 //   Goopling: slow, wanders, turns at random at junctions.
+//   Chaser:   a hungry Goopling: wanders the same, but heads for an astronaut
+//             within CHASE_RANGE steps (instinct, not the sector-4 Hunt).
 //   Sniffer:  faster; notices charges after a delay and dodges blast lines (not always).
 //   Phaser:   wanders, hides in a burrow (can't be hit), then jumps through a portal pair.
 //   Builder:  slow and toxic to touch, never chases; builds Mars rocks next to itself.
@@ -89,10 +91,46 @@ function sniffDir(state: GameState, m: Martian, open: MoveDir[], tx: number, ty:
   return danger[ty * w + tx] === SAFE ? Dir.None : wanderDir(state, m, open); // wait it out where it is safe
 }
 
+/**
+ * Chaser: the first step of the shortest walk (breadth-first, Up/Down/Left/Right
+ * order, so every browser picks the same one) to the nearest living astronaut at
+ * most CHASE_RANGE steps away, or Dir.None if nobody is that close.
+ */
+export function chaseStep(state: GameState, tx: number, ty: number): Dir {
+  const { w } = state.grid;
+  const targets = new Set(state.players.filter((p) => p.alive).map((p) => { const [px, py] = playerTile(p); return py * w + px; }));
+  if (targets.size === 0) return Dir.None;
+  const start = ty * w + tx;
+  const first = new Map<number, Dir>([[start, Dir.None]]);
+  let frontier = [start];
+  for (let depth = 1; depth <= CHASE_RANGE && frontier.length > 0; depth++) {
+    const next: number[] = [];
+    for (const i of frontier) {
+      const x = i % w, y = Math.floor(i / w);
+      for (const d of ALL_DIRS) {
+        const nx = x + DIR_DX[d], ny = y + DIR_DY[d];
+        const ni = ny * w + nx;
+        if (first.has(ni) || !martianCanEnter(state, nx, ny)) continue;
+        const dir = depth === 1 ? d : first.get(i)!;
+        if (targets.has(ni)) return dir;
+        first.set(ni, dir);
+        next.push(ni);
+      }
+    }
+    frontier = next;
+  }
+  return Dir.None;
+}
+
 function chooseDir(state: GameState, m: Martian, tx: number, ty: number): Dir {
   const open = ALL_DIRS.filter((d) => martianCanEnter(state, tx + DIR_DX[d], ty + DIR_DY[d]));
   if (open.length === 0) return Dir.None;
-  return m.kind === Kind.Sniffer ? sniffDir(state, m, open, tx, ty) : wanderDir(state, m, open);
+  if (m.kind === Kind.Sniffer) return sniffDir(state, m, open, tx, ty);
+  if (m.kind === Kind.Chaser) {
+    const chase = chaseStep(state, tx, ty);
+    if (chase !== Dir.None) return chase;
+  }
+  return wanderDir(state, m, open);
 }
 
 /** The next tile centre ahead of a Martian along its direction. */

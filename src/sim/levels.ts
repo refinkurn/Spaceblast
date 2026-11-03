@@ -1,4 +1,5 @@
-import { BossKind, Kind } from './constants';
+import { BossKind, Kind, RIVAL_PAR_SECONDS, ROCK_DENSITY_PERCENT, STAGE_PAR_SECONDS, STAGE_ROCK_DENSITY } from './constants';
+import type { GameOptions } from './state';
 
 // Survival ("story mode"): 20 levels in 4 sectors of 5. The 5th level of
 // each sector is a boss: survival waves on 5, 10 and 15, a duel on 20.
@@ -7,7 +8,7 @@ import { BossKind, Kind } from './constants';
 // new Martian species and one new scenario (hazard), introduced by Kit's
 // briefing, with the Martian count rising steadily inside each sector.
 //
-//   Sector 1  Duststorm Valley         (1-5)   new: Gooplings; no scenario, no hazards
+//   Sector 1  Duststorm Valley         (1-5)   new: Gooplings, then hungry Gooplings (Chasers, 3); no hazards
 //   Sector 2  Abandoned Mining Colony  (6-10)  new: Sniffers (6), Blackout (7)
 //   Sector 3  Crystal Core             (11-15) new: Phasers + Maze Shift (11); Blackout returns (13), gate drifts (14)
 //   Sector 4  Underground Bio-Lab      (16-20) new: Builders + the Hunt (16); then every hazard together
@@ -41,9 +42,15 @@ export interface LevelSpec {
   rival: boolean;
   /** Arena layout (arenas.ts): each sector has its own, so this is the sector number. */
   arena: number;
+  /** Stage in the sector, 1-5 (5 = the boss, or the duel on level 20). */
+  stage: number;
+  /** Par in seconds for the score's time bonus; null on boss levels. */
+  par: number | null;
+  /** Chance (in %) that a floor tile starts as a rock (GameOptions.rockDensity). */
+  rockDensity: number;
 }
 
-const { Goopling: G, Sniffer: S, Phaser: P, Builder: B } = Kind;
+const { Goopling: G, Sniffer: S, Phaser: P, Builder: B, Chaser: C } = Kind;
 
 const MAZE: Partial<LevelRules> = { mazeShift: true };
 const DARK: Partial<LevelRules> = { blackout: true };
@@ -60,8 +67,8 @@ const LEVELS: { roster: Kind[]; rules?: Partial<LevelRules> }[] = [
   // Sector 1: Duststorm Valley. Gooplings only, no hazards: learn the basics.
   { roster: [G, G] }, //                         1  tutorial: two slow Gooplings
   { roster: [G, G, G] }, //                      2  more Gooplings
-  { roster: [G, G, G, G] }, //                   3  a crowd of Gooplings
-  { roster: [G, G, G, G, G] }, //                4  the sector's peak
+  { roster: [G, G, C, C] }, //                   3  first hungry Gooplings (Chasers)
+  { roster: [C, C, C, C] }, //                   4  the sector's peak: all hungry
   { roster: [] }, //                             5  Goopling Hive
   // Sector 2: Abandoned Mining Colony. New: Sniffers, then Blackouts (the only hazard here).
   { roster: [G, G, S] }, //                      6  first Sniffer; no hazards yet
@@ -96,12 +103,19 @@ export function sectorOf(level: number): number {
 
 export function levelSpec(level: number): LevelSpec {
   const n = Math.max(1, Math.min(level, LEVEL_COUNT));
+  const stage = n - (sectorOf(n) - 1) * 5;
+  const boss = BOSSES[n] ?? BossKind.None;
+  // Stages 1-4 get par 90/80/75/60 s and rocks 50/55/60/65 %; bosses and the duel keep 60 %.
+  const normal = stage <= 4;
   return {
+    stage,
+    par: boss ? null : normal ? STAGE_PAR_SECONDS[stage - 1] : RIVAL_PAR_SECONDS,
+    rockDensity: normal ? STAGE_ROCK_DENSITY[stage - 1] : ROCK_DENSITY_PERCENT,
     level: n,
     sector: sectorOf(n),
     roster: [...LEVELS[n - 1].roster],
     rules: rulesFor(n),
-    boss: BOSSES[n] ?? BossKind.None,
+    boss,
     rival: n === LEVEL_COUNT,
     arena: sectorOf(n),
   };
@@ -119,4 +133,10 @@ export function levelRules(level: number): LevelRules {
 /** First level of each sector: these get the story card. */
 export function isSectorStart(level: number): boolean {
   return level === 1 || level === 6 || level === 11 || level === 16;
+}
+
+/** Everything createGame needs for a Story level (roster, hazards, boss, duel, arena, rock density). */
+export function storyOptions(level: number): GameOptions {
+  const spec = levelSpec(level);
+  return { roster: spec.roster, rules: spec.rules, boss: spec.boss, rival: spec.rival, arena: spec.arena, rockDensity: spec.rockDensity };
 }

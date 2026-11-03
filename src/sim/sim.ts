@@ -82,7 +82,7 @@ export function hashState(state: GameState): number {
   for (const b of state.beams) mix(b);
   for (const o of state.beamOwner) mix(o);
   for (const p of state.players) {
-    for (const v of [p.x, p.y, p.facing, p.alive ? 1 : 0, p.lives, p.respawn, p.shield, p.range, p.maxCharges, p.boots, p.armor, p.placeHeld ? 1 : 0]) mix(v);
+    for (const v of [p.x, p.y, p.facing, p.alive ? 1 : 0, p.lives, p.respawn, p.shield, p.range, p.maxCharges, p.boots, p.armor, p.gems, p.placeHeld ? 1 : 0]) mix(v);
     for (const id of p.passable) mix(id);
   }
   for (const m of state.martians) for (const v of [m.id, m.kind, m.x, m.y, m.dir, m.alive ? 1 : 0, m.timer, m.hidden ? 1 : 0, m.built]) mix(v);

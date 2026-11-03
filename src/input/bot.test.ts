@@ -113,13 +113,15 @@ describe('bot difficulty', () => {
 
   // Steps, not cliffs: Normal is a ~20% softer fight than it used to be, so it
   // beats Easy clearly but no longer crushes it (it was about 23-5 in 30 rounds).
+  // Since the rock drop table (about 1 rock in 3 hides a power-up in Battle)
+  // rounds are swingier, so this needs 60 rounds: about 27-23 and 30-24.
   it('normal beats easy and hard beats normal (bot-vs-bot rounds often end in draws)', () => {
-    const ne = duel('normal', 'easy', 12);
+    const ne = duel('normal', 'easy', 60);
     expect(ne.wins).toBeGreaterThan(ne.losses);
     expect(ne.losses).toBeGreaterThan(0);
-    const hn = duel('hard', 'normal', 12);
+    const hn = duel('hard', 'normal', 60);
     expect(hn.wins).toBeGreaterThan(hn.losses);
-  }, 30000);
+  }, 120000);
 
   it('an easy bot rarely blows itself up against an idle player', () => {
     let selfKills = 0;

@@ -9,10 +9,13 @@ export interface Grid {
   cells: Uint8Array;
 }
 
-/** Builds layout `arena` (arenas.ts; default classic) and rolls its rocks, one RNG draw per floor tile outside the spawn zones. */
-export function generateGrid(rng: RngState, arena = CLASSIC_ARENA): Grid {
+/**
+ * Builds layout `arena` (arenas.ts; default classic) and rolls its rocks, one RNG
+ * draw per floor tile outside the spawn zones. `rockDensity` (0-100 %) overrides the layout's.
+ */
+export function generateGrid(rng: RngState, arena = CLASSIC_ARENA, rockDensity?: number): Grid {
   const cells = new Uint8Array(GRID_W * GRID_H);
-  const density = arenaLayout(arena).rockDensity;
+  const density = Number.isInteger(rockDensity) ? Math.max(0, Math.min(100, rockDensity!)) : arenaLayout(arena).rockDensity;
   for (let y = 0; y < GRID_H; y++) {
     for (let x = 0; x < GRID_W; x++) {
       cells[y * GRID_W + x] = rollCell(arena, density, x, y, rng);

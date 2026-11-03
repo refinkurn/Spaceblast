@@ -16,6 +16,8 @@ export const MARTIAN_COLOR: Record<number, number> = {
   [Kind.Sniffer]: 0xa66bff,
   [Kind.Phaser]: 0x7f8cff,
   [Kind.Builder]: 0xc6e33a,
+  /** Hungry Goopling: a Goopling body in hot pink (orange clashed with the sector rocks), so it reads as "this one comes for you". */
+  [Kind.Chaser]: 0xff8fab,
 };
 /** A frozen Martian (Freeze Pulse). */
 export const FROZEN = 0x9fd8ff;
@@ -35,6 +37,7 @@ export const RESERVED: Record<string, number> = {
   sniffer: MARTIAN_COLOR[Kind.Sniffer],
   phaser: MARTIAN_COLOR[Kind.Phaser],
   builder: MARTIAN_COLOR[Kind.Builder],
+  chaser: MARTIAN_COLOR[Kind.Chaser],
   frozen: FROZEN,
   warnRemove: WARN_REMOVE,
   gate: GATE_OPEN,

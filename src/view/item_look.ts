@@ -21,10 +21,11 @@ export const ITEM_LOOK: Record<number, ItemLook> = {
   [Item.JetBoots]: { name: 'Speed Boost', color: 0xffe600, second: 0xffffff },
   [Item.FreezePulse]: { name: 'Freeze Pulse', color: 0xb9a4ff, second: 0xffffff },
   [Item.OxygenVest]: { name: 'Oxygen Vest', color: 0xffffff, second: 0x7fe8ff },
+  [Item.Gem]: { name: 'Star Dot', color: 0xffd84a, second: 0xfff4c2 },
 };
 
-/** Every real power-up (not Item.None). */
-export const ITEM_KINDS: number[] = Object.values(Item).filter((v) => v !== Item.None);
+/** The power-ups (the Gem / Star Dot gets its own look with its UI). */
+export const ITEM_KINDS: number[] = Object.values(Item).filter((v) => v !== Item.None && v !== Item.Gem);
 
 const glow = (color: number, intensity = 0.8) =>
   new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, roughness: 0.4, flatShading: true });
@@ -72,6 +73,12 @@ function body(item: number): THREE.Group {
   const g = new THREE.Group();
   const l = ITEM_LOOK[item];
   switch (item) {
+    case Item.Gem: {
+      // Star Dot: a small golden gem, Pac-Man-dot sized, no glass shell.
+      g.add(mesh(geo('gem', () => new THREE.OctahedronGeometry(0.11, 0)), mat('gem', () => glow(l.color, 1))));
+      g.add(mesh(geo('gem-core', () => new THREE.OctahedronGeometry(0.05, 0)), mat('gem-core', () => glow(l.second, 1.2)), 0, 0.02, 0));
+      break;
+    }
     case Item.ExtraCharge: {
       g.add(mesh(geo('charge', () => new THREE.IcosahedronGeometry(0.15, 0)), mat('charge', () => solid(l.second))));
       g.add(mesh(geo('fuse', () => new THREE.OctahedronGeometry(0.07, 0)), mat('fuse', () => glow(l.color, 1.2)), 0, 0.2, 0));

@@ -12,6 +12,11 @@ export const ALIEN_CARDS: Record<Kind, IntroCard> = {
     id: 'goopling', name: 'Goopling', icon: martianIcon('#6fd14f'), focus: 'martian', zoom: 0.5, ...KIT,
     text: "Gooplings wander slowly. Touching one bites you.",
   },
+  // A Goopling with a temper: hunger, not Ducking's signal (that is the sector-4 Hunt).
+  [Kind.Chaser]: {
+    id: 'chaser', name: 'Hungry Goopling', icon: martianIcon('#ff8fab'), focus: 'martian', zoom: 0.5, ...KIT,
+    text: "The pink ones are hungry. Get within a few steps and they come for you.",
+  },
   [Kind.Sniffer]: {
     id: 'sniffer', name: 'Sniffer', icon: martianIcon('#a66bff'), focus: 'martian', zoom: 0.5, ...KIT,
     text: "Sniffers dodge your blasts. Trap them in a corridor.",

@@ -43,8 +43,8 @@ export const ENDING =
 export const CONTEXT: string[] = [
   'Clear a path through the rocks. We need those power cores to get home.',
   'Movement ahead. Small creatures. Keep your distance.',
-  'More Gooplings. Lure them into your blasts.',
-  'The whole herd is out. Stay alert.',
+  'Some Gooplings are hungry. Get close and they come for you.',
+  'The hungry ones are out. Keep moving, keep your distance.',
   '', // level 5: the boss / duel scene instead
   'New readings: Sniffers. They dodge your blasts, so trap them in a corridor.',
   'The power down here is failing. When the lights go, trust your memory.',

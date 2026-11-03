@@ -29,4 +29,8 @@ export const POWERUP_CARDS: Partial<Record<Item, IntroCard>> = {
     id: 'freeze_pulse', name: 'Freeze Pulse', icon: POWER_ICONS.freeze, focus: 'hero', zoom: 0.6, ...KIT,
     text: "Freezes every Martian for 3 seconds, as soon as you pick it up.",
   },
+  [Item.Gem]: {
+    id: 'star_dot', name: 'Star Dot', icon: '<svg viewBox="0 0 24 24" class="icon"><path d="M12 3l6 9-6 9-6-9z" fill="#ffd84a" stroke="#fff4c2" stroke-width="1.5"/></svg>', focus: 'hero', zoom: 0.6, ...KIT,
+    text: "Star Dots. Worth 50 points each. Blasts can't break them, so sweep them up.",
+  },
 };
