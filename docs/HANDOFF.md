@@ -19,6 +19,35 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
+Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the nightly run; 3-7 touch server/ or src/net/, so the nightly skips them and the code session (sim-specialist) takes them.
+
+- **Doc drift: power-up look** (docs/design/powerup-look.md)
+  Now: still describes the floor aura removed on 2026-10-22.
+  Want: describe what the game draws today (src/view), no aura.
+  Done when: the doc matches the code; no mention of a floor aura.
+- **Offline cache: a tab open across a deploy 404s on changed art** (server/offline_cache.ts, src/flow/offline.ts)
+  Now: an old page asks for a hashed art file the new deploy no longer has.
+  Want: on a failed asset load, fall back to the old cache, or reload the page once to the new version (no loop).
+  Done when: a test simulates old page + new cache and the file still loads or the page reloads once.
+- **Online: version check on join** (src/net/, server/room.ts) [code session]
+  Now: a room mixing an old cached page with a new one desyncs until everyone refreshes.
+  Want: the client sends its build version on join; on mismatch the server refuses with "update", and the page reloads once.
+  Done when: room test: mismatched version is refused, matched joins.
+- **Online: host restarts a round mid-round** (server/room.ts) [code session]
+  Now: `start` is accepted while a round runs.
+  Want: ignore `start` until the round is over.
+  Done when: room test covers it.
+- **Online: nameless `profile` resets the name** (server/room.ts) [code session]
+  Now: a `profile` without a name becomes "Player N".
+  Want: keep the seat's current name when the field is missing or empty.
+  Done when: room test covers it.
+- **Debt: split server/room.ts** (about 400 lines) [code session]
+  Want: round clock in its own file, room.ts under ~300 lines, no behaviour change.
+  Done when: all room tests pass unchanged.
+- **Debt: Durable Object hibernation for idle lobbies** [code session]
+  Want: change the ping protocol so idle lobbies can hibernate (WebSocket hibernation API), then enable it.
+  Done when: room tests pass and an idle lobby shows no running clock.
+
 ## In progress
 
 ## Blocked
