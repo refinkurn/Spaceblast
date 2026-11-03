@@ -21,10 +21,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the nightly run; 3-7 touch server/ or src/net/, so the nightly skips them and the code session (sim-specialist) takes them.
 
-- **Offline cache: a tab open across a deploy 404s on changed art** (server/offline_cache.ts, src/flow/offline.ts)
-  Now: an old page asks for a hashed art file the new deploy no longer has.
-  Want: on a failed asset load, fall back to the old cache, or reload the page once to the new version (no loop).
-  Done when: a test simulates old page + new cache and the file still loads or the page reloads once.
 - **Online: version check on join** (src/net/, server/room.ts) [code session]
   Now: a room mixing an old cached page with a new one desyncs until everyone refreshes.
   Want: the client sends its build version on join; on mismatch the server refuses with "update", and the page reloads once.
@@ -46,8 +42,6 @@ Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the
 
 ## In progress
 
-- **Offline cache: a tab open across a deploy 404s on changed art** (started 2026-11-03)
-
 ## Blocked
 
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
@@ -59,13 +53,14 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 - **Online: the host can restart a round mid-round** (server/room.ts) [code session].
 - **Online: a `profile` message without a name resets the player to "Player N"** (server/room.ts) [code session].
 - **Online: a room mixing an old cached page with a new one desyncs until everyone refreshes** (after a deploy). Needs a version check on join [code session].
-- **Offline cache: a tab left open across a deploy can 404 on a changed art file** (server/offline_cache.ts, src/flow/offline.ts).
 - **Debt: server/room.ts is about 400 lines** (rule: under ~300); split the round clock out [code session].
 - **Debt: Durable Object hibernation for idle lobbies** needs a ping protocol change first (assessed, not built) [code session].
 
 ## Done
 
 Older entries: docs/CHANGELOG.md.
+
+- 2026-11-03: offline cache across a deploy: sw.js now keeps the previous build's cache (older ones deleted) so an open tab's old art files still load; a failed lazy chunk reloads the page once (sessionStorage guard, no loop). Tests: old-page + new-cache SW case, reload-once. 493 tests pass.
 
 - 2026-11-03: doc drift fixed: docs/design/powerup-look.md now describes what src/view draws (clear shell, no floor glow, no idle particles, hoverboard and shield looks, Star Dot); no mention of a floor aura.
 

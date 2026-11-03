@@ -8,7 +8,9 @@ import type { Plugin, ResolvedConfig } from 'vite';
 // with no connection. Rooms (/room/CODE) and the leaderboard (/api/) always go
 // to the network. The page itself is network first, so updates arrive as soon
 // as the player is online; everything else is cache first (file names carry a
-// content hash). A new build gets a new cache and the old one is deleted.
+// content hash). A new build gets a new cache; the one before it is kept so a
+// tab left open across a deploy can still load its (since renamed) art files,
+// and older ones are deleted.
 
 /** Builds sw.js for this build's files (paths relative to the page, e.g. 'assets/index-abc.js'). */
 export function serviceWorkerSource(version: string, files: readonly string[]): string {
@@ -27,9 +29,13 @@ self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((f) => new Request(at(f), { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
+// Caches list in creation order: keep this build's and the build before it.
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys()
-    .then((keys) => Promise.all(keys.filter((k) => k.startsWith('spaceblast-') && k !== CACHE).map((k) => caches.delete(k))))
+    .then((keys) => {
+      const others = keys.filter((k) => k.startsWith('spaceblast-') && k !== CACHE);
+      return Promise.all(others.slice(0, -1).map((k) => caches.delete(k)));
+    })
     .then(() => self.clients.claim()));
 });
 
@@ -61,6 +67,7 @@ async function page(req) {
   }
 }
 
+// Saved files (this build's or the previous one's) first, then the network.
 async function file(req) {
   return (await caches.match(req, MATCH)) || fetch(req);
 }

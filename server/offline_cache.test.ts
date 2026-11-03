@@ -6,7 +6,7 @@ const SCOPE = 'https://game.example/play/';
 
 /** Runs sw.js against fake caches and a fake network; `online` switches the network. */
 function worker(files: string[], version = 'v1', opts: { quickTimeout?: boolean } = {}) {
-  const stores = new Map<string, Map<string, string>>([['spaceblast-old', new Map()], ['other-app', new Map()]]);
+  const stores = new Map<string, Map<string, string>>([['spaceblast-older', new Map()], ['spaceblast-old', new Map()], ['other-app', new Map()]]);
   const listeners: Record<string, (e: unknown) => void> = {};
   const net = { online: true, hang: false, status: 200, fetched: [] as string[] };
   const caches = {
@@ -54,12 +54,23 @@ function worker(files: string[], version = 'v1', opts: { quickTimeout?: boolean 
 }
 
 describe('offline cache (sw.js)', () => {
-  it('saves the page and every file on install, and drops only its own old caches', async () => {
+  it('saves the page and every file on install, keeps the previous build and drops only older caches of its own', async () => {
     const w = worker(['assets/index-abc.js', 'icon-192.png']);
     await w.lifecycle('install');
     expect([...w.stores.get('spaceblast-v1')!.keys()]).toEqual([SCOPE, `${SCOPE}assets/index-abc.js`, `${SCOPE}icon-192.png`]);
     await w.lifecycle('activate');
-    expect([...w.stores.keys()].sort()).toEqual(['other-app', 'spaceblast-v1']);
+    expect([...w.stores.keys()].sort()).toEqual(['other-app', 'spaceblast-old', 'spaceblast-v1']);
+  });
+
+  it('a tab left open across a deploy still loads its old art file from the previous cache', async () => {
+    const w = worker(['assets/index-new.js']);
+    w.stores.get('spaceblast-old')!.set(`${SCOPE}assets/hero-old.png`, 'saved old hero');
+    await w.lifecycle('install');
+    await w.lifecycle('activate');
+    w.net.status = 404; // the new deploy no longer has the old hashed file
+    expect(await w.request(`${SCOPE}assets/hero-old.png`)).toBe('saved old hero');
+    // Two deploys later the file is gone from every cache: the 404 reaches the page.
+    expect(await w.request(`${SCOPE}assets/hero-gone.png`)).toBe(`net 404 ${SCOPE}assets/hero-gone.png`);
   });
 
   it('opens the game with no connection: saved page for any page URL, saved files', async () => {
