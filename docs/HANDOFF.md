@@ -21,10 +21,6 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the nightly run; 3-7 touch server/ or src/net/, so the nightly skips them and the code session (sim-specialist) takes them.
 
-- **Online: version check on join** (src/net/, server/room.ts) [code session]
-  Now: a room mixing an old cached page with a new one desyncs until everyone refreshes.
-  Want: the client sends its build version on join; on mismatch the server refuses with "update", and the page reloads once.
-  Done when: room test: mismatched version is refused, matched joins.
 - **Online: host restarts a round mid-round** (server/room.ts) [code session]
   Now: `start` is accepted while a round runs.
   Want: ignore `start` until the round is over.
@@ -44,6 +40,7 @@ Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the
 
 ## Blocked
 
+- **Online: version check on join** (src/net/, server/room.ts) [code session] - Blocked 2026-11-07 by the nightly run: needs src/net/ and server/ (online sync), outside its scope; the code session (sim-specialist) takes it. The nightly also cannot build the other Ready items (all server/ or src/net/).
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
 
 ## Known issues
