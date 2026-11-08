@@ -14,7 +14,7 @@ export function devRelay(): Plugin {
   // Made on first use, so loading the config (builds, tests) starts nothing.
   let host: NodeHost | null = null;
   const attach = (server: ViteDevServer | PreviewServer) => {
-    host ??= createNodeHost({ leaderboard: new Leaderboard(new MemoryStore()), clientAddress: socketAddress, where: '' });
+    host ??= createNodeHost({ leaderboard: new Leaderboard(new MemoryStore()), clientAddress: socketAddress, where: '', devVersions: true });
     const h = host;
     server.httpServer?.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => { h.upgrade(req, socket, head); });
     server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {

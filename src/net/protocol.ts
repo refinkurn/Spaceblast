@@ -57,12 +57,27 @@ export type ArenaSetting = (typeof ARENA_SETTINGS)[number];
 
 export const DEFAULT_SETTINGS: RoomSettings = { time: 120, maze: false, blackout: false, bots: 0, botLevel: 'normal', match: 'ft3', arena: 'random' };
 
-/** Trims a typed name to something safe to show; empty becomes "Player N". */
-export function cleanName(raw: unknown, slot: number): string {
+/** Trims a typed name to something safe to show; '' when nothing is left (or it isn't text). */
+export function trimName(raw: unknown): string {
   const clean = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim() : '';
   // Cut by characters, not UTF-16 units, so an emoji is never split in half.
-  const name = Array.from(clean).slice(0, NAME_MAX).join('').trim();
-  return name || `Player ${slot + 1}`;
+  return Array.from(clean).slice(0, NAME_MAX).join('').trim();
+}
+
+/** Trims a typed name to something safe to show; empty becomes "Player N". */
+export function cleanName(raw: unknown, slot: number): string {
+  return trimName(raw) || `Player ${slot + 1}`;
+}
+
+/** Longest build version a join may carry (a git commit is cut to 12 characters). */
+export const VERSION_MAX = 40;
+
+/**
+ * The build version from a join URL (?v=...). Missing or malformed is '' (a
+ * page from before the version check), which only matches another ''.
+ */
+export function cleanVersion(raw: unknown): string {
+  return typeof raw === 'string' && raw.length <= VERSION_MAX && /^[\w.-]+$/.test(raw) ? raw : '';
 }
 
 /** Validates settings from a browser, keeping humans + bots within MAX_PLAYERS. */
@@ -79,6 +94,9 @@ export function cleanSettings(raw: Partial<RoomSettings> | undefined, humans: nu
 /**
  * Browser -> server. Name and colour wishes go in the URL: /room/CODE?name=..&color=..
  * A reconnecting browser adds ?rejoin=SLOT&token=TOKEN (from its welcome).
+ * Every join also sends ?v=BUILD (net/build.ts): a room keeps the version of
+ * its first player and refuses other versions with the error 'update', since
+ * two builds in one round could play the game differently (a desync).
  */
 export type ClientMsg =
   /** Host only: start a round with everyone in the room. */
@@ -115,7 +133,8 @@ export const REJOIN_MS = 20000;
  */
 export const FRAME_LEFT = 255;
 
-export type ErrorReason = 'taken' | 'not_found' | 'full' | 'bad_code' | 'expired';
+/** 'update': this page's build differs from the room's (reload to update). Older pages show the word as it is. */
+export type ErrorReason = 'taken' | 'not_found' | 'full' | 'bad_code' | 'expired' | 'update';
 
 /** Server -> browser. A slot is a seat in the room (0-3) and stays the same all match. */
 export type ServerMsg =

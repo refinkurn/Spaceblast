@@ -19,45 +19,23 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Ready
 
-Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the nightly run; 3-7 touch server/ or src/net/, so the nightly skips them and the code session (sim-specialist) takes them.
-
-- **Online: host restarts a round mid-round** (server/room.ts) [code session]
-  Now: `start` is accepted while a round runs.
-  Want: ignore `start` until the round is over.
-  Done when: room test covers it.
-- **Online: nameless `profile` resets the name** (server/room.ts) [code session]
-  Now: a `profile` without a name becomes "Player N".
-  Want: keep the seat's current name when the field is missing or empty.
-  Done when: room test covers it.
-- **Debt: split server/room.ts** (about 400 lines) [code session]
-  Want: round clock in its own file, room.ts under ~300 lines, no behaviour change.
-  Done when: all room tests pass unchanged.
-- **Debt: Durable Object hibernation for idle lobbies** [code session]
-  Want: change the ping protocol so idle lobbies can hibernate (WebSocket hibernation API), then enable it.
-  Done when: room tests pass and an idle lobby shows no running clock.
-
 ## In progress
-
-- 2026-11-08: the five online items (version check on join, host restart, nameless profile, room.ts split, hibernation) are with sim-specialist in the code session.
 
 ## Blocked
 
-- **Online: version check on join** (src/net/, server/room.ts) [code session] - Blocked 2026-11-07 by the nightly run: needs src/net/ and server/ (online sync), outside its scope; the code session (sim-specialist) takes it. The nightly also cannot build the other Ready items (all server/ or src/net/).
+- **Decide: Durable Object hibernation for idle lobbies** (assessed 2026-11-08, not built). Saves server time only while lobbies sit idle; rounds keep the clock anyway. Needs two deploys (a fixed-string ping the server can auto-answer, then the page switches to it), room state saved across eviction (seats, tokens, settings, version pin), a handler rewrite, and a new dev dependency (@cloudflare/vitest-pool-workers) plus a manual check on Cloudflare. Risk: a lost seat/token after a wake-up blocks rejoin. Suggest: first check Durable Object duration in the Cloudflare dashboard; build only if idle lobbies cost real money.
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
 
 ## Known issues
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
-- **Online: the host can restart a round mid-round** (server/room.ts) [code session].
-- **Online: a `profile` message without a name resets the player to "Player N"** (server/room.ts) [code session].
-- **Online: a room mixing an old cached page with a new one desyncs until everyone refreshes** (after a deploy). Needs a version check on join [code session].
-- **Debt: server/room.ts is about 400 lines** (rule: under ~300); split the round clock out [code session].
-- **Debt: Durable Object hibernation for idle lobbies** needs a ping protocol change first (assessed, not built) [code session].
 
 ## Done
 
 Older entries: docs/CHANGELOG.md.
+
+- 2026-11-08: online fixes (sim-specialist). Version check on join: the page sends its build (commit SHA) with ?v=; a room seats one version only; a mismatched page reloads once into the invite link, then shows "Everyone should reload". Host `start` ignored mid-round (a straggler that never reports the round over can hold the next round 10 s at most). A `profile` without a usable name keeps the seat's name. server/room.ts split into room.ts (288 lines), round_clock.ts, room_join.ts; build_version.ts derives the build. 512 tests pass. Every push now changes the version: a tab left open across any deploy reloads before it can join new rooms.
 
 - 2026-11-03: offline cache across a deploy: sw.js now keeps the previous build's cache (older ones deleted) so an open tab's old art files still load; a failed lazy chunk reloads the page once (sessionStorage guard, no loop). Tests: old-page + new-cache SW case, reload-once. 493 tests pass.
 

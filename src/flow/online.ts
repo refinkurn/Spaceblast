@@ -1,3 +1,4 @@
+import { reloadForUpdate } from '../net/build';
 import { randomCode } from '../net/client';
 import { RoomLink, savedSeat } from '../net/link';
 import {
@@ -5,7 +6,7 @@ import {
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
 import { dragScroll } from './drag_scroll';
-import { shareInvite } from './invite';
+import { inviteUrl, shareInvite } from './invite';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
 import { arenaOptions, botLevelOptions, matchOptions, scenarioFlags, scenarioOf, scenarioOptions, timeOptions, type Scenario } from './online_options';
 import { Stepper } from './stepper';
@@ -33,7 +34,11 @@ export interface RoundStart {
 }
 
 /** A refused join, in words (unknown reasons are shown as they are). */
-const errorText = (reason: string) => (['taken', 'not_found', 'full', 'bad_code', 'expired'].includes(reason) ? t(`online.err.${reason}`) : reason);
+const errorText = (reason: string) => (['taken', 'not_found', 'full', 'bad_code', 'expired', 'update'].includes(reason) ? t(`online.err.${reason}`) : reason);
+
+const session = (): Storage | null => {
+  try { return window.sessionStorage; } catch { return null; }
+};
 
 const PREFS_KEY = 'spaceblast.online';
 
@@ -279,7 +284,7 @@ export class OnlineRoom {
     this.setStatus('Rejoining…');
     try {
       const first = await this.net.rejoin(seat);
-      if (first.t === 'error') this.setStatus(errorText(first.reason), true);
+      if (first.t === 'error') this.refused(seat.code, first.reason);
     } catch {
       this.setStatus(t('online.unreachable'), true);
     } finally {
@@ -293,7 +298,7 @@ export class OnlineRoom {
     try {
       const first = await this.net.connect(code, create, this.typedName(), this.prefs.color);
       if (first.t === 'error') {
-        if (first.reason !== 'taken' || !create) this.setStatus(errorText(first.reason), true);
+        if (first.reason !== 'taken' || !create) this.refused(code, first.reason);
         return first.reason;
       }
       return 'ok';
@@ -301,6 +306,19 @@ export class OnlineRoom {
       this.setStatus(t('online.unreachableHosted'), true);
       return 'offline';
     }
+  }
+
+  /**
+   * A refused join, shown in words. 'update' (the room runs another build of
+   * the game): reload once into the latest page, back on this room's code
+   * (an invite link); if the room still refuses it, say so.
+   */
+  private refused(code: string, reason: string): void {
+    if (reason === 'update' && reloadForUpdate(session(), Date.now(), () => window.location.assign(inviteUrl(code, window.location.href)))) {
+      this.setStatus(t('online.updating'));
+      return;
+    }
+    this.setStatus(errorText(reason), true);
   }
 
   private handle(m: ServerMsg): void {

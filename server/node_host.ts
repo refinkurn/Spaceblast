@@ -16,6 +16,8 @@ export interface NodeHostOptions {
   clientAddress?: (req: IncomingMessage) => string | undefined;
   /** Put on every new Room for the stats overlay (e.g. "SIN"); '' shows nothing. */
   where?: string;
+  /** Dev server: pages built as 'dev' may join any room (RoomOptions.devVersions). Never on Fly. */
+  devVersions?: boolean;
 }
 
 export interface NodeHost {
@@ -55,7 +57,7 @@ function urlOf(req: IncomingMessage): URL | null {
 }
 
 export function createNodeHost(opts: NodeHostOptions): NodeHost {
-  const { leaderboard: lb, clientAddress = socketAddress, where = '' } = opts;
+  const { leaderboard: lb, clientAddress = socketAddress, where = '', devVersions = false } = opts;
   const rooms = new Map<string, Room>();
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD });
   let closed = false;
@@ -73,7 +75,7 @@ export function createNodeHost(opts: NodeHostOptions): NodeHost {
     }
     let room = rooms.get(code);
     if (!room) {
-      room = new Room();
+      room = new Room({ devVersions });
       room.where = where;
       rooms.set(code, room);
     }

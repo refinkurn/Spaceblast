@@ -1,3 +1,4 @@
+import { BUILD } from './build';
 import { CLOSE_LEAVE, CODE_LENGTH, CODE_LETTERS, type ClientMsg, type ServerMsg } from './protocol';
 
 // WebSocket connection to the relay. The relay lives on the same host as the
@@ -28,7 +29,7 @@ export class NetClient {
     return new Promise((resolve, reject) => {
       let ws: WebSocket;
       try {
-        const q = new URLSearchParams({ name, color: String(color) });
+        const q = new URLSearchParams({ name, color: String(color), v: BUILD });
         if (rejoin) {
           q.set('rejoin', String(rejoin.slot));
           q.set('token', rejoin.token);

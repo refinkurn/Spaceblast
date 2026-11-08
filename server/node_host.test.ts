@@ -176,6 +176,22 @@ describe('node host: rooms', () => {
     ws.close(1000);
   });
 
+  it('passes the version from the join URL: another build is refused; the dev server lets a dev page in', async () => {
+    const join = async (port: number, q: string) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${port}/room/ABCD?${q}`);
+      return { ws, first: await firstMessage(ws) };
+    };
+    const fly = await start();
+    const host = await join(fly.port, 'create=1&v=aaa111');
+    expect(host.first.t).toBe('welcome');
+    expect((await join(fly.port, 'v=bbb222')).first).toEqual({ t: 'error', reason: 'update' });
+    expect((await join(fly.port, 'v=dev')).first).toEqual({ t: 'error', reason: 'update' });
+    expect((await join(fly.port, 'v=aaa111')).first.t).toBe('welcome');
+    const dev = await start({ devVersions: true });
+    await join(dev.port, 'create=1&v=aaa111');
+    expect((await join(dev.port, 'v=dev')).first.t).toBe('welcome');
+  });
+
   it('refuses a bad code with an error message, and a non-room path with 404', async () => {
     const { host, port } = await start();
     const ws = new WebSocket(`ws://127.0.0.1:${port}/room/ABIO`); // no I or O in codes

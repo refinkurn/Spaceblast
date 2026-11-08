@@ -1,8 +1,11 @@
 import { defineConfig } from 'vitest/config';
+import { buildVersion, gitHead } from './server/build_version';
 import { devRelay } from './server/dev_relay';
 import { offlineCache } from './server/offline_cache';
 
-export default defineConfig(({ isSsrBuild }) => ({
+export default defineConfig(({ command, isSsrBuild }) => ({
+  // The build version a page sends when joining a room (src/net/build.ts): the commit, or 'dev'.
+  define: { __BUILD__: JSON.stringify(buildVersion(command, process.env, gitHead)) },
   // Relative asset paths so the same build works on GitHub Pages, itch.io,
   // web portals and inside the Capacitor app.
   base: './',

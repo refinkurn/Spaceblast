@@ -181,6 +181,8 @@
     "online.err.full": "That room is full (4 players).",
     "online.err.not_found": "No room with that code. Check the letters.",
     "online.err.taken": "That code is already in use.",
+    "online.err.update": "This room runs a different version of the game. Everyone should reload the page, then try again.",
+    "online.updating": "Updating the game…",
     "online.keepPlaying": "Keep playing",
     "online.leave": "Leave",
     "online.leaveRoom": "Leave room",

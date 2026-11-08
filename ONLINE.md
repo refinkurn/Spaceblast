@@ -42,6 +42,13 @@ match. Blackouts never overlap the arena collapse.
   Someone gone for more than 20 seconds is out for that round.
 - Every second the phones compare a fingerprint of the game state. If they
   ever differ, the game shows "Out of sync" (that would be a bug in `src/sim`).
+- **One version per room.** Every join sends the page's build version (the
+  git commit, `?v=` on the room address; `src/net/build.ts`). A room keeps
+  its first player's version and refuses others with `update`: that page
+  reloads once into the latest build, and if the room still differs it says
+  "Everyone should reload the page". A page from before this check counts as
+  no version and only plays with other such pages. On `npm run dev` the
+  version is `dev`, which joins any room there.
 
 ## The stats line (finding lag)
 
