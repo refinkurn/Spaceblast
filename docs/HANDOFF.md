@@ -38,6 +38,8 @@ Queued 2026-11-03 by Refindo ("fix all known issues tonight"). Items 1-2 fit the
 
 ## In progress
 
+- 2026-11-08: the five online items (version check on join, host restart, nameless profile, room.ts split, hibernation) are with sim-specialist in the code session.
+
 ## Blocked
 
 - **Online: version check on join** (src/net/, server/room.ts) [code session] - Blocked 2026-11-07 by the nightly run: needs src/net/ and server/ (online sync), outside its scope; the code session (sim-specialist) takes it. The nightly also cannot build the other Ready items (all server/ or src/net/).
