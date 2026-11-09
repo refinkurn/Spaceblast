@@ -55,4 +55,11 @@ describe('joystick geometry', () => {
     expect(rest.top).toContain('safe-area-inset-bottom');
     expect(restPosition('floating', 56).top).toBe('62%');
   });
+
+  it('floating: the idle base rests in the middle of the gutter, not halfway across the wide touch zone', () => {
+    const left = restPosition('floating', 56).left;
+    expect(left).toContain('var(--gutter) / 2');
+    expect(left).toContain('safe-area-inset-left');
+    expect(left).not.toBe('50%');
+  });
 });

@@ -29,9 +29,15 @@ export function floatingCenter(
   };
 }
 
-/** CSS position of the base when nobody touches it. Fixed: bottom-left of the gutter above the safe area. */
+/**
+ * Middle of the left gutter. Floating mode widens the touch zone to half the
+ * screen, so '50%' of the zone would put the idle stick over the arena's edge.
+ */
+const GUTTER_MIDDLE = 'max(calc(env(safe-area-inset-left) + var(--gutter) / 2), calc(56px * var(--ctl, 1) + 4px))';
+
+/** CSS position of the base when nobody touches it: in the gutter, clear of the arena. Fixed: bottom of the gutter above the safe area. */
 export function restPosition(mode: JoystickMode, radius: number): { left: string; top: string } {
   return mode === 'fixed'
     ? { left: '50%', top: `calc(100% - ${Math.round(radius + FIXED_MARGIN)}px - env(safe-area-inset-bottom))` }
-    : { left: '50%', top: '62%' };
+    : { left: GUTTER_MIDDLE, top: '62%' };
 }
