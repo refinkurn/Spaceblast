@@ -36,7 +36,8 @@ jobs:
           retention-days: 14
 
   screens:
-    runs-on: ubuntu-latest
+    # Pinned: the browser download for this Playwright version has no build for newer runners.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
