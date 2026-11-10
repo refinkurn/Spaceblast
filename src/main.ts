@@ -39,6 +39,8 @@ import { GameView } from './view/game_view';
 import { applyDom, t } from './utils/i18n';
 import { analytics, installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
+import { isPortal, markPortal } from './config/portal';
+import { installInputMode } from './input/input_mode';
 
 // Wiring: game modes (Story, Battle vs bot, online rooms), the round flow and
 // the fixed 60 Hz loop. Rendering lives in view/game_view.ts, online rounds in
@@ -143,10 +145,13 @@ function pauseButton() {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && !pause.open && canPause()) pause.show(mode);
 });
-setupFullscreen();
+markPortal();
+installInputMode();
+// A portal provides full screen itself and forbids a button of our own.
+if (!isPortal) setupFullscreen();
 installMultiTouchTaps();
 installAnalytics();
-installWebAnalytics();
+if (!isPortal) installWebAnalytics();
 
 /** Developer level select: jump straight to a Story level. */
 function startAtLevel(n: number) {
@@ -694,7 +699,8 @@ view.renderer.setAnimationLoop((now: number) => {
   });
 });
 
-registerOfflineCache();
+// Inside a portal's page there is nothing to install or keep offline.
+if (!isPortal) registerOfflineCache();
 
 // Dev-only console hooks for debugging (`spaceblast.state`, `spaceblast.startLevel(n)`)
 // in the browser console. Stripped from production builds.

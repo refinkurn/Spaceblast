@@ -21,6 +21,8 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## In progress
 
+- 2026-11-10, code session: M0 close-out and CrazyGames portal prep (plan agreed with Refindo). Producer: do not queue M0 or portal items; they are being built here.
+
 ## Blocked
 
 - **Decide: Durable Object hibernation for idle lobbies** (assessed 2026-11-08, not built). Saves server time only while lobbies sit idle; rounds keep the clock anyway. Needs two deploys (a fixed-string ping the server can auto-answer, then the page switches to it), room state saved across eviction (seats, tokens, settings, version pin), a handler rewrite, and a new dev dependency (@cloudflare/vitest-pool-workers) plus a manual check on Cloudflare. Risk: a lost seat/token after a wake-up blocks rejoin. Suggest: first check Durable Object duration in the Cloudflare dashboard; build only if idle lobbies cost real money.
@@ -34,6 +36,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 ## Done
 
 Older entries: docs/CHANGELOG.md.
+
+- 2026-11-10: launch prep (Refindo: "execute"). Portal build (`npm run build:portal`, docs/PORTAL.md: CrazyGames rules read from their docs); desktop players no longer see the touch stick and Charge button (they come back on a real touch); privacy page (public/privacy.html, linked from Credits); iPhone sound resumes on the next touch after an interruption; scripts `status`, `check`, `shots`, `live`; GitHub Actions: screenshot checks on every push and a live check after each deploy and daily; new `ui-builder` agent (Sonnet). Cloud environment "spaceblast" lets sessions reach the live game and the CrazyGames docs. Live check: both addresses run the same build.
 
 - 2026-11-09: floating joystick rests in the middle of the left gutter when idle (was '50%' of the half-screen touch zone, i.e. over the arena's edge); clamped 4 px from the screen edge. Checked at 667/844/896 px wide. Phone checks for Ducking v0.3 and the balance passed (Refindo).
 

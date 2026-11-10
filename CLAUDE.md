@@ -9,6 +9,8 @@ Capacitor. Multiplayer is the main goal, so the simulation must stay determinist
 - `npm run dev` — dev server (also reachable from a phone on the same Wi-Fi)
 - `npm test` — Vitest unit tests (must pass before every commit)
 - `npm run build` — typecheck + production build into `dist/`
+- `npm run status` — queue, phone checks waiting, long files (no agent needed); `npm run check` — tests + build + portal build; `npm run shots` — phone/desktop screenshots with checks (shots/); `npm run live` — the live page and server answer and run the same build
+- `npm run build:portal` — CrazyGames build: `dist-portal/` + `spaceblast-portal.zip` (rules and what it switches off: docs/PORTAL.md)
 - Hosting (ONLINE.md): game page on Vercel (https://spaceblast.vercel.app, built on every push: `main` = live), rooms + leaderboard on Cloudflare (https://spaceblast.refinkurn.workers.dev)
 - Every push to `main` deploys both: Vercel builds the page, Cloudflare Workers Builds deploys the rooms + leaderboard (a deploy restarts live rooms)
 - `npm run deploy` — deploy the rooms + leaderboard (and a page copy) to Cloudflare by hand
@@ -26,7 +28,7 @@ src/
   audio/   synthesised sound effects and music (Web Audio, no files); driven by sim events
   flow/    menus, HUD, story, online lobby
   services/ score rules, leaderboard client + offline queue, device profile, name filter (docs/design/leaderboard.md)
-  config/  data: locales.json (interface text by key; English now)
+  config/  data: locales.json (interface text by key; English now); portal.ts (portal builds: what is switched off)
   utils/   i18n.ts: t(key, vars) for interface text; applyDom() fills data-i18n labels in index.html
   main.ts  wiring + fixed 60 Hz loop
 server/    the room server: room.ts (shared: seats, rejoin, one build version per room), round_clock.ts (round ticks + frames), room_join.ts (join requests, tokens), build_version.ts (commit SHA as the build version), leaderboard.ts (scores API), node_host.ts (Node hosting for dev + Fly), node_sqlite.ts, dev_relay.ts (npm run dev), fly.ts (Fly.io; Dockerfile, fly.toml, npm run build:server), worker.ts (Cloudflare), offline_cache.ts (build step: writes sw.js so the installed game opens offline; registered by src/flow/offline.ts)
@@ -55,7 +57,8 @@ server/    the room server: room.ts (shared: seats, rejoin, one build version pe
 
 - Start every session by reading `docs/HANDOFF.md` (where to put what: `docs/PLAYBOOK.md`); take the top Ready item, update the file when done.
 - Specs from the story/design chat live in `docs/story/` and `docs/design/`. The code stays the source of truth for what plays.
-- Delegate: story text → `script-integrator`, checks before commit → `qa-runner`, `src/sim/` / `src/net/` / `server/` → `sim-specialist`.
+- Delegate by cost: story text → `script-integrator` (Haiku), checks before commit → `qa-runner` (Haiku, runs the scripts above), UI / input / CSS / assets → `ui-builder` (Sonnet), `src/sim/` / `src/net/` / `server/` → `sim-specialist` (Opus). Prefer a script over an agent, and an agent over reading many files in the main session.
+- GitHub Actions runs the tests, builds, the screenshot checks (test.yml) and, after each deploy and every morning, the live check (live.yml). A red run is the first thing to fix.
 - Commit straight to `main` once `npm test` passes.
 
 ## Game rules reference

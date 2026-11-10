@@ -6,3 +6,6 @@ dist-server/
 .wrangler/
 .vercel
 .env*
+dist-portal/
+spaceblast-portal.zip
+shots/

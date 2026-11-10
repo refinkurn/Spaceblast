@@ -1289,3 +1289,11 @@ body.scene .boss-clock { visibility: hidden; }
 .lb-pick button, .lb-form button, .map-card-actions button, .nav-back, .announce-count,
 #map-card-enter { font-family: var(--font-label); }
 .hud-clock, .hud-chip, .cut-speaker, .intro-speaker, .coach-label, .announce-count { font-weight: 700; }
+
+/* Portal builds (src/config/portal.ts): no full screen button, install tip or invite link of our own. */
+body.portal .full-btn, body.portal #start-tip, body.portal #install, body.portal #online-invite, body.portal .own-site-only { display: none !important; }
+
+/* Mouse and keyboard (src/input/input_mode.ts): no on-screen stick or Charge button until a real touch. */
+body.no-touch #stick-zone, body.no-touch #action-zone { display: none; }
+
+.text-link { color: var(--ink-quiet, #9aa3b5); text-decoration: underline; display: inline-block; padding: 14px 0; min-height: 48px; }

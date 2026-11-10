@@ -1,4 +1,5 @@
 import { AudioEngine, type SoundSetting } from '../audio/engine';
+import { isPortal } from '../config/portal';
 import { bossWaveCount } from '../sim/boss';
 import { Music } from '../audio/music';
 import { Sfx } from '../audio/sfx';
@@ -38,7 +39,7 @@ export class GameAudio {
       this.engine.unlock();
       this.sfx.start();
       // Phones go full screen on that first tap where the browser allows it.
-      if (window.matchMedia('(pointer: coarse)').matches) enterFullscreen();
+      if (!isPortal && window.matchMedia('(pointer: coarse)').matches) enterFullscreen();
       onStart();
     };
     // 'click', not 'pointerdown': hiding the screen on touch-down let the same
@@ -65,6 +66,14 @@ export class GameAudio {
       if (document.hidden) void ctx.suspend();
       else void ctx.resume();
     });
+    // iPhone: after a call or app switch the sound stays interrupted until the next
+    // touch; resuming on visibility alone is not allowed there.
+    const wake = () => {
+      const ctx = this.engine.ctx;
+      if (ctx && !document.hidden && ctx.state !== 'running' && ctx.state !== 'closed') void ctx.resume();
+    };
+    document.addEventListener('touchend', wake, { passive: true });
+    document.addEventListener('click', wake);
   }
 
   setVolumes(music: number, sfx: number): void {

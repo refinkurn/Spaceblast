@@ -1,0 +1,30 @@
+name: Live check
+
+# After a push to main (and every morning): wait for Vercel and Cloudflare to
+# deploy, then check the live game: both addresses answer, run the pushed build
+# (a room seats one build only) and the server's APIs answer. A red run here
+# means a deploy failed or the two sides drifted apart.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 23 * * *' # 06:17 Jakarta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check the live game
+        run: node scripts/live_check.mjs --wait
+        env:
+          # On a push, the live page must reach this commit; the daily run only checks health.
+          EXPECT_BUILD: ${{ github.event_name == 'push' && github.sha || '' }}

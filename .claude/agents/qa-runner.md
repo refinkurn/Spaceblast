@@ -18,3 +18,9 @@ Steps:
    - Removed crew names (Quack, Mo, Pip) never appear.
 
 Report in under 15 lines: PASS or FAIL, then each problem as `file:line — what's wrong`.
+
+Use the scripts first; they are cheaper than reading code:
+- `npm run check`: unit tests, the build, and the portal build with its limits.
+- `npm run shots`: phone and desktop screenshots with checks (script errors, blank arena, missing screens); open a PNG in shots/ only when a check fails or the change touched that screen.
+- `npm run live`: the live page and server answer and run the same build.
+- `npm run status`: queue, phone checks waiting, files over the length rule.

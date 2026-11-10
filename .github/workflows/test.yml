@@ -1,8 +1,10 @@
 name: Test
 
-# Tests and builds every push to main. Deploys happen elsewhere: Vercel builds
-# the game page from GitHub, and the rooms go to Cloudflare with `npm run deploy`
-# (see ONLINE.md).
+# Every push to main: unit tests, builds (page, Fly server, portal zip), then
+# phone-size screenshots of the key screens (fails on a script error, a blank
+# arena or a missing screen). Deploys happen elsewhere: Vercel builds the page
+# and Cloudflare Workers Builds deploys the rooms (see ONLINE.md); live.yml
+# checks the result.
 
 on:
   push:
@@ -26,3 +28,27 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run build:server
+      - run: npm run build:portal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spaceblast-portal
+          path: spaceblast-portal.zip
+          retention-days: 14
+
+  screens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screens
+          path: shots/
+          retention-days: 14
