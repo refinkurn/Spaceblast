@@ -10,6 +10,7 @@ Capacitor. Multiplayer is the main goal, so the simulation must stay determinist
 - `npm test` — Vitest unit tests (must pass before every commit)
 - `npm run build` — typecheck + production build into `dist/`
 - `npm run status` — queue, phone checks waiting, long files (no agent needed); `npm run check` — tests + build + portal build; `npm run shots` — phone/desktop screenshots with checks (shots/); `npm run live` — the live page and server answer and run the same build; `npm run online-check` — two browsers join a room and play a round (run after any src/net, server or main-loop change)
+- Listing pack (docs/LISTING.md): `node scripts/listing_covers.mjs` (covers from the menu art), `node scripts/listing_capture.mjs` + ffmpeg (gameplay videos, slow: about 30 min each)
 - `npm run build:portal` — CrazyGames build: `dist-portal/` + `spaceblast-portal.zip` (rules and what it switches off: docs/PORTAL.md)
 - Hosting (ONLINE.md): game page on Vercel (https://spaceblast.vercel.app, built on every push: `main` = live), rooms + leaderboard on Cloudflare (https://spaceblast.refinkurn.workers.dev)
 - Every push to `main` deploys both: Vercel builds the page, Cloudflare Workers Builds deploys the rooms + leaderboard (a deploy restarts live rooms)

@@ -74,6 +74,7 @@ Chat first: I ask the questions, write the spec to `docs/design/`, and split it 
 - Producer (daily 00:44 Jakarta, Opus): reads docs/ROADMAP.md and HANDOFF.md, queues up to 4 Ready items for the current milestone (and fixes from Known issues), puts open questions under Blocked. Docs only, never code.
 - Nightly run and code session: build only what is in Ready.
 - Refindo: vision, answers to Blocked, and the phone checks in docs/PHONE_TEST.md (only a real phone can clear them).
+- Decisions agents make without waiting (reversible ones only) are logged in docs/DECISIONS.md with a veto date; to undo one, tell the chat "veto D-n". What only Refindo can do is listed under "Needs Refindo" at the top of HANDOFF.md.
 - HANDOFF.md Done keeps the last 7 days; older lines move to docs/CHANGELOG.md.
 
 ## Keeping usage low

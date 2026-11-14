@@ -35,6 +35,8 @@ Details in `ONLINE.md`.
 | `docs/ROADMAP.md` | vision, players, milestones, monetisation |
 | `docs/GAME_RULES.md` | every rule number the game plays by |
 | `docs/DESIGN.md` | colours, type, components, character art rules |
+| `docs/DECISIONS.md` | decisions agents made for Refindo, with veto dates |
+| `docs/LISTING.md` + `listing/` | CrazyGames listing text, covers and videos |
 | `docs/HANDOFF.md` | the work queue: Ready, In progress, Blocked, Known issues, Done |
 | `docs/PLAYBOOK.md` | who does what, and how to ask for work |
 | `docs/story/canon.md` | the story bible |
