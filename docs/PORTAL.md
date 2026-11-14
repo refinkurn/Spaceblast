@@ -24,7 +24,7 @@ Online rooms seat one build only. Portal players therefore meet players on our o
 | Initial download | 50 MB; 20 MB to be on the mobile homepage | about 1.5 MB |
 | File count | 1500 | 19 |
 | Paths | relative only | yes (`base: './'`), checked by the build script |
-| Browsers | Chrome and Edge; Safari or it is switched off there; smooth on a 4 GB Chromebook | not yet tested on a Chromebook |
+| Browsers | Chrome and Edge; Safari or it is switched off there; smooth on a 4 GB Chromebook | `npm run perf` (1366x768, CPU 4x slower, cloud machine with no GPU so drawing is in software): Story level 1 2.3 fps avg (1% worst frame 483 ms, 96 draw calls); Battle vs Bot 2.2 fps (700 ms, 70 draw calls). Not comparable to a real Chromebook GPU; check on a real one |
 | Controls | mouse + keyboard, and touch on mobile; no touch controls shown to desktop players | on-screen stick hides without touch (`src/input/input_mode.ts`) |
 | Screen sizes | readable at 800x450 (mobile), 907x510, 1366x768, 1920x1080... | `npm run shots` covers 800x450 and 907x510 |
 | Physics | same at 144 Hz as at 60 Hz | fixed 60-tick loop |

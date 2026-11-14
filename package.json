@@ -18,7 +18,8 @@
     "shots": "node scripts/shots.mjs",
     "live": "node scripts/live_check.mjs",
     "check": "npm test && npm run build && node scripts/build_portal.mjs",
-    "online-check": "node scripts/online_check.mjs"
+    "online-check": "node scripts/online_check.mjs",
+    "perf": "node scripts/perf_check.mjs"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.3.0",

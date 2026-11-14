@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Chromebook frame-rate check** (new scripts/perf_check.mjs, `npm run perf`; Known issue)
-  Now: CrazyGames wants the game smooth on a 4 GB Chromebook (docs/PORTAL.md); we have never measured it, and no script checks frame rate.
-  Want: a Playwright script like scripts/shots.mjs that opens the dev server at 1366x768, sets CPU throttling 4x (CDP `Emulation.setCPUThrottlingRate`), plays 20 s of Story level 1 and 20 s of Battle vs Bot (4 players), and prints average fps, the 1% worst frame time and draw calls.
-  Want: write the measured numbers into the "Browsers" row of the PORTAL.md table; if average fps is under 50, add a Known issue with the numbers instead of fixing it here.
-  Done when: `npm run perf` prints both runs' numbers and exits 0; PORTAL.md shows them; the Chromebook Known issue is removed (or replaced by the low-fps one).
-
 - **CrazyGames SDK loader, portal build only** (new src/services/crazygames.ts, src/config/portal.ts, src/main.ts)
   Now: the portal build has no CrazyGames SDK; Full Launch (M2) makes it mandatory.
   Want: `CRAZY_SDK` switch and `initCrazySdk()` as in the spec: the v3 script loads at boot in the portal build only, never blocks the start screen, and a blocked or failed load leaves the game as it is today.
@@ -65,10 +59,12 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
 - **Debt: files over the ~300-line rule**: src/flow/online.ts (500), src/flow/story_mode.ts (339), src/main.ts (338), src/flow/story_map.ts (336). Split by feature, no behaviour change.
-- **Not yet tested on a 4 GB Chromebook** (a CrazyGames requirement, docs/PORTAL.md): check frame rate with CPU throttling, or on a real one.
+- **Frame rate under 50 fps in `npm run perf`** (4 GB Chromebook, a CrazyGames requirement, docs/PORTAL.md): Story level 1 2.3 fps avg, Battle vs Bot 2.2 fps, with 4x CPU throttling and software drawing (no GPU in the cloud run), so this says little about a real Chromebook. Needs a run on a real one (Refindo) or a GPU-backed machine before any optimising.
 
 
 ## Done
+
+- 2026-11-14: Chromebook frame-rate check: `npm run perf` (scripts/perf_check.mjs) plays 20 s of Story level 1 and 20 s of Battle vs Bot at 1366x768, CPU 4x throttled, prints avg fps, 1% worst frame and draw calls; numbers in PORTAL.md; low-fps Known issue replaces the untested one. Battle vs Bot has 2 players (you and the bot), not 4.
 
 - 2026-11-14 (Director run, Refindo: "run it now"): quick start for first-time portal players: one tap lands in Story level 1; the opening crawl and prologue play once as a look back before the next level; once per save, never for a room invite, our own site unchanged (D-1, veto by 2026-11-16). Analytics events carry their source (site / crazygames; D-2) with queries for the numbers CrazyGames judges. Independent review found and fixed 4 bugs before the push (invite ignored, repeat on every visit, story lost if interrupted, level running under the splash). Hibernation closed as not needed now (D-3). The stale M0 / portal lock from 2026-11-10 was released: M0 is done apart from the items under Needs Refindo. 522 tests pass.
 
