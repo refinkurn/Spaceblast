@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames SDK loader, portal build only** (new src/services/crazygames.ts, src/config/portal.ts, src/main.ts)
-  Now: the portal build has no CrazyGames SDK; Full Launch (M2) makes it mandatory.
-  Want: `CRAZY_SDK` switch and `initCrazySdk()` as in the spec: the v3 script loads at boot in the portal build only, never blocks the start screen, and a blocked or failed load leaves the game as it is today.
-  Done when: tests with a missing, throwing and working fake `window.CrazyGames.SDK` all pass with no throw; `npm run build` output has no sdk.crazygames.com reference and `npm run build:portal` does; `npm run shots` passes.
-  Spec: docs/design/crazygames-sdk.md
-
 - **CrazyGames gameplay start/stop** (src/services/crazygames.ts, src/main.ts)
   Now: after the loader item, the SDK is loaded but never told when the player is playing.
   Want: `setGameplay(active)` called from the main loop: active while a Story level, Battle vs Bot or online round runs and the existing `paused` check (main.ts) is false; the SDK is called only on a change, and the current state is re-sent once when init finishes.
@@ -63,6 +57,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-14: CrazyGames SDK loader: `CRAZY_SDK` switch, `initCrazySdk()` in src/services/crazygames.ts loads the v3 script at boot in the portal build only (no reference in the normal build; build:portal now checks it is there), failures caught and warned once. 528 tests, build, portal build and shots pass.
 
 - 2026-11-14: Chromebook frame-rate check: `npm run perf` (scripts/perf_check.mjs) plays 20 s of Story level 1 and 20 s of Battle vs Bot at 1366x768, CPU 4x throttled, prints avg fps, 1% worst frame and draw calls; numbers in PORTAL.md; low-fps Known issue replaces the untested one. Battle vs Bot has 2 players (you and the bot), not 4.
 

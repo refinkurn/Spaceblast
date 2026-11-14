@@ -7,6 +7,9 @@ export const PORTAL: string = (import.meta.env?.VITE_PORTAL as string | undefine
 
 export const isPortal = PORTAL !== '';
 
+/** The CrazyGames SDK (src/services/crazygames.ts) loads in the CrazyGames portal build only, never on our own site. */
+export const CRAZY_SDK: boolean = PORTAL === 'crazygames';
+
 /** Marks the page so CSS can hide what a portal forbids (body.portal ...). */
 export function markPortal(): void {
   if (isPortal) document.body.classList.add('portal', `portal-${PORTAL}`);

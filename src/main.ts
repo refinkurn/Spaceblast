@@ -40,6 +40,7 @@ import { GameView } from './view/game_view';
 import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
+import { initCrazySdk } from './services/crazygames';
 import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
 
@@ -141,6 +142,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden && !pause.open && canPause()) pause.show(session.mode);
 });
 markPortal();
+// CrazyGames portal build only: loads in the background, never holds up the start screen.
+initCrazySdk();
 installInputMode();
 // A portal provides full screen itself and forbids a button of our own.
 if (!isPortal) setupFullscreen();

@@ -37,6 +37,7 @@ if (absolute) problems.push(`absolute paths in index.html: ${absolute.join(', ')
 if (/rel="manifest"/.test(html)) problems.push('index.html still links the web manifest');
 const js = files.filter((f) => f.endsWith('.js')).map((f) => readFileSync(f, 'utf8')).join('\n');
 if (!js.includes(`https://${SERVER}`)) problems.push('the build does not point at the room server');
+if (PORTAL === 'crazygames' && !js.includes('sdk.crazygames.com')) problems.push('the CrazyGames SDK loader is missing from the portal build');
 if (js.includes('cloudflareinsights')) problems.push('the Cloudflare beacon is in the portal build');
 
 rmSync(ZIP, { force: true });
