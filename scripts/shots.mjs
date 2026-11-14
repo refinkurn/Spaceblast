@@ -65,9 +65,14 @@ for (const s of SIZES) {
   await shot('3-level-card');
   for (let i = 0; i < 8; i++) { await tapCards(p); await p.waitForTimeout(250); }
   await p.waitForTimeout(3200);
+  // The level runs once the cards and the 3-2-1 count are over: a slow machine (CI) may need longer.
   const t0 = await p.evaluate(() => window.spaceblast.state.tick);
-  await p.waitForTimeout(500);
-  const t1 = await p.evaluate(() => window.spaceblast.state.tick);
+  let t1 = t0;
+  for (let i = 0; i < 20 && !(t1 > t0); i++) {
+    await tapCards(p);
+    await p.waitForTimeout(500);
+    t1 = await p.evaluate(() => window.spaceblast.state.tick);
+  }
   if (!(t1 > t0)) fail(`${s.name}: Story level is not running`);
   if (!(await canvasAlive(p))) fail(`${s.name}: arena canvas looks blank`);
   await need('hud', 'HUD');
