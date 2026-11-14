@@ -34,6 +34,14 @@ describe('analytics client', () => {
     expect(sent[1].map((e) => [e.name, e.value])).toEqual([['session_start', undefined], ['session_end', 10]]);
   });
 
+  it('tags every sent event with where the page runs', () => {
+    const sent: { name: string; src?: string }[][] = [];
+    const a = new Analytics((body) => sent.push(JSON.parse(body).events));
+    a.track({ name: 'round', mode: 'bot', value: 40 });
+    a.flush();
+    expect(sent[0][0].src).toBe('site');
+  });
+
   it('never throws when sending fails', () => {
     const a = new Analytics(() => { throw new Error('offline'); });
     a.track({ name: 'round', mode: 'bot', value: 40 });

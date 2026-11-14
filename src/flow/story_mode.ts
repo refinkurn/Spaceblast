@@ -117,6 +117,21 @@ export class StoryMode {
     this.map.show();
   }
 
+  /**
+   * Quick start (config/portal.ts): a first-time portal player goes straight into
+   * level 1. The coach prompts teach the controls; the opening crawl and prologue
+   * are kept for after that first clear (see `play`).
+   */
+  coldOpen(): void {
+    this.progress.setIntroPending(true);
+    this.play(1, false, true);
+  }
+
+  /** A save that has never played Story, seen the opening card or had a quick start. */
+  get fresh(): boolean {
+    return !this.progress.started && !this.progress.tutorialSeen && !this.progress.introPending;
+  }
+
   closeOverlays(): void {
     this.map.hide();
     this.board.hide();
@@ -156,16 +171,35 @@ export class StoryMode {
     // Retrying after a game over skips the scenes and goes straight to the level card.
     const scene = withStory ? INTRO_SCENES[level] : undefined;
     const intro = () => this.cutscene.play(scene ?? [], state, brief);
-    // Sectors with an opening scene get it instead of the plain story card.
-    if (withStory && isSectorStart(level) && !scene) {
-      const sector = SECTORS[spec.sector - 1];
-      this.screens.showStory(t('story.sectorOf', { n: spec.sector }), sector.name, sector.story, t('story.begin'), intro);
-    } else if (level === 1 && withStory) {
-      // The story begins: the opening crawl, then the prologue scene.
-      this.crawl.play(OPENING_CRAWL, intro);
-    } else {
-      intro();
+    const begin = () => {
+      // Sectors with an opening scene get it instead of the plain story card.
+      if (withStory && isSectorStart(level) && !scene) {
+        const sector = SECTORS[spec.sector - 1];
+        this.screens.showStory(t('story.sectorOf', { n: spec.sector }), sector.name, sector.story, t('story.begin'), intro);
+      } else if (level === 1 && withStory) {
+        // The story begins: the opening crawl, then the prologue scene.
+        this.crawl.play(OPENING_CRAWL, intro);
+      } else {
+        intro();
+      }
+    };
+    // After a quick start the opening story is still owed: it plays as a look
+    // back before the next level (level 1 itself opens with it anyway).
+    if (withStory && this.progress.introPending) {
+      if (level > 1) {
+        // The flag clears only once the story has played: leaving midway shows it again next time.
+        const seen = () => {
+          this.progress.setIntroPending(false);
+          this.progress.markTutorialSeen(); // they have played: Kit's opening card would be old news
+          begin();
+        };
+        this.screens.showStory(t('story.earlierKicker'), t('story.earlierTitle'), t('story.earlierText'), t('story.begin'), () =>
+          this.crawl.play(OPENING_CRAWL, () => this.cutscene.play(INTRO_SCENES[1] ?? [], state, seen)));
+        return;
+      }
+      this.progress.setIntroPending(false);
     }
+    begin();
   }
 
   /** Every Story tick: play time, and an enemy card the first time each kind of Martian comes close. */

@@ -25,6 +25,8 @@ interface Saved {
   finished: boolean;
   /** Captain Kit's opening card (story_scenes.ts OPENING_TUTORIAL) was shown. */
   tutorialSeen: boolean;
+  /** Quick start (config/portal.ts): level 1 was played first, so the opening crawl and prologue are still to come. */
+  introPending: boolean;
   /** Ids of the tutorial steps already shown (tutorial_script.ts). */
   seenBeats: string[];
   /** Ids of the enemy cards already shown (alien_cards.ts). */
@@ -36,7 +38,7 @@ interface Saved {
 export type CardList = 'seenBeats' | 'seenEnemies' | 'seenPowerups';
 
 const fresh = (): Saved => ({
-  unlocked: 1, stars: {}, scores: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, tutorialSeen: false, seenBeats: [], seenEnemies: [], seenPowerups: [],
+  unlocked: 1, stars: {}, scores: {}, stats: { martians: 0, bosses: 0, livesLost: 0, ticks: 0 }, finished: false, tutorialSeen: false, introPending: false, seenBeats: [], seenEnemies: [], seenPowerups: [],
 });
 
 /** A saved list of card ids: short lowercase words only, no repeats. */
@@ -59,6 +61,7 @@ function sanitize(raw: Partial<Saved> | null): Saved {
   out.stats = { martians: int(st?.martians, 1e9), bosses: int(st?.bosses, 1e9), livesLost: int(st?.livesLost, 1e9), ticks: int(st?.ticks, 1e12) };
   out.finished = raw.finished === true;
   out.tutorialSeen = raw.tutorialSeen === true;
+  out.introPending = raw.introPending === true;
   // Older saves used seenAliens / seenPowerUps.
   const old = raw as { seenAliens?: unknown; seenPowerUps?: unknown };
   out.seenBeats = ids(raw.seenBeats);
@@ -127,6 +130,15 @@ export class StoryProgress {
 
   markTutorialSeen(): void {
     this.data.tutorialSeen = true;
+    this.save();
+  }
+
+  get introPending(): boolean {
+    return this.data.introPending;
+  }
+
+  setIntroPending(pending: boolean): void {
+    this.data.introPending = pending;
     this.save();
   }
 

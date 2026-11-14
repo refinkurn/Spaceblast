@@ -103,6 +103,30 @@ for (const s of SIZES) {
   await ctx.close();
 }
 
+// Quick start (portal builds; `?quickstart` here): a fresh save plays level 1 after one tap.
+{
+  console.log('quick start 800x450');
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 450 }, hasTouch: true });
+  const p = await ctx.newPage();
+  p.on('pageerror', (e) => fail(`quick start: script error: ${e.message}`));
+  await p.goto(`http://localhost:${PORT}/?quickstart`);
+  await p.waitForTimeout(1200);
+  await p.click('#start-screen');
+  await p.waitForTimeout(1500);
+  for (const id of ['start-screen', 'menu', 'crawl', 'cutscene', 'intro-card', 'level-card']) {
+    if (await visible(p, id)) fail(`quick start: #${id} is in the way of level 1`);
+  }
+  const t0 = await p.evaluate(() => window.spaceblast.state.tick);
+  await p.waitForTimeout(500);
+  if (!((await p.evaluate(() => window.spaceblast.state.tick)) > t0)) fail('quick start: level 1 is not running');
+  await p.screenshot({ path: `${OUT}/quick-start.png` });
+  // The opening story is still owed, and is shown before the next level.
+  await p.evaluate(() => window.spaceblast.story.play(2, true));
+  await p.waitForTimeout(700);
+  if (!(await visible(p, 'story'))) fail('quick start: the "Earlier today" card does not show before level 2');
+  await ctx.close();
+}
+
 await browser.close();
 stop();
 console.log(problems.length ? `\n${problems.length} problem(s)` : '\nAll screens OK');

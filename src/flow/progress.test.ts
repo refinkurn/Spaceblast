@@ -76,6 +76,16 @@ describe('story progress', () => {
       expect(new StoryProgress().beats.has('gate')).toBe(true);
     });
 
+    it('remembers that the opening story is still owed after a quick start', () => {
+      fakeStorage({});
+      const p = new StoryProgress();
+      expect(p.introPending).toBe(false);
+      p.setIntroPending(true);
+      expect(new StoryProgress().introPending).toBe(true);
+      p.setIntroPending(false);
+      expect(new StoryProgress().introPending).toBe(false);
+    });
+
     it('ignores broken or edited card lists', () => {
       fakeStorage({ 'spaceblast.story': JSON.stringify({ unlocked: 3, seenAliens: ['sniffer', 7, '<b>', 'sniffer'], seenPowerUps: 'x' }) });
       const p = new StoryProgress();

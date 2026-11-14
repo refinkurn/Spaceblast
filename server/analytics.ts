@@ -14,6 +14,8 @@ export const EVENT_NAMES = [
 export type EventName = (typeof EVENT_NAMES)[number];
 
 export const MODES = ['story', 'bot', 'online'] as const;
+/** Where the page runs: our own site, or a portal build (src/config/portal.ts). */
+export const SOURCES = ['site', 'crazygames'] as const;
 
 export interface GameEvent {
   name: EventName;
@@ -26,6 +28,8 @@ export interface GameEvent {
   first?: string;
   /** Whole days since `first`. */
   days?: number;
+  /** One of SOURCES; missing on pages built before 2026-11-14. */
+  src?: (typeof SOURCES)[number];
 }
 
 export interface EventRow {
@@ -36,6 +40,7 @@ export interface EventRow {
   value: number | null;
   first_day: string | null;
   days: number | null;
+  src: string | null;
 }
 
 export const MAX_EVENTS_BODY = 4096;
@@ -65,6 +70,7 @@ export function parseEvents(text: string, now: number): EventRow[] | null {
       value: int(e.value, 0, 86_400),
       first_day: first,
       days: first ? int(e.days, 0, 3650) : null,
+      src: (SOURCES as readonly string[]).includes(e.src as string) ? (e.src as string) : null,
     });
   }
   return rows;
@@ -78,11 +84,14 @@ export const SCHEMA = `CREATE TABLE IF NOT EXISTS events (
   mode TEXT,
   value INTEGER,
   first_day TEXT,
-  days INTEGER
+  days INTEGER,
+  src TEXT
 );
 CREATE INDEX IF NOT EXISTS events_name_day ON events (name, day);`;
 
-const INSERT = 'INSERT INTO events (day, name, level, mode, value, first_day, days) VALUES (?, ?, ?, ?, ?, ?, ?)';
+const INSERT = 'INSERT INTO events (day, name, level, mode, value, first_day, days, src) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+/** For a database made before the `src` column existed (docs/ANALYTICS.md, "Source column"). */
+const INSERT_NO_SRC = 'INSERT INTO events (day, name, level, mode, value, first_day, days) VALUES (?, ?, ?, ?, ?, ?, ?)';
 
 /** Minimal D1 surface, so tests can pass a fake. */
 export interface EventsDb {
@@ -93,5 +102,13 @@ export interface EventsDb {
 export async function storeEvents(db: EventsDb, rows: EventRow[]): Promise<void> {
   if (rows.length === 0) return;
   const stmt = db.prepare(INSERT);
-  await db.batch(rows.map((r) => stmt.bind(r.day, r.name, r.level, r.mode, r.value, r.first_day, r.days)));
+  try {
+    await db.batch(rows.map((r) => stmt.bind(r.day, r.name, r.level, r.mode, r.value, r.first_day, r.days, r.src)));
+  } catch (e) {
+    // Only a missing `src` column falls back; any other failure is the caller's to log.
+    if (!/no column named src|no such column: src/i.test(String(e))) throw e;
+    // Keep the events, without their source, rather than lose them.
+    const old = db.prepare(INSERT_NO_SRC);
+    await db.batch(rows.map((r) => old.bind(r.day, r.name, r.level, r.mode, r.value, r.first_day, r.days)));
+  }
 }

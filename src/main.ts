@@ -40,7 +40,7 @@ import { GameView } from './view/game_view';
 import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
-import { isPortal, markPortal } from './config/portal';
+import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
 
 // Wiring: game modes (Story, Battle vs bot, online rooms) and the fixed 60 Hz loop.
@@ -75,7 +75,12 @@ const announcer = new Announcer();
 const congrats = new Congrats();
 const recorder = new Recorder();
 /** Sound starts on the tap-to-start screen (the menu is already open behind it). */
-const audio = new GameAudio(() => {});
+/** The address the page was opened with (a room invite is removed from it further down). */
+const openedWith = window.location.search;
+const audio = new GameAudio(() => {
+  // Quick start: a first-time portal player skips the menu and plays level 1 at once (inside the splash's fade).
+  if (wantsQuickStart(QUICK_START, story.fresh, openedWith)) fadeThrough(() => { session.mode = 'survival'; screens.hideMenu(); story.coldOpen(); });
+});
 const cine = new Cinematic(view, recorder, (s) => {
   for (const e of s.events) view.effect(e, s);
   audio.events(s, session.localId);

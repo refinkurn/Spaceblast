@@ -13,6 +13,8 @@ What a portal build changes (`src/config/portal.ts`, `VITE_PORTAL=crazygames`):
 - no Cloudflare Web Analytics beacon (our anonymous game events still go to our server)
 - the page talks to our room server at spaceblast.refinkurn.workers.dev
 
+**Quick start** (portal builds only; try it on our site with `?quickstart`): a player on a fresh save lands in Story level 1 on the first tap, with no menu, opening crawl, prologue or cards; the coach prompts teach the controls. The opening crawl and prologue then play once as a look back ("Earlier today") before the next level. It happens once per save and never for a room invite. Why: CrazyGames judges the share of players who stay a minute, and Full Launch requires gameplay within one click. Decision D-1 in docs/DECISIONS.md; switch: `QUICK_START` in `src/config/portal.ts`.
+
 Online rooms seat one build only. Portal players therefore meet players on our own site only when both run the same commit: **upload a fresh zip after every push that changes the game**, or portal players will only meet each other.
 
 ## CrazyGames rules that matter to us

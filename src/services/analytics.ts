@@ -1,3 +1,5 @@
+import { PORTAL } from '../config/portal';
+
 // Anonymous game analytics (server side: server/analytics.ts, queries: docs/ANALYTICS.md).
 // No player id and no cookies: events carry only the level, mode, seconds, and
 // for retention the day this device first played. Events wait in a small batch
@@ -10,8 +12,11 @@ export type AnalyticsEvent = {
   value?: number;
   first?: string;
   days?: number;
+  /** Added to every event when sent: 'site' or the portal's id. */
+  src?: string;
 };
 
+const SRC = PORTAL || 'site';
 const BASE = (import.meta.env?.VITE_API_BASE as string | undefined) ?? '';
 const FIRST_KEY = 'spaceblast.firstDay';
 const LAST_KEY = 'spaceblast.lastDay';
@@ -58,7 +63,7 @@ export class Analytics {
 
   flush(): void {
     if (this.queue.length === 0) return;
-    const events = this.queue.splice(0, BATCH);
+    const events = this.queue.splice(0, BATCH).map((e) => ({ ...e, src: SRC }));
     try { this.send(JSON.stringify({ events })); } catch { /* analytics never breaks the game */ }
   }
 

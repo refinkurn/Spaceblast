@@ -17,23 +17,36 @@ Agents (in `.claude/agents/`): `script-integrator` (Haiku, story text), `qa-runn
 
 Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.app (every push builds it; `main` = live). Rooms + leaderboard on Cloudflare, https://spaceblast.refinkurn.workers.dev: Cloudflare Workers Builds deploys every push to `main` too, so a pushed server change goes live within minutes (and restarts any live match). Fly.io server code is in the repo but not deployed (not free).
 
+## Needs Refindo
+
+Only you can do these (accounts, uploads, your own databases). Ranked by what they unblock. Everything else is prepared.
+
+1. **Create the CrazyGames developer account** (developer.crazygames.com), about 10 min. Unblocks the whole soft launch (M1).
+2. **Upload the game**, about 15 min: `spaceblast-portal.zip` (from `npm run build:portal`, or the "spaceblast-portal" file on the latest GitHub Test run), orientation landscape, desktop + mobile; listing text and covers are in `docs/LISTING.md` and `listing/`. Then try it in their preview tool on a phone and a computer.
+3. **Analytics source column**, 1 min: run the one line in docs/ANALYTICS.md ("Source column") in the Cloudflare D1 console, before the upload.
+4. **Traffic analytics token**, 5 min (optional): set `VITE_CF_BEACON_TOKEN` in Vercel (docs/ANALYTICS.md, part 1).
+5. **Phone check**, 1 min: the last open line in docs/PHONE_TEST.md (floating stick at rest).
+6. **Decisions made for you**: docs/DECISIONS.md. D-1 (quick start on the portal) can be vetoed until 2026-11-16.
+
 ## Ready
 
 ## In progress
 
-- 2026-11-10, code session: M0 close-out and CrazyGames portal prep (plan agreed with Refindo). Producer: do not queue M0 or portal items; they are being built here.
-
 ## Blocked
 
-- **Decide: Durable Object hibernation for idle lobbies** (assessed 2026-11-08, not built). Saves server time only while lobbies sit idle; rounds keep the clock anyway. Needs two deploys (a fixed-string ping the server can auto-answer, then the page switches to it), room state saved across eviction (seats, tokens, settings, version pin), a handler rewrite, and a new dev dependency (@cloudflare/vitest-pool-workers) plus a manual check on Cloudflare. Risk: a lost seat/token after a wake-up blocks rejoin. Suggest: first check Durable Object duration in the Cloudflare dashboard; build only if idle lobbies cost real money.
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
 
 ## Known issues
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
+- **Debt: files over the ~300-line rule**: src/flow/online.ts (500), src/flow/story_mode.ts (339), src/main.ts (338), src/flow/story_map.ts (336). Split by feature, no behaviour change.
+- **Not yet tested on a 4 GB Chromebook** (a CrazyGames requirement, docs/PORTAL.md): check frame rate with CPU throttling, or on a real one.
+
 
 ## Done
+
+- 2026-11-14 (Director run, Refindo: "run it now"): quick start for first-time portal players: one tap lands in Story level 1; the opening crawl and prologue play once as a look back before the next level; once per save, never for a room invite, our own site unchanged (D-1, veto by 2026-11-16). Analytics events carry their source (site / crazygames; D-2) with queries for the numbers CrazyGames judges. Independent review found and fixed 4 bugs before the push (invite ignored, repeat on every visit, story lost if interrupted, level running under the splash). Hibernation closed as not needed now (D-3). The stale M0 / portal lock from 2026-11-10 was released: M0 is done apart from the items under Needs Refindo. 522 tests pass.
 
 Older entries: docs/CHANGELOG.md.
 
