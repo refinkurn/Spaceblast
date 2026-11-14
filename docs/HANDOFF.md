@@ -30,6 +30,30 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Chromebook frame-rate check** (new scripts/perf_check.mjs, `npm run perf`; Known issue)
+  Now: CrazyGames wants the game smooth on a 4 GB Chromebook (docs/PORTAL.md); we have never measured it, and no script checks frame rate.
+  Want: a Playwright script like scripts/shots.mjs that opens the dev server at 1366x768, sets CPU throttling 4x (CDP `Emulation.setCPUThrottlingRate`), plays 20 s of Story level 1 and 20 s of Battle vs Bot (4 players), and prints average fps, the 1% worst frame time and draw calls.
+  Want: write the measured numbers into the "Browsers" row of the PORTAL.md table; if average fps is under 50, add a Known issue with the numbers instead of fixing it here.
+  Done when: `npm run perf` prints both runs' numbers and exits 0; PORTAL.md shows them; the Chromebook Known issue is removed (or replaced by the low-fps one).
+
+- **CrazyGames SDK loader, portal build only** (new src/services/crazygames.ts, src/config/portal.ts, src/main.ts)
+  Now: the portal build has no CrazyGames SDK; Full Launch (M2) makes it mandatory.
+  Want: `CRAZY_SDK` switch and `initCrazySdk()` as in the spec: the v3 script loads at boot in the portal build only, never blocks the start screen, and a blocked or failed load leaves the game as it is today.
+  Done when: tests with a missing, throwing and working fake `window.CrazyGames.SDK` all pass with no throw; `npm run build` output has no sdk.crazygames.com reference and `npm run build:portal` does; `npm run shots` passes.
+  Spec: docs/design/crazygames-sdk.md
+
+- **CrazyGames gameplay start/stop** (src/services/crazygames.ts, src/main.ts)
+  Now: after the loader item, the SDK is loaded but never told when the player is playing.
+  Want: `setGameplay(active)` called from the main loop: active while a Story level, Battle vs Bot or online round runs and the existing `paused` check (main.ts) is false; the SDK is called only on a change, and the current state is re-sent once when init finishes.
+  Done when: a test with a fake SDK sees start, stop, start, stop for level start, pause, resume, level clear, and nothing on repeated frames; our own site makes no SDK call.
+  Spec: docs/design/crazygames-sdk.md
+
+- **CrazyGames invite button + instant join** (src/flow/online.ts, src/flow/invite.ts, src/main.ts, src/services/crazygames.ts)
+  Now: the portal build hides our invite button (style.css `body.portal #online-invite`), so portal players can share only the room code.
+  Want: in the portal build the lobby shows the CrazyGames invite button for its room (`showInvite(code)`, hidden when the lobby closes or the round starts); a page opened from a CrazyGames invite (`getInviteParam('roomId')`) opens Multiplayer with the code filled in, exactly like `?room=CODE`, and skips quick start.
+  Done when: tests with a fake SDK cover show/hide on lobby open/close/start and the invite code reaching the join screen; `?room=` on our own site works as before.
+  Spec: docs/design/crazygames-sdk.md
+
 ## In progress
 
 ## Blocked
