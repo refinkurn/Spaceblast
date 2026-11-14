@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SDK_URL, crazySdk, initCrazySdk, resetCrazySdk, type CrazySdk } from './crazygames';
+import { SDK_URL, crazySdk, initCrazySdk, resetCrazySdk, setGameplay, type CrazySdk } from './crazygames';
 
 const ok = () => Promise.resolve();
 afterEach(() => { resetCrazySdk(); vi.restoreAllMocks(); });
@@ -49,5 +49,45 @@ describe('initCrazySdk', () => {
   it('an SDK outside crazygames.com ("disabled") stays a no-op', async () => {
     await initCrazySdk({ enabled: true, load: ok, find: () => ({ init: ok, environment: 'disabled' }) });
     expect(crazySdk()).toBeNull();
+  });
+});
+
+describe('setGameplay', () => {
+  const fakeSdk = () => {
+    const calls: string[] = [];
+    const sdk: CrazySdk = { init: ok, environment: 'crazygames', game: { gameplayStart: () => { calls.push('start'); }, gameplayStop: () => { calls.push('stop'); } } };
+    return { sdk, calls };
+  };
+
+  it('start, stop, start, stop for level start, pause, resume, clear; nothing on repeated frames', async () => {
+    const { sdk, calls } = fakeSdk();
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdk });
+    setGameplay(false); setGameplay(false); // menu frames
+    setGameplay(true); setGameplay(true); setGameplay(true); // level runs
+    setGameplay(false); setGameplay(false); // pause
+    setGameplay(true); // resume
+    setGameplay(false); setGameplay(false); // level clear
+    expect(calls).toEqual(['start', 'stop', 'start', 'stop']);
+  });
+
+  it('a state reached before init finished is sent once when it is ready', async () => {
+    const { sdk, calls } = fakeSdk();
+    setGameplay(true);
+    expect(calls).toEqual([]);
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdk });
+    expect(calls).toEqual(['start']);
+    setGameplay(true);
+    expect(calls).toEqual(['start']);
+  });
+
+  it('makes no SDK call on our own site, with the SDK blocked, or when a call throws', async () => {
+    const { sdk, calls } = fakeSdk();
+    await initCrazySdk({ enabled: false, load: ok, find: () => sdk });
+    setGameplay(true); setGameplay(false);
+    expect(calls).toEqual([]);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad: CrazySdk = { init: ok, game: { gameplayStart: () => { throw new Error('x'); } } };
+    await initCrazySdk({ enabled: true, load: ok, find: () => bad });
+    expect(() => setGameplay(true)).not.toThrow();
   });
 });

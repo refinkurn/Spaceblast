@@ -27,6 +27,9 @@ export interface CrazyDeps {
 
 let sdk: CrazySdk | null = null;
 let warned = false;
+/** Whether a round is running right now, and what the SDK was last told. */
+let wanted = false;
+let told = false;
 
 function warnOnce(what: string, err?: unknown): void {
   if (warned) return;
@@ -54,6 +57,29 @@ export function crazySdk(): CrazySdk | null {
 export function resetCrazySdk(): void {
   sdk = null;
   warned = false;
+  wanted = false;
+  told = false;
+}
+
+/** Tells the SDK about gameplay when it differs from what it last heard. Never throws. */
+function sendGameplay(): void {
+  if (!sdk || wanted === told) return;
+  told = wanted;
+  try {
+    if (wanted) sdk.game?.gameplayStart?.();
+    else sdk.game?.gameplayStop?.();
+  } catch (err) {
+    warnOnce('gameplay call failed', err);
+  }
+}
+
+/**
+ * A round is running and not paused (main loop, every frame). Only a change reaches the SDK;
+ * until init finished the state is only remembered and sent once when it is ready.
+ */
+export function setGameplay(active: boolean): void {
+  wanted = active;
+  sendGameplay();
 }
 
 /**
@@ -69,6 +95,7 @@ export async function initCrazySdk(deps: CrazyDeps = {}): Promise<void> {
     await found.init();
     if (found.environment === 'disabled') return; // not on crazygames.com: stay a no-op
     sdk = found;
+    sendGameplay(); // the state reached while init was running
   } catch (err) {
     sdk = null;
     warnOnce('load or init failed; the game plays without it', err);

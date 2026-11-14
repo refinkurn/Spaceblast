@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames gameplay start/stop** (src/services/crazygames.ts, src/main.ts)
-  Now: after the loader item, the SDK is loaded but never told when the player is playing.
-  Want: `setGameplay(active)` called from the main loop: active while a Story level, Battle vs Bot or online round runs and the existing `paused` check (main.ts) is false; the SDK is called only on a change, and the current state is re-sent once when init finishes.
-  Done when: a test with a fake SDK sees start, stop, start, stop for level start, pause, resume, level clear, and nothing on repeated frames; our own site makes no SDK call.
-  Spec: docs/design/crazygames-sdk.md
-
 - **CrazyGames invite button + instant join** (src/flow/online.ts, src/flow/invite.ts, src/main.ts, src/services/crazygames.ts)
   Now: the portal build hides our invite button (style.css `body.portal #online-invite`), so portal players can share only the room code.
   Want: in the portal build the lobby shows the CrazyGames invite button for its room (`showInvite(code)`, hidden when the lobby closes or the round starts); a page opened from a CrazyGames invite (`getInviteParam('roomId')`) opens Multiplayer with the code filled in, exactly like `?room=CODE`, and skips quick start.
@@ -57,6 +51,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-14: CrazyGames gameplay start/stop: `setGameplay(active)` called every frame from the main loop (round playing and not paused); the SDK hears changes only, state re-sent once when init finishes; our own site makes no call. 531 tests and build pass.
 
 - 2026-11-14: CrazyGames SDK loader: `CRAZY_SDK` switch, `initCrazySdk()` in src/services/crazygames.ts loads the v3 script at boot in the portal build only (no reference in the normal build; build:portal now checks it is there), failures caught and warned once. 528 tests, build, portal build and shots pass.
 

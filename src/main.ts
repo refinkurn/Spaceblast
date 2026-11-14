@@ -40,7 +40,7 @@ import { GameView } from './view/game_view';
 import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
-import { initCrazySdk } from './services/crazygames';
+import { initCrazySdk, setGameplay } from './services/crazygames';
 import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
 
@@ -280,6 +280,7 @@ view.renderer.setAnimationLoop((now: number) => {
   if (paused && !wasPaused) touch.release();
   if (!paused && wasPaused) clearPresses();
   wasPaused = paused;
+  setGameplay(!paused && session.state.status === 'playing'); // CrazyGames: a no-op unless the SDK is up
   tutorial.update(!paused && mode === 'survival' && session.state.status === 'playing');
   let steps = 0;
   if (!paused && mode === 'online' && net) {
