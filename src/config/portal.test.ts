@@ -14,5 +14,6 @@ describe('quick start', () => {
   it('gives way to a room invite', () => {
     expect(wantsQuickStart(true, true, '?room=ABCD')).toBe(false);
     expect(wantsQuickStart(true, true, '?quickstart')).toBe(true);
+    expect(wantsQuickStart(true, true, '', true)).toBe(false); // CrazyGames invite
   });
 });

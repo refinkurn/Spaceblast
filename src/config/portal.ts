@@ -25,8 +25,9 @@ export const QUICK_START: boolean = isPortal || (typeof location !== 'undefined'
 /**
  * Quick start happens once per save: `fresh` means no Story progress, no opening
  * card seen and no quick start before. Never for someone following a room invite
- * (pass the address the page was opened with: the invite is removed from it at load).
+ * (pass the address the page was opened with: the invite is removed from it at load;
+ * `crazyInvite` is true for a CrazyGames invite, which comes from the SDK, not the address).
  */
-export function wantsQuickStart(enabled: boolean, fresh: boolean, search: string): boolean {
-  return enabled && fresh && !new URLSearchParams(search).has('room');
+export function wantsQuickStart(enabled: boolean, fresh: boolean, search: string, crazyInvite = false): boolean {
+  return enabled && fresh && !crazyInvite && !new URLSearchParams(search).has('room');
 }

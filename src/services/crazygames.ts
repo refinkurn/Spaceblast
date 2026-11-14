@@ -2,6 +2,7 @@
 // the only file that touches `window.CrazyGames`. The game plays exactly as without it
 // when the script is blocked, slow or broken: every call is a silent no-op until init finished.
 import { CRAZY_SDK } from '../config/portal';
+import { isRoomCode } from '../net/protocol';
 
 /** Empty on our own site, so the address is not in that build at all. */
 export const SDK_URL = CRAZY_SDK ? 'https://sdk.crazygames.com/crazygames-sdk-v3.js' : '';
@@ -13,6 +14,9 @@ export interface CrazySdk {
   game?: {
     gameplayStart?(): void;
     gameplayStop?(): void;
+    showInviteButton?(params: Record<string, string>): unknown;
+    hideInviteButton?(): void;
+    getInviteParam?(key: string): string | null;
   };
 }
 
@@ -59,6 +63,7 @@ export function resetCrazySdk(): void {
   warned = false;
   wanted = false;
   told = false;
+  inviteShown = false;
 }
 
 /** Tells the SDK about gameplay when it differs from what it last heard. Never throws. */
@@ -80,6 +85,44 @@ function sendGameplay(): void {
 export function setGameplay(active: boolean): void {
   wanted = active;
   sendGameplay();
+}
+
+/** The invite button shows only while it is on, so a repeated call changes nothing. */
+let inviteShown = false;
+
+/** Lobby open with a room code: CrazyGames shows its invite button for that room. */
+export function showInvite(code: string): void {
+  if (!sdk || !code) return;
+  try {
+    sdk.game?.showInviteButton?.({ roomId: code });
+    inviteShown = true;
+  } catch (err) {
+    warnOnce('showInviteButton failed', err);
+  }
+}
+
+/** Lobby closed or the round started. Only calls the SDK if the button was shown. */
+export function hideInvite(): void {
+  if (!sdk || !inviteShown) return;
+  inviteShown = false;
+  try {
+    sdk.game?.hideInviteButton?.();
+  } catch (err) {
+    warnOnce('hideInviteButton failed', err);
+  }
+}
+
+/** The room code this page was opened with from a CrazyGames invite, or null (none, malformed, no SDK). */
+export function inviteRoom(): string | null {
+  if (!sdk) return null;
+  try {
+    const raw = sdk.game?.getInviteParam?.('roomId');
+    const code = typeof raw === 'string' ? raw.trim().toUpperCase() : '';
+    return isRoomCode(code) ? code : null;
+  } catch (err) {
+    warnOnce('getInviteParam failed', err);
+    return null;
+  }
 }
 
 /**

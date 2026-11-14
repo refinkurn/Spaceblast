@@ -6,6 +6,7 @@ import {
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
 import { dragScroll } from './drag_scroll';
+import { hideInvite, showInvite } from '../services/crazygames';
 import { inviteUrl, shareInvite } from './invite';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
 import { arenaOptions, botLevelOptions, matchOptions, scenarioFlags, scenarioOf, scenarioOptions, timeOptions, type Scenario } from './online_options';
@@ -185,16 +186,19 @@ export class OnlineRoom {
     $('online-lobby').hidden = false;
     backLabel(t('online.leaveRoom'));
     $('online-room').textContent = this.code;
+    showInvite(this.code); // CrazyGames portal: its own invite button for this room
     this.renderLobby(note);
   }
 
   hide(): void {
     this.screen.hidden = true;
+    hideInvite();
   }
 
   /** Leaves the room and tells main.ts. With a reason, the online screen stays up to show it. */
   exit(reason: string): void {
     this.net.leave();
+    hideInvite();
     this.you = this.host = -1;
     this.players = [];
     if (reason) {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SDK_URL, crazySdk, initCrazySdk, resetCrazySdk, setGameplay, type CrazySdk } from './crazygames';
+import { CODE_LENGTH, CODE_LETTERS } from '../net/protocol';
+import { SDK_URL, crazySdk, hideInvite, initCrazySdk, inviteRoom, showInvite, resetCrazySdk, setGameplay, type CrazySdk } from './crazygames';
 
 const ok = () => Promise.resolve();
 afterEach(() => { resetCrazySdk(); vi.restoreAllMocks(); });
@@ -89,5 +90,59 @@ describe('setGameplay', () => {
     const bad: CrazySdk = { init: ok, game: { gameplayStart: () => { throw new Error('x'); } } };
     await initCrazySdk({ enabled: true, load: ok, find: () => bad });
     expect(() => setGameplay(true)).not.toThrow();
+  });
+});
+
+describe('invites', () => {
+  const code = 'ABCD';
+  const make = (param: string | null | (() => never)) => {
+    const calls: string[] = [];
+    const sdk: CrazySdk = {
+      init: ok,
+      environment: 'crazygames',
+      game: {
+        showInviteButton: (p) => { calls.push(`show ${p.roomId}`); },
+        hideInviteButton: () => { calls.push('hide'); },
+        getInviteParam: typeof param === 'function' ? param : () => param,
+      },
+    };
+    return { sdk, calls };
+  };
+
+  it('shows the invite button for the lobby and hides it when it closes or the round starts', async () => {
+    const { sdk, calls } = make(null);
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdk });
+    hideInvite(); // nothing shown yet: no call
+    showInvite('WXYZ');
+    hideInvite();
+    hideInvite(); // already hidden: no second call
+    expect(calls).toEqual(['show WXYZ', 'hide']);
+  });
+
+  it('reads the room code from a CrazyGames invite, checked like ?room=', async () => {
+    const good = CODE_LETTERS.slice(0, CODE_LENGTH);
+    expect(inviteRoom()).toBeNull(); // no SDK yet
+    await initCrazySdk({ enabled: true, load: ok, find: () => make(good.toLowerCase()).sdk });
+    expect(inviteRoom()).toBe(good);
+    resetCrazySdk();
+    await initCrazySdk({ enabled: true, load: ok, find: () => make('<script>').sdk });
+    expect(inviteRoom()).toBeNull();
+    resetCrazySdk();
+    await initCrazySdk({ enabled: true, load: ok, find: () => make(null).sdk });
+    expect(inviteRoom()).toBeNull();
+  });
+
+  it('makes no call and finds no invite on our own site, and survives a throwing SDK', async () => {
+    const { sdk, calls } = make(code);
+    await initCrazySdk({ enabled: false, load: ok, find: () => sdk });
+    showInvite('WXYZ'); hideInvite();
+    expect(calls).toEqual([]);
+    expect(inviteRoom()).toBeNull();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad = make(() => { throw new Error('x'); });
+    bad.sdk.game!.showInviteButton = () => { throw new Error('y'); };
+    await initCrazySdk({ enabled: true, load: ok, find: () => bad.sdk });
+    expect(() => showInvite('WXYZ')).not.toThrow();
+    expect(inviteRoom()).toBeNull();
   });
 });

@@ -40,7 +40,7 @@ import { GameView } from './view/game_view';
 import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
-import { initCrazySdk, setGameplay } from './services/crazygames';
+import { initCrazySdk, inviteRoom, setGameplay } from './services/crazygames';
 import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
 
@@ -80,7 +80,7 @@ const recorder = new Recorder();
 const openedWith = window.location.search;
 const audio = new GameAudio(() => {
   // Quick start: a first-time portal player skips the menu and plays level 1 at once (inside the splash's fade).
-  if (wantsQuickStart(QUICK_START, story.fresh, openedWith)) fadeThrough(() => { session.mode = 'survival'; screens.hideMenu(); story.coldOpen(); });
+  if (wantsQuickStart(QUICK_START, story.fresh, openedWith, inviteRoom() !== null)) fadeThrough(() => { session.mode = 'survival'; screens.hideMenu(); story.coldOpen(); });
 });
 const cine = new Cinematic(view, recorder, (s) => {
   for (const e of s.events) view.effect(e, s);
@@ -143,7 +143,11 @@ document.addEventListener('visibilitychange', () => {
 });
 markPortal();
 // CrazyGames portal build only: loads in the background, never holds up the start screen.
-initCrazySdk();
+initCrazySdk().then(() => {
+  // Opened from a CrazyGames invite: same as ?room=CODE (Multiplayer, code filled in, the player taps Join).
+  const invited = inviteRoom();
+  if (invited && screens.menuOpen) { startModeNow('online'); online.prefillCode(invited); }
+});
 installInputMode();
 // A portal provides full screen itself and forbids a button of our own.
 if (!isPortal) setupFullscreen();

@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames invite button + instant join** (src/flow/online.ts, src/flow/invite.ts, src/main.ts, src/services/crazygames.ts)
-  Now: the portal build hides our invite button (style.css `body.portal #online-invite`), so portal players can share only the room code.
-  Want: in the portal build the lobby shows the CrazyGames invite button for its room (`showInvite(code)`, hidden when the lobby closes or the round starts); a page opened from a CrazyGames invite (`getInviteParam('roomId')`) opens Multiplayer with the code filled in, exactly like `?room=CODE`, and skips quick start.
-  Done when: tests with a fake SDK cover show/hide on lobby open/close/start and the invite code reaching the join screen; `?room=` on our own site works as before.
-  Spec: docs/design/crazygames-sdk.md
-
 ## In progress
 
 ## Blocked
@@ -51,6 +45,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-14: CrazyGames invite button + instant join: lobby shows the SDK invite button for its room and hides it on close, leave or round start; a page opened from a CrazyGames invite opens Multiplayer with the code filled in and skips quick start (our `?room=` unchanged). 534 tests, build, shots and online-check pass.
 
 - 2026-11-14: CrazyGames gameplay start/stop: `setGameplay(active)` called every frame from the main loop (round playing and not paused); the SDK hears changes only, state re-sent once when init finishes; our own site makes no call. 531 tests and build pass.
 
