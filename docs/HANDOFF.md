@@ -22,7 +22,7 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 Only you can do these (accounts, uploads, your own databases). Ranked by what they unblock. Everything else is prepared.
 
 1. **Create the CrazyGames developer account** (developer.crazygames.com), about 10 min. Unblocks the whole soft launch (M1).
-2. **Upload the game**, about 15 min: `spaceblast-portal.zip` (from `npm run build:portal`, or the "spaceblast-portal" file on the latest GitHub Test run), orientation landscape, desktop + mobile; listing text and covers are in `docs/LISTING.md` and `listing/`. Then try it in their preview tool on a phone and a computer.
+2. **Upload the game**, about 15 min: `spaceblast-portal.zip` (from `npm run build:portal`, or the "spaceblast-portal" file on the latest GitHub Test run), orientation landscape, desktop + mobile; listing text, covers and both videos are in `docs/LISTING.md` and `listing/`. Then try it in their preview tool on a phone and a computer.
 3. **Analytics source column**, 1 min: run the one line in docs/ANALYTICS.md ("Source column") in the Cloudflare D1 console, before the upload.
 4. **Traffic analytics token**, 5 min (optional): set `VITE_CF_BEACON_TOKEN` in Vercel (docs/ANALYTICS.md, part 1).
 5. **Phone check**, 1 min: the last open line in docs/PHONE_TEST.md (floating stick at rest).

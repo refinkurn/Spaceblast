@@ -48,6 +48,13 @@ Made by `node scripts/listing_covers.mjs` from the menu key art and the game's t
 
 Note: the key art shows Captain Kit standing beside Bosco; in the story Kit is radio only. It is the same art as the game's menu, so the listing matches what players see. Replace it here when the new 9:16 menu art exists (run the script again).
 
-## Videos (still to make)
+## Videos (in `listing/`)
 
-CrazyGames asks for two silent gameplay videos, 15-20 s each, no fast-forward, opening on the static cover, no cursor, no black bars: landscape 1080p (16:9) and portrait 1080p (2:3). See docs/HANDOFF.md for who makes them.
+Silent H.264, 30 fps, real gameplay at true speed (a bot plays; recorded frame by frame with `node scripts/listing_capture.mjs`, joined with ffmpeg). Each opens on its static cover, no cursor, no black bars, no promotional text.
+
+| File | Size | Length | Shows |
+|---|---|---|---|
+| `listing/video-landscape.mp4` | 1920x1080 (16:9) | 15.2 s | cover, Story level 1-3 (Gooplings, Hungry Gooplings), a Battle vs Bot round with a cross blast |
+| `listing/video-portrait.mp4` | 1080x1620 (2:3) | 15.3 s | cover, Story level 1-3, a Battle vs Bot round in the crystal cavern arena |
+
+The game is landscape-only, so in the portrait video the arena is small in the middle of the frame. If CrazyGames rejects it, a cropped close-up version is the fix (agents can make it).
