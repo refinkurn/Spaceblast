@@ -1,10 +1,11 @@
 import { LEVEL_COUNT } from '../sim/levels';
+import { writeAccountData } from '../services/crazygames';
 
 // Story Mode progress, saved on this device: the furthest level reached, the
 // best stars per level, run totals for the ending screen, and which tutorial
 // steps and enemy / power-up cards have been shown (once per save).
 
-const KEY = 'spaceblast.story';
+export const KEY = 'spaceblast.story';
 const OLD_BEATS_KEY = 'spaceblast.tutorial';
 
 export interface StoryStats {
@@ -15,7 +16,7 @@ export interface StoryStats {
   ticks: number;
 }
 
-interface Saved {
+export interface Saved {
   /** Highest level you can play (the one after your furthest clear). */
   unlocked: number;
   stars: Record<number, number>;
@@ -46,7 +47,7 @@ const ids = (v: unknown): string[] =>
   Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && /^[a-z_]{1,24}$/.test(x)))].slice(0, 32) : [];
 
 /** Saved data checked field by field, so old or edited data can't break the game. */
-function sanitize(raw: Partial<Saved> | null): Saved {
+export function sanitize(raw: Partial<Saved> | null): Saved {
   const out = fresh();
   if (!raw || typeof raw !== 'object') return out;
   const int = (v: unknown, max: number) => (Number.isInteger(v) && (v as number) >= 0 ? Math.min(v as number, max) : 0);
@@ -68,6 +69,37 @@ function sanitize(raw: Partial<Saved> | null): Saved {
   out.seenEnemies = ids(raw.seenEnemies ?? old.seenAliens);
   out.seenPowerups = ids(raw.seenPowerups ?? old.seenPowerUps);
   return out;
+}
+
+const best = (a: Record<number, number>, b: Record<number, number>): Record<number, number> => {
+  const out: Record<number, number> = {};
+  for (let n = 1; n <= LEVEL_COUNT; n++) {
+    const v = Math.max(a[n] ?? 0, b[n] ?? 0);
+    if (v > 0) out[n] = v;
+  }
+  return out;
+};
+
+/** Two saves of the same player (this device and the CrazyGames account) as one: the best of each field. */
+export function mergeSaved(a: Saved, b: Saved): Saved {
+  return {
+    unlocked: Math.max(a.unlocked, b.unlocked),
+    stars: best(a.stars, b.stars),
+    scores: best(a.scores, b.scores),
+    stats: {
+      martians: Math.max(a.stats.martians, b.stats.martians),
+      bosses: Math.max(a.stats.bosses, b.stats.bosses),
+      livesLost: Math.max(a.stats.livesLost, b.stats.livesLost),
+      ticks: Math.max(a.stats.ticks, b.stats.ticks),
+    },
+    finished: a.finished || b.finished,
+    tutorialSeen: a.tutorialSeen || b.tutorialSeen,
+    // The opening story is still owed only if neither copy has had it.
+    introPending: a.introPending && b.introPending,
+    seenBeats: ids([...a.seenBeats, ...b.seenBeats]),
+    seenEnemies: ids([...a.seenEnemies, ...b.seenEnemies]),
+    seenPowerups: ids([...a.seenPowerups, ...b.seenPowerups]),
+  };
 }
 
 export class StoryProgress {
@@ -177,7 +209,24 @@ export class StoryProgress {
     s.ticks += change.ticks ?? 0;
   }
 
+  /**
+   * The CrazyGames account's copy (SDK.data, once the SDK is ready): checked field by field, merged
+   * with this one, saved to both places. Returns whether anything changed here (bad data = no change).
+   */
+  mergeAccount(raw: string | null): boolean {
+    if (!raw) { this.save(); return false; } // nothing on the account yet: it gets our copy
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { this.save(); return false; }
+    if (!parsed || typeof parsed !== 'object') { this.save(); return false; }
+    const before = JSON.stringify(this.data);
+    this.data = mergeSaved(this.data, sanitize(parsed as Partial<Saved>));
+    this.save();
+    return JSON.stringify(this.data) !== before;
+  }
+
   save(): void {
-    try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch { /* private mode */ }
+    const json = JSON.stringify(this.data);
+    try { localStorage.setItem(KEY, json); } catch { /* private mode */ }
+    writeAccountData(KEY, json); // portal build with the SDK ready; otherwise nothing
   }
 }

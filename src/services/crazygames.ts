@@ -17,6 +17,11 @@ export interface CrazyUser {
 export interface CrazySdk {
   init(): Promise<void>;
   environment?: string;
+  /** Works like localStorage and follows the CrazyGames account when logged in. */
+  data?: {
+    getItem?(key: string): string | null;
+    setItem?(key: string, value: string): void;
+  };
   user?: {
     getUser?(): Promise<CrazyUser | null | undefined>;
     addAuthListener?(listener: (user: CrazyUser | null | undefined) => void): void;
@@ -89,6 +94,7 @@ export function resetCrazySdk(): void {
   adHook = null;
   accountName = null;
   nameListeners.length = 0;
+  readyListeners.length = 0;
 }
 
 /** Tells the SDK about gameplay when it differs from what it last heard. Never throws. */
@@ -166,6 +172,7 @@ export async function initCrazySdk(deps: CrazyDeps = {}): Promise<void> {
     sendGameplay(); // the state reached while init was running
     await checkAdblock(found);
     await watchUser(found);
+    for (const l of readyListeners.splice(0)) runReady(l);
   } catch (err) {
     sdk = null;
     warnOnce('load or init failed; the game plays without it', err);
@@ -279,5 +286,41 @@ async function watchUser(found: CrazySdk): Promise<void> {
     setUser(await found.user?.getUser?.());
   } catch (err) {
     warnOnce('user module failed', err); // logged out or blocked: the device name stays
+  }
+}
+
+// --- Saved data on the account (data module) ---------------------------------------------------
+
+const readyListeners: Array<() => void> = [];
+
+function runReady(l: () => void): void {
+  try { l(); } catch (err) { warnOnce('a ready listener failed', err); }
+}
+
+/** Runs once the SDK is ready (at once if it already is). Never runs without the SDK. */
+export function onCrazyReady(listener: () => void): void {
+  if (sdk) runReady(listener);
+  else readyListeners.push(listener);
+}
+
+/** What the account holds under `key`, or null (nothing saved, no SDK). */
+export function readAccountData(key: string): string | null {
+  if (!sdk) return null;
+  try {
+    const v = sdk.data?.getItem?.(key);
+    return typeof v === 'string' ? v : null;
+  } catch (err) {
+    warnOnce('data.getItem failed', err);
+    return null;
+  }
+}
+
+/** Saves under `key` on the account. A silent no-op without the SDK. */
+export function writeAccountData(key: string, value: string): void {
+  if (!sdk) return;
+  try {
+    sdk.data?.setItem?.(key, value);
+  } catch (err) {
+    warnOnce('data.setItem failed', err);
   }
 }

@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Story progress saved to the CrazyGames account** (src/services/crazygames.ts, src/flow/progress.ts)
-  Now: Story progress lives only in localStorage (`spaceblast.story`), so it stays on one device.
-  Want: in the portal build with the SDK ready, progress is written to `SDK.data` too; after init the account copy is sanitized and merged with the local one (best of each field), saved to both, and the Story map refreshes if open.
-  Done when: tests cover the merge (further on the account, further locally, seen lists joined, bad account data ignored) and no SDK = localStorage only as today; `npm test` and `npm run build:portal` pass.
-  Spec: docs/design/crazygames-full-launch.md (Progress)
-
 ## In progress
 
 ## Blocked
@@ -53,6 +47,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-15: Story progress on the CrazyGames account: `save()` also writes SDK.data; when the SDK is ready the account copy is sanitized, merged with the local one (`mergeSaved`: best of each field, seen lists joined, introPending only if both) and saved to both; the Story map refreshes if open; no SDK = localStorage only. 575 tests, build and build:portal pass. Not checked: whether the data module must be switched on in the CrazyGames developer page (docs search returned no text); worth a look at upload.
 
 - 2026-11-15: CrazyGames username as the leaderboard name: the SDK user module (getUser + auth listener) gives a logged-in username, cleaned to our name rules (`usernameToName`; unusable = device name); scores are sent with it (`displayName()`), the leaderboard name field shows it read-only with a hint (`lb.fromCrazyGames`), updates on a login during play. 564 tests, build and build:portal pass.
 

@@ -9,7 +9,7 @@ import { IntroCards } from './intro_card';
 import { LeaderboardScreen } from './leaderboard_screen';
 import { StoryMap } from './story_map';
 import { POWERUP_CARDS } from './powerup_cards';
-import { StoryProgress } from './progress';
+import { KEY as SAVE_KEY, StoryProgress } from './progress';
 import { StoryResults } from './story_results';
 import type { Screens } from './screens';
 import { ENDING, SECTORS, levelCard, type LevelCardText } from './story';
@@ -17,6 +17,7 @@ import { INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL } from './story_scenes';
 import { t } from '../utils/i18n';
 import { fadeThrough } from './transition';
 import { analytics } from '../services/analytics';
+import { onCrazyReady, readAccountData } from '../services/crazygames';
 
 // Story Mode flow: the Story map (flow/story_map.ts), each level's
 // lead-in (sector card, boss cutscene, level card), results, retrying a level
@@ -75,6 +76,10 @@ export class StoryMode {
       let last = 1;
       for (let n = 1; n <= LEVEL_COUNT; n++) if (this.progress.stars(n) > 0) last = n;
       this.board.show(last);
+    });
+    // CrazyGames account: once the SDK is ready its copy of the progress is merged with this device's.
+    onCrazyReady(() => {
+      if (this.progress.mergeAccount(readAccountData(SAVE_KEY)) && this.map.open) this.map.show();
     });
     // After the ending: back to the Story map (all 20 levels cleared, ready to replay for stars).
     $('ending-btn').addEventListener('click', () => fadeThrough(() => {
