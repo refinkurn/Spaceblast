@@ -1,6 +1,4 @@
-import { START_LIVES } from '../sim/constants';
-import { gemsCollected } from '../sim/items';
-import { LEVEL_COUNT, isSectorStart, levelRoster, levelSpec } from '../sim/levels';
+import { LEVEL_COUNT, isSectorStart, levelSpec } from '../sim/levels';
 import type { GameState, SimEvent } from '../sim/state';
 import type { GameView } from '../view/game_view';
 import { ALIEN_CARDS } from './alien_cards';
@@ -12,14 +10,10 @@ import { LeaderboardScreen } from './leaderboard_screen';
 import { StoryMap } from './story_map';
 import { POWERUP_CARDS } from './powerup_cards';
 import { StoryProgress } from './progress';
-import { scoreFor } from '../services/score';
-import { scoreRows, sendScore } from './story_score';
+import { StoryResults } from './story_results';
 import type { Screens } from './screens';
 import { ENDING, SECTORS, levelCard, type LevelCardText } from './story';
-import { ENDING_SCENE, INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL, OUTRO_SCENES } from './story_scenes';
-import { randomTip } from './tutorial';
-import { bossClearLine, storySummary } from './summary';
-import { tally } from './match_tally';
+import { INTRO_SCENES, OPENING_CRAWL, OPENING_TUTORIAL } from './story_scenes';
 import { t } from '../utils/i18n';
 import { fadeThrough } from './transition';
 import { analytics } from '../services/analytics';
@@ -56,9 +50,21 @@ export class StoryMode {
     $('hub-board').focus();
   });
   private map: StoryMap;
+  private results: StoryResults;
 
   constructor(private host: StoryHost, private screens: Screens, private cutscene: Cutscene, private view: GameView) {
     this.cards = new IntroCards(view);
+    this.results = new StoryResults({
+      host,
+      screens,
+      cutscene,
+      progress: this.progress,
+      level: () => this.level,
+      livesLost: () => this.livesLost,
+      play: (level, withStory) => this.play(level, withStory),
+      showMap: (from) => this.map.show(from === undefined ? undefined : { from }),
+      showEnding: () => this.showEnding(),
+    });
     // Map -> level and map -> menu change the whole screen (and rebuild the arena): both fade through black.
     this.map = new StoryMap(this.progress, (level) => fadeThrough(() => this.play(level, true, true)), () => fadeThrough(() => {
       this.map.hide();
@@ -237,67 +243,12 @@ export class StoryMode {
         }
         break;
       case 'level_clear':
-        this.cleared();
+        this.results.cleared();
         break;
       case 'game_over':
-        this.gameOver();
+        this.results.gameOver();
         break;
     }
-  }
-
-  private cleared(): void {
-    const state = this.host.state;
-    const level = this.level;
-    const spec = levelSpec(level);
-    analytics.track({ name: 'level_clear', level, mode: 'story', value: Math.round(state.tick / 60) });
-    // The Ducking duel counts as a boss too.
-    if (spec.rival) this.progress.add({ bosses: 1 });
-    const lost = Math.min(this.livesLost, START_LIVES);
-    const martians = state.martians.filter((m) => !m.alive).length;
-    const heartsLeft = START_LIVES - lost;
-    const gems = gemsCollected(state);
-    const score = scoreFor({ level, martians, ticks: state.tick, heartsLeft, gems });
-    const stars = score.stars;
-    const prevBest = this.progress.bestScore(level);
-    this.progress.clear(level, stars, score.total);
-    sendScore(level, score, heartsLeft, gems, () => this.screens.bannerOpen);
-    // After the duel, the ending scene follows straight on.
-    const outro = [...(OUTRO_SCENES[level] ?? []), ...(level >= LEVEL_COUNT ? ENDING_SCENE : [])];
-    this.cutscene.play(outro, state, () => {
-      if (level >= LEVEL_COUNT) {
-        this.showEnding();
-        return;
-      }
-      const next = level + 1;
-      const line = spec.boss ? bossClearLine(spec.boss) : t('story.levelClear', { n: level });
-      // Boss and duel levels have no Martian roster: name their goal instead of "0 Martians".
-      const nextSpec = levelSpec(next);
-      const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : t('story.martians', { n: levelRoster(next).length });
-      const upNext = isSectorStart(next) ? t('story.sectorComplete', { n: spec.sector, name: SECTORS[spec.sector].name }) : t('story.next', { n: next, goal: nextGoal });
-      this.screens.showBanner(spec.boss ? t('banner.survived') : t('banner.levelClear'), `${line}\n${upNext}`, t('banner.nextLevel'), () => fadeThrough(() => this.play(next, true)), t('banner.map'), '', {
-        pose: 'happy', summary: [...scoreRows(score, prevBest), ...storySummary(state, tally, lost, stars)],
-        // "Map" goes back to the Story map, where Bosco walks (or warps) on to the next node.
-        onMenu: () => fadeThrough(() => {
-          this.screens.hideBanner();
-          this.map.show({ from: level });
-        }),
-      });
-    });
-  }
-
-  private gameOver(): void {
-    this.progress.save();
-    const level = this.level;
-    analytics.track({ name: 'level_fail', level, mode: 'story', value: Math.round(this.host.state.tick / 60) });
-    this.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.play(level, false)), t('banner.map'), randomTip(),
-      {
-        pose: 'defeated', summary: storySummary(this.host.state, tally, this.livesLost, 0),
-        // "Map" goes back to the Story map, not the main menu.
-        onMenu: () => fadeThrough(() => {
-          this.screens.hideBanner();
-          this.map.show();
-        }),
-      });
   }
 
   private showEnding(): void {

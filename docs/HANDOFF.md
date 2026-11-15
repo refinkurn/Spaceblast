@@ -30,11 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Split src/flow/story_mode.ts by feature, no behaviour change** (src/flow/story_mode.ts)
-  Now: 339 lines (Known issue: over the ~300-line rule); the level-end banners (`cleared()`, the game-over banner) live with the lead-in and map flow, and the ads items below add to them.
-  Want: move the level-end results (clear and game-over banners, their "Next level" / "Retry" / "Map" actions) into a new src/flow/story_results.ts; story_mode.ts under 300 lines.
-  Done when: both files under 300 lines, `npm test`, `npm run build` and `npm run shots` pass, and a Story level clear and a game over show the same banners as before.
-
 - **CrazyGames midgame ads, switched off** (src/services/crazygames.ts, src/config/portal.ts, src/flow/story_mode.ts or story_results.ts, src/flow/battle_flow.ts, src/flow/online.ts)
   Now: no ad code; the SDK wrapper has gameplay and invites only.
   Want: `CRAZY_ADS` switch (false) and `midgameAd()` / `adsAvailable()` in the wrapper, sound muted and taps ignored while an ad plays; a midgame ad on the Story "Next level" / "Retry" tap, on leaving the Battle vs Bot end screen, and on leaving an online room (never between online rounds).
@@ -65,11 +60,13 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
-- **Debt: files over the ~300-line rule**: src/flow/online.ts (500), src/flow/story_mode.ts (339), src/main.ts (338), src/flow/story_map.ts (336). Split by feature, no behaviour change.
+- **Debt: files over the ~300-line rule**: src/flow/online.ts (500), src/main.ts (338), src/flow/story_map.ts (336). Split by feature, no behaviour change.
 - **Frame rate under 50 fps in `npm run perf`** (4 GB Chromebook, a CrazyGames requirement, docs/PORTAL.md): Story level 1 2.3 fps avg, Battle vs Bot 2.2 fps, with 4x CPU throttling and software drawing (no GPU in the cloud run), so this says little about a real Chromebook. Needs a run on a real one (Refindo) or a GPU-backed machine before any optimising.
 
 
 ## Done
+
+- 2026-11-15: Split story_mode.ts: level-clear and game-over banners moved to src/flow/story_results.ts (story_mode.ts 290 lines, story_results.ts 93), no behaviour change. Tests, build and shots pass.
 
 - 2026-11-14: CrazyGames invite button + instant join: lobby shows the SDK invite button for its room and hides it on close, leave or round start; a page opened from a CrazyGames invite opens Multiplayer with the code filled in and skips quick start (our `?room=` unchanged). 534 tests, build, shots and online-check pass.
 
