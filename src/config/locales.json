@@ -131,6 +131,7 @@
     "invite.share": "Join my Spaceblast room {code}",
     "lb.badName": "Try another name (2-12 letters, numbers, spaces, _ or -, nothing rude).",
     "lb.empty": "No scores yet. Be the first!",
+    "lb.fromCrazyGames": "Your name comes from your CrazyGames account.",
     "lb.level": "Level {n}",
     "lb.offline": "Offline. Scores are sent when you are back online.",
     "lb.saved": "Saved. It shows with your next score.",

@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames username as the leaderboard name** (src/services/crazygames.ts, src/services/profile.ts, src/flow/leaderboard_screen.ts)
-  Now: the leaderboard name is the device profile name ("Bosco_482" or what the player typed), also in the portal build.
-  Want: in the portal build, a logged-in CrazyGames user's username (cleaned to our name rules, device name if it can't be used) is the name sent with scores; the leaderboard name field shows it read-only with a short hint (text through t()); logged out = today's behaviour.
-  Done when: tests cover a usable username, one with a dot, an unusable one, logged out, no SDK, and a login during play; `npm test` and `npm run build:portal` pass.
-  Spec: docs/design/crazygames-full-launch.md (Username)
-
 - **Story progress saved to the CrazyGames account** (src/services/crazygames.ts, src/flow/progress.ts)
   Now: Story progress lives only in localStorage (`spaceblast.story`), so it stays on one device.
   Want: in the portal build with the SDK ready, progress is written to `SDK.data` too; after init the account copy is sanitized and merged with the local one (best of each field), saved to both, and the Story map refreshes if open.
@@ -59,6 +53,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-15: CrazyGames username as the leaderboard name: the SDK user module (getUser + auth listener) gives a logged-in username, cleaned to our name rules (`usernameToName`; unusable = device name); scores are sent with it (`displayName()`), the leaderboard name field shows it read-only with a hint (`lb.fromCrazyGames`), updates on a login during play. 564 tests, build and build:portal pass.
 
 - 2026-11-15: CrazyGames midgame ads, switched off: `CRAZY_ADS` (false) in config/portal.ts; `midgameAd()` / `adsAvailable()` / `afterMidgameAd()` in the SDK wrapper (5 s start limit, never rejects); sound muted and taps shielded while an ad plays (flow/ad_shield.ts); call points on Story Next level / Retry, Battle vs Bot end screen, leaving an online room (flow/ad_points.ts). With the switch off the actions run in the same call as before. 554 tests, build and build:portal pass.
 

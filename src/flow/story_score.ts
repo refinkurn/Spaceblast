@@ -1,5 +1,5 @@
 import { leaderboard } from '../services/leaderboardApi';
-import { loadProfile } from '../services/profile';
+import { displayName, loadProfile } from '../services/profile';
 import { stageId, type ScoreBreakdown } from '../services/score';
 import { t } from '../utils/i18n';
 
@@ -18,7 +18,7 @@ export function sendScore(level: number, score: ScoreBreakdown, heartsLeft: numb
   const me = loadProfile();
   void leaderboard.submit({
     device_uuid: me.uuid,
-    display_name: me.name,
+    display_name: displayName(),
     stage_id: stageId(level),
     score: score.total,
     completion_time_seconds: Math.max(5, score.seconds),

@@ -1,7 +1,8 @@
 import { LEVEL_COUNT } from '../sim/levels';
 import { leaderboard } from '../services/leaderboardApi';
 import { NAME_MAX } from '../services/name_filter';
-import { loadProfile, renameProfile } from '../services/profile';
+import { crazyAccountName, onAccountName } from '../services/crazygames';
+import { displayName, loadProfile, renameProfile } from '../services/profile';
 import { stageId } from '../services/score';
 import type { ScoreRow } from '../services/leaderboard_types';
 import { t } from '../utils/i18n';
@@ -28,10 +29,23 @@ export class LeaderboardScreen {
     input.maxLength = NAME_MAX;
     $('lb-form').addEventListener('submit', (e) => {
       e.preventDefault();
+      if (crazyAccountName()) return; // the name comes from the CrazyGames account
       const ok = renameProfile(input.value);
       $('lb-name-note').textContent = ok ? t('lb.saved') : t('lb.badName');
       input.value = loadProfile().name;
     });
+    // A login or logout while the screen is open.
+    onAccountName(() => { if (this.open) this.showName(); });
+  }
+
+  /** The name field: the CrazyGames username (read-only, with a hint) when logged in, else the device name. */
+  private showName(): void {
+    const input = $<HTMLInputElement>('lb-name');
+    const account = crazyAccountName() !== null;
+    input.value = displayName();
+    input.readOnly = account;
+    $<HTMLButtonElement>('lb-form').querySelector('button')!.disabled = account;
+    $('lb-name-note').textContent = account ? t('lb.fromCrazyGames') : '';
   }
 
   get open(): boolean {
@@ -41,7 +55,7 @@ export class LeaderboardScreen {
   show(level: number): void {
     this.level = Math.max(1, Math.min(LEVEL_COUNT, level));
     this.el.hidden = false;
-    $<HTMLInputElement>('lb-name').value = loadProfile().name;
+    this.showName();
     $('lb-level').textContent = t('lb.level', { n: this.level });
     $<HTMLButtonElement>('lb-prev').disabled = this.level <= 1;
     $<HTMLButtonElement>('lb-next').disabled = this.level >= LEVEL_COUNT;

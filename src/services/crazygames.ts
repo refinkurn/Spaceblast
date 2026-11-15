@@ -3,14 +3,24 @@
 // when the script is blocked, slow or broken: every call is a silent no-op until init finished.
 import { CRAZY_ADS, CRAZY_SDK } from '../config/portal';
 import { isRoomCode } from '../net/protocol';
+import { cleanName } from './name_filter';
 
 /** Empty on our own site, so the address is not in that build at all. */
 export const SDK_URL = CRAZY_SDK ? 'https://sdk.crazygames.com/crazygames-sdk-v3.js' : '';
+
+/** A logged-in CrazyGames player (logged out: null). */
+export interface CrazyUser {
+  username?: string;
+}
 
 /** The part of `window.CrazyGames.SDK` we use. */
 export interface CrazySdk {
   init(): Promise<void>;
   environment?: string;
+  user?: {
+    getUser?(): Promise<CrazyUser | null | undefined>;
+    addAuthListener?(listener: (user: CrazyUser | null | undefined) => void): void;
+  };
   ad?: {
     requestAd?(type: 'midgame' | 'rewarded', callbacks: { adStarted?: () => void; adFinished?: () => void; adError?: (error: unknown) => void }): unknown;
     hasAdblock?(): Promise<boolean> | boolean;
@@ -77,6 +87,8 @@ export function resetCrazySdk(): void {
   inviteShown = false;
   adblock = true;
   adHook = null;
+  accountName = null;
+  nameListeners.length = 0;
 }
 
 /** Tells the SDK about gameplay when it differs from what it last heard. Never throws. */
@@ -153,6 +165,7 @@ export async function initCrazySdk(deps: CrazyDeps = {}): Promise<void> {
     sdk = found;
     sendGameplay(); // the state reached while init was running
     await checkAdblock(found);
+    await watchUser(found);
   } catch (err) {
     sdk = null;
     warnOnce('load or init failed; the game plays without it', err);
@@ -228,4 +241,43 @@ export function midgameAd(deps: AdDeps = {}): Promise<void> {
 export function afterMidgameAd(next: () => void, deps: AdDeps = {}): void {
   if (!(deps.enabled ?? CRAZY_ADS) || !sdk?.ad?.requestAd) { next(); return; }
   void midgameAd(deps).then(next);
+}
+
+// --- The player's CrazyGames username (user module) -------------------------------------------
+
+/** A CrazyGames username made usable as a leaderboard name, or null (then the device name stays). */
+export function usernameToName(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const name = cleanName(raw.replace(/[^A-Za-z0-9 _-]/g, '_'));
+  // Only underscores left (a name in another alphabet): nothing of theirs survives, so it is not their name.
+  return name && /[A-Za-z0-9]/.test(name) ? name : null;
+}
+
+/** The leaderboard name from the logged-in account, or null (logged out, no SDK, unusable name). */
+let accountName: string | null = null;
+const nameListeners: Array<() => void> = [];
+
+export function crazyAccountName(): string | null {
+  return accountName;
+}
+
+/** Runs when a login, logout or the first answer changes `crazyAccountName()` (a login during play). */
+export function onAccountName(listener: () => void): void {
+  nameListeners.push(listener);
+}
+
+function setUser(user: CrazyUser | null | undefined): void {
+  const next = usernameToName(user?.username);
+  if (next === accountName) return;
+  accountName = next;
+  for (const l of nameListeners) l();
+}
+
+async function watchUser(found: CrazySdk): Promise<void> {
+  try {
+    found.user?.addAuthListener?.(setUser);
+    setUser(await found.user?.getUser?.());
+  } catch (err) {
+    warnOnce('user module failed', err); // logged out or blocked: the device name stays
+  }
 }

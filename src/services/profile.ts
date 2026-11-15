@@ -1,3 +1,4 @@
+import { crazyAccountName } from './crazygames';
 import { UUID_RE } from './leaderboard_types';
 import { cleanName, defaultName } from './name_filter';
 
@@ -31,6 +32,11 @@ export function loadProfile(): Profile {
   cached = { uuid, name: cleanName(p.name) ?? defaultName() };
   save(cached);
   return cached;
+}
+
+/** The name sent with scores: the CrazyGames username when logged in (portal build), else the device name. */
+export function displayName(): string {
+  return crazyAccountName() ?? loadProfile().name;
 }
 
 /** Sets the display name; returns false (and keeps the old one) if it can't be used. */
