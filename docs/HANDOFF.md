@@ -30,11 +30,36 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Split src/flow/story_mode.ts by feature, no behaviour change** (src/flow/story_mode.ts)
+  Now: 339 lines (Known issue: over the ~300-line rule); the level-end banners (`cleared()`, the game-over banner) live with the lead-in and map flow, and the ads items below add to them.
+  Want: move the level-end results (clear and game-over banners, their "Next level" / "Retry" / "Map" actions) into a new src/flow/story_results.ts; story_mode.ts under 300 lines.
+  Done when: both files under 300 lines, `npm test`, `npm run build` and `npm run shots` pass, and a Story level clear and a game over show the same banners as before.
+
+- **CrazyGames midgame ads, switched off** (src/services/crazygames.ts, src/config/portal.ts, src/flow/story_mode.ts or story_results.ts, src/flow/battle_flow.ts, src/flow/online.ts)
+  Now: no ad code; the SDK wrapper has gameplay and invites only.
+  Want: `CRAZY_ADS` switch (false) and `midgameAd()` / `adsAvailable()` in the wrapper, sound muted and taps ignored while an ad plays; a midgame ad on the Story "Next level" / "Retry" tap, on leaving the Battle vs Bot end screen, and on leaving an online room (never between online rounds).
+  Done when: tests cover the wrapper (switch off = resolves at once, no SDK, adError, no callback within 5 s, adFinished, sound restored) and the three call points; with the switch off the portal build plays exactly as today; `npm test`, `npm run build` and `npm run build:portal` pass.
+  Spec: docs/design/crazygames-full-launch.md (Ads)
+
+- **CrazyGames username as the leaderboard name** (src/services/crazygames.ts, src/services/profile.ts, src/flow/leaderboard_screen.ts)
+  Now: the leaderboard name is the device profile name ("Bosco_482" or what the player typed), also in the portal build.
+  Want: in the portal build, a logged-in CrazyGames user's username (cleaned to our name rules, device name if it can't be used) is the name sent with scores; the leaderboard name field shows it read-only with a short hint (text through t()); logged out = today's behaviour.
+  Done when: tests cover a usable username, one with a dot, an unusable one, logged out, no SDK, and a login during play; `npm test` and `npm run build:portal` pass.
+  Spec: docs/design/crazygames-full-launch.md (Username)
+
+- **Story progress saved to the CrazyGames account** (src/services/crazygames.ts, src/flow/progress.ts)
+  Now: Story progress lives only in localStorage (`spaceblast.story`), so it stays on one device.
+  Want: in the portal build with the SDK ready, progress is written to `SDK.data` too; after init the account copy is sanitized and merged with the local one (best of each field), saved to both, and the Story map refreshes if open.
+  Done when: tests cover the merge (further on the account, further locally, seen lists joined, bad account data ignored) and no SDK = localStorage only as today; `npm test` and `npm run build:portal` pass.
+  Spec: docs/design/crazygames-full-launch.md (Progress)
+
 ## In progress
 
 ## Blocked
 
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
+
+- **Rewarded extra heart vs score (asked 2026-11-15)**: the roadmap's rewarded ad gives one extra heart on a Story retry. Should that heart count for score and stars? Today hearts left count up to 3 (1000 each) and 3 stars need all 3 hearts, so a bonus heart lets a player lose one and still score full hearts and 3 stars. Suggest: no, score and stars count hearts as if the bonus heart were not there, so the leaderboard stays fair. The item (src/sim option + Story game-over button, code session) is queued once you answer.
 
 ## Known issues
 
