@@ -14,6 +14,7 @@ import { ENDING_SCENE, OUTRO_SCENES } from './story_scenes';
 import { scoreRows, sendScore } from './story_score';
 import { bossClearLine, storySummary } from './summary';
 import { randomTip } from './tutorial';
+import { afterMidgameAd } from '../services/crazygames';
 import { fadeThrough } from './transition';
 
 // Story level results: the level-clear and game-over banners and their
@@ -65,7 +66,7 @@ export class StoryResults {
       const nextSpec = levelSpec(next);
       const nextGoal = nextSpec.boss || nextSpec.rival ? levelCard(nextSpec).goal.text : t('story.martians', { n: levelRoster(next).length });
       const upNext = isSectorStart(next) ? t('story.sectorComplete', { n: spec.sector, name: SECTORS[spec.sector].name }) : t('story.next', { n: next, goal: nextGoal });
-      this.deps.screens.showBanner(spec.boss ? t('banner.survived') : t('banner.levelClear'), `${line}\n${upNext}`, t('banner.nextLevel'), () => fadeThrough(() => this.deps.play(next, true)), t('banner.map'), '', {
+      this.deps.screens.showBanner(spec.boss ? t('banner.survived') : t('banner.levelClear'), `${line}\n${upNext}`, t('banner.nextLevel'), () => afterMidgameAd(() => fadeThrough(() => this.deps.play(next, true))), t('banner.map'), '', {
         pose: 'happy', summary: [...scoreRows(score, prevBest), ...storySummary(state, tally, lost, stars)],
         // "Map" goes back to the Story map, where Bosco walks (or warps) on to the next node.
         onMenu: () => fadeThrough(() => {
@@ -80,7 +81,7 @@ export class StoryResults {
     this.deps.progress.save();
     const level = this.deps.level();
     analytics.track({ name: 'level_fail', level, mode: 'story', value: Math.round(this.deps.host.state.tick / 60) });
-    this.deps.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => fadeThrough(() => this.deps.play(level, false)), t('banner.map'), randomTip(),
+    this.deps.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => afterMidgameAd(() => fadeThrough(() => this.deps.play(level, false))), t('banner.map'), randomTip(),
       {
         pose: 'defeated', summary: storySummary(this.deps.host.state, tally, this.deps.livesLost(), 0),
         // "Map" goes back to the Story map, not the main menu.

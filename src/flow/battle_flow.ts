@@ -13,6 +13,7 @@ import { fadeThrough } from './transition';
 import { randomTip } from './tutorial';
 import { BATTLE_TIPS } from './tutorial_script';
 import { session } from './session';
+import { botMatchEndActions } from './ad_points';
 
 /** You (blue), the rival (orange: battle bot or the Renegade Pilot), then players 3 and 4. */
 const HERO_COLORS = [0x3a7bff, 0xff6a3d, 0x4fd17a, 0xc77dff];
@@ -117,9 +118,11 @@ export function createBattleFlow(d: BattleDeps) {
     if (mode === 'online') {
       congrats.show(winner, standings, [{ label: t('banner.backToRoom'), primary: true, onClick: () => { congrats.hide(); online.showLobby(); } }]);
     } else {
+      // Leaving the end screen (a new match or the menu): a midgame ad first.
+      const out = botMatchEndActions({ playAgain: () => fadeThrough(() => { congrats.hide(); d.startModeNow('battle'); }), menu: d.openMenu });
       congrats.show(winner, standings, [
-        { label: t('banner.playAgain'), primary: true, onClick: () => fadeThrough(() => { congrats.hide(); d.startModeNow('battle'); }) },
-        { label: t('banner.menu'), onClick: d.openMenu },
+        { label: t('banner.playAgain'), primary: true, onClick: out.playAgain },
+        { label: t('banner.menu'), onClick: out.menu },
       ]);
     }
   }

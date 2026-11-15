@@ -80,6 +80,11 @@ export class GameAudio {
     this.engine.setVolumes(music, sfx);
   }
 
+  /** An ad is playing: silence everything, and bring the Settings sound back after. */
+  setAdMuted(on: boolean): void {
+    this.engine.setAdMuted(on);
+  }
+
   get started(): boolean {
     return $('start-screen').hasAttribute('hidden');
   }

@@ -1,3 +1,4 @@
+import { installAdShield } from './flow/ad_shield';
 import { Announcer } from './flow/announcer';
 import { Cinematic, Recorder } from './flow/cinematic';
 import { Cutscene } from './flow/cutscene';
@@ -86,6 +87,7 @@ const cine = new Cinematic(view, recorder, (s) => {
   for (const e of s.events) view.effect(e, s);
   audio.events(s, session.localId);
 });
+installAdShield((on) => audio.setAdMuted(on));
 const cutscene = new Cutscene((cue) => audio.cue(cue));
 const story = new StoryMode({
   newLevel: () => { newGame(); return session.state; },
@@ -208,7 +210,7 @@ function showMenuNow() {
   cutscene.cancel();
   story.closeOverlays();
   congrats.hide();
-  if (online.connected) online.exit(''); // leaving the room; onExit comes back here
+  if (online.connected) online.leave(); // leaving the room (after a midgame ad if on); onExit comes back here
   else screens.showMenu();
 }
 

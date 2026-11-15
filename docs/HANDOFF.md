@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames midgame ads, switched off** (src/services/crazygames.ts, src/config/portal.ts, src/flow/story_mode.ts or story_results.ts, src/flow/battle_flow.ts, src/flow/online.ts)
-  Now: no ad code; the SDK wrapper has gameplay and invites only.
-  Want: `CRAZY_ADS` switch (false) and `midgameAd()` / `adsAvailable()` in the wrapper, sound muted and taps ignored while an ad plays; a midgame ad on the Story "Next level" / "Retry" tap, on leaving the Battle vs Bot end screen, and on leaving an online room (never between online rounds).
-  Done when: tests cover the wrapper (switch off = resolves at once, no SDK, adError, no callback within 5 s, adFinished, sound restored) and the three call points; with the switch off the portal build plays exactly as today; `npm test`, `npm run build` and `npm run build:portal` pass.
-  Spec: docs/design/crazygames-full-launch.md (Ads)
-
 - **CrazyGames username as the leaderboard name** (src/services/crazygames.ts, src/services/profile.ts, src/flow/leaderboard_screen.ts)
   Now: the leaderboard name is the device profile name ("Bosco_482" or what the player typed), also in the portal build.
   Want: in the portal build, a logged-in CrazyGames user's username (cleaned to our name rules, device name if it can't be used) is the name sent with scores; the leaderboard name field shows it read-only with a short hint (text through t()); logged out = today's behaviour.
@@ -65,6 +59,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-15: CrazyGames midgame ads, switched off: `CRAZY_ADS` (false) in config/portal.ts; `midgameAd()` / `adsAvailable()` / `afterMidgameAd()` in the SDK wrapper (5 s start limit, never rejects); sound muted and taps shielded while an ad plays (flow/ad_shield.ts); call points on Story Next level / Retry, Battle vs Bot end screen, leaving an online room (flow/ad_points.ts). With the switch off the actions run in the same call as before. 554 tests, build and build:portal pass.
 
 - 2026-11-15: Split story_mode.ts: level-clear and game-over banners moved to src/flow/story_results.ts (story_mode.ts 290 lines, story_results.ts 93), no behaviour change. Tests, build and shots pass.
 

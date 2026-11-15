@@ -10,6 +10,12 @@ export const isPortal = PORTAL !== '';
 /** The CrazyGames SDK (src/services/crazygames.ts) loads in the CrazyGames portal build only, never on our own site. */
 export const CRAZY_SDK: boolean = PORTAL === 'crazygames';
 
+/**
+ * CrazyGames midgame ads (docs/design/crazygames-full-launch.md, Ads). Off: Basic Launch allows no
+ * ads at all. Turning it on at Full Launch is this one line (the SDK itself loads only when CRAZY_SDK).
+ */
+export const CRAZY_ADS = false;
+
 /** Marks the page so CSS can hide what a portal forbids (body.portal ...). */
 export function markPortal(): void {
   if (isPortal) document.body.classList.add('portal', `portal-${PORTAL}`);

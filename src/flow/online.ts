@@ -6,6 +6,7 @@ import {
   type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
 import { dragScroll } from './drag_scroll';
+import { leaveRoom } from './ad_points';
 import { hideInvite, showInvite } from '../services/crazygames';
 import { inviteUrl, shareInvite } from './invite';
 import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
@@ -112,7 +113,7 @@ export class OnlineRoom {
       });
     }
     $('online-start').addEventListener('click', () => this.startRound());
-    $('online-back').addEventListener('click', () => this.exit(''));
+    $('online-back').addEventListener('click', () => this.leave());
     this.buildLobbyControls();
   }
 
@@ -193,6 +194,11 @@ export class OnlineRoom {
   hide(): void {
     this.screen.hidden = true;
     hideInvite();
+  }
+
+  /** The player leaves the room for the menu: a midgame ad first when in a room (never between rounds). */
+  leave(): void {
+    leaveRoom(this.connected, () => this.exit(''));
   }
 
   /** Leaves the room and tells main.ts. With a reason, the online screen stays up to show it. */

@@ -18,6 +18,8 @@ export class AudioEngine {
   /** Volumes from Settings, 0-1. */
   private musicVolume = 0.7;
   private sfxVolume = 0.9;
+  /** An ad is playing: everything is silent (the Settings choice comes back after). */
+  private adMuted = false;
 
   /** Creates or resumes the context. Must be called from a tap or key press. */
   unlock(): void {
@@ -64,11 +66,17 @@ export class AudioEngine {
     return this.setting;
   }
 
+  /** Mutes all sound while an ad plays. */
+  setAdMuted(on: boolean): void {
+    this.adMuted = on;
+    this.apply();
+  }
+
   private apply(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this.music.gain.setTargetAtTime(this.setting === 'all' ? 0.45 * this.musicVolume : 0, t, 0.05);
-    this.sfx.gain.setTargetAtTime(this.setting === 'off' ? 0 : 0.9 * this.sfxVolume, t, 0.05);
+    this.music.gain.setTargetAtTime(this.adMuted ? 0 : this.setting === 'all' ? 0.45 * this.musicVolume : 0, t, 0.05);
+    this.sfx.gain.setTargetAtTime(this.adMuted || this.setting === 'off' ? 0 : 0.9 * this.sfxVolume, t, 0.05);
   }
 
   /** A shaped oscillator note. `to` slides the pitch over the note. */
