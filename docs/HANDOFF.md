@@ -30,6 +30,29 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Split src/flow/online.ts by feature** (src/flow/online.ts)
+  Now: 509 lines in one file (name/create/join screen, lobby rendering, match options, prefs and connection), over the ~300-line rule; the next two items both touch it.
+  Want: move the lobby rendering and match-option selectors (and the prefs helpers) into their own src/flow/ modules; online.ts keeps the OnlineRoom class and connection; no behaviour change.
+  Done when: every file under ~300 lines; `npm test`, build, `npm run shots` and `npm run online-check` pass.
+
+- **CrazyGames room data instead of the invite button** (src/services/crazygames_room.ts new, src/flow/online.ts, src/main.ts)
+  Now: the lobby calls `showInvite(code)` / `hideInvite()` (SDK.game.showInviteButton, deprecated by CrazyGames); the SDK is never told when a round starts, the room is full or the player left; a friend joining through the CrazyGames UI while the game is open is not heard.
+  Want: `updateRoom` with roomId, isJoinable (true in the lobby, false during a round or when full) and inviteParams `{ roomId }`; `leftRoom()` on leaving; a join-room listener that opens Multiplayer with the code filled in when the player is in a menu (ignored during play).
+  Done when: unit tests with a fake SDK cover lobby / round start / full / leave / join listener in and out of play; our own site makes no call; tests and build:portal pass.
+  Spec: docs/design/crazygames-multiplayer.md
+
+- **CrazyGames Instant Multiplayer: straight into a new room** (src/main.ts, src/flow/online.ts, src/config/portal.ts)
+  Now: after init, only `inviteRoom()` is checked; a player sent as the first of a CrazyGames party gets quick start into Story level 1 (or the menu).
+  Want: `SDK.game.isInstantMultiplayer` true = skip quick start and the menu, open Multiplayer and create a room at once with the saved name and colour; an invite wins over it (join that room as today); a failed create stays on the Multiplayer screen with today's error.
+  Done when: tests with a fake SDK cover instant / invite + instant / neither; the normal build is unchanged; tests, build:portal and `npm run online-check` pass.
+  Spec: docs/design/crazygames-multiplayer.md
+
+- **CrazyGames muteAudio setting silences the game** (src/services/crazygames_room.ts, src/flow/sound.ts, src/main.ts)
+  Now: sound is muted only while a midgame ad plays (`audio.setAdMuted`); `SDK.game.settings.muteAudio`, required for HTML5 at Full Launch, is ignored.
+  Want: muteAudio true (read after init and kept current with addSettingsChangeListener) turns all sound off above the player's own settings, without changing saved settings; it stacks with the ad mute (sound returns only when neither asks for silence).
+  Done when: tests cover setting on/off, a change during play, and ad mute + setting overlapping; tests and build:portal pass.
+  Spec: docs/design/crazygames-multiplayer.md
+
 ## In progress
 
 ## Blocked
