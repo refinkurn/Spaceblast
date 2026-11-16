@@ -53,3 +53,13 @@ export function onJoinRoom(handler: (code: string) => void): void {
     }));
   });
 }
+
+/** The player came as the first of a CrazyGames party (Instant Multiplayer). False without the SDK. */
+export function isInstantMultiplayer(): boolean {
+  try {
+    return crazySdk()?.game?.isInstantMultiplayer === true;
+  } catch (err) {
+    console.warn('CrazyGames SDK: isInstantMultiplayer failed', err);
+    return false;
+  }
+}

@@ -145,6 +145,11 @@ export class OnlineRoom {
     if (seat) rejoin.querySelector('span')!.textContent = t('online.rejoinRoom', { code: seat.code });
   }
 
+  /** Instant Multiplayer: create a room now with the saved name and colour (a failure shows today's error). */
+  createNow(): void {
+    void this.joiner.create();
+  }
+
   /** An invite link was opened: fill in the code and focus the name. Joins only on Join. */
   prefillCode(code: string): void {
     this.codeInput.value = code;

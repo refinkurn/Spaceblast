@@ -31,6 +31,8 @@ export interface CrazySdk {
     hasAdblock?(): Promise<boolean> | boolean;
   };
   game?: {
+    /** True when the player came as the first of a CrazyGames party. */
+    isInstantMultiplayer?: boolean;
     gameplayStart?(): void;
     gameplayStop?(): void;
     getInviteParam?(key: string): string | null;

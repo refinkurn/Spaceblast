@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { canJoinFromUi } from '../flow/crazy_join';
+import { canJoinFromUi, sdkEntry } from '../flow/crazy_join';
 import { CODE_LENGTH, CODE_LETTERS } from '../net/protocol';
 import { initCrazySdk, resetCrazySdk, type CrazySdk } from './crazygames';
-import { leftRoom, onJoinRoom, resetCrazyRoom, updateRoom } from './crazygames_room';
+import { isInstantMultiplayer, leftRoom, onJoinRoom, resetCrazyRoom, updateRoom } from './crazygames_room';
 
 const ok = () => Promise.resolve();
 const code = CODE_LETTERS.slice(0, CODE_LENGTH);
@@ -125,5 +125,28 @@ describe('when a join from the CrazyGames UI is followed', () => {
   it('during play (a Story level, Battle vs Bot, an online round) or when already in a room: no', () => {
     expect(canJoinFromUi(idle)).toBe(false);
     expect(canJoinFromUi({ ...idle, menuOpen: true, inRoom: true })).toBe(false);
+  });
+});
+
+describe('Instant Multiplayer', () => {
+  it('reads the flag after init; false without the SDK or when not set', async () => {
+    expect(isInstantMultiplayer()).toBe(false); // no SDK yet
+    const { sdk } = make();
+    await ready(sdk);
+    expect(isInstantMultiplayer()).toBe(false); // not set
+    resetCrazySdk();
+    sdk.game!.isInstantMultiplayer = true;
+    await ready(sdk);
+    expect(isInstantMultiplayer()).toBe(true);
+    resetCrazySdk();
+    await initCrazySdk({ enabled: false, load: ok, find: () => sdk }); // our own site
+    expect(isInstantMultiplayer()).toBe(false);
+  });
+
+  it('instant creates a room, an invite wins over it, neither does nothing', () => {
+    expect(sdkEntry(null, true)).toBe('create');
+    expect(sdkEntry(code, true)).toEqual({ join: code });
+    expect(sdkEntry(code, false)).toEqual({ join: code });
+    expect(sdkEntry(null, false)).toBeNull();
   });
 });

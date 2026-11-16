@@ -14,3 +14,12 @@ export interface JoinScreens {
 export function canJoinFromUi(s: JoinScreens): boolean {
   return !s.inRoom && (s.menuOpen || s.storyMapOpen || s.onlineScreenOpen);
 }
+
+/**
+ * What the page does right after the CrazyGames SDK is ready: join the invited room (an invite wins),
+ * create a new room at once (Instant Multiplayer: first of a party), or nothing (normal start).
+ */
+export function sdkEntry(invite: string | null, instant: boolean): { join: string } | 'create' | null {
+  if (invite) return { join: invite };
+  return instant ? 'create' : null;
+}

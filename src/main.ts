@@ -7,7 +7,7 @@ import { DevPanel } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
 import { haptics } from './flow/haptics';
-import { canJoinFromUi } from './flow/crazy_join';
+import { canJoinFromUi, sdkEntry } from './flow/crazy_join';
 import { parseRoomParam } from './flow/invite';
 import { registerOfflineCache } from './flow/offline';
 import { Countdown } from './flow/countdown';
@@ -43,7 +43,7 @@ import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
 import { initCrazySdk, inviteRoom, setGameplay } from './services/crazygames';
-import { onJoinRoom } from './services/crazygames_room';
+import { isInstantMultiplayer, onJoinRoom } from './services/crazygames_room';
 import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
 
@@ -83,7 +83,7 @@ const recorder = new Recorder();
 const openedWith = window.location.search;
 const audio = new GameAudio(() => {
   // Quick start: a first-time portal player skips the menu and plays level 1 at once (inside the splash's fade).
-  if (wantsQuickStart(QUICK_START, story.fresh, openedWith, inviteRoom() !== null)) fadeThrough(() => { session.mode = 'survival'; screens.hideMenu(); story.coldOpen(); });
+  if (wantsQuickStart(QUICK_START, story.fresh, openedWith, inviteRoom() !== null || isInstantMultiplayer())) fadeThrough(() => { session.mode = 'survival'; screens.hideMenu(); story.coldOpen(); });
 });
 const cine = new Cinematic(view, recorder, (s) => {
   for (const e of s.events) view.effect(e, s);
@@ -149,8 +149,12 @@ markPortal();
 // CrazyGames portal build only: loads in the background, never holds up the start screen.
 initCrazySdk().then(() => {
   // Opened from a CrazyGames invite: same as ?room=CODE (Multiplayer, code filled in, the player taps Join).
-  const invited = inviteRoom();
-  if (invited && screens.menuOpen) { startModeNow('online'); online.prefillCode(invited); }
+  // First of a CrazyGames party (Instant Multiplayer): straight into a new room. An invite wins.
+  const entry = sdkEntry(inviteRoom(), isInstantMultiplayer());
+  if (!entry || !screens.menuOpen) return;
+  startModeNow('online');
+  if (entry === 'create') online.createNow();
+  else online.prefillCode(entry.join);
 });
 // A friend joins through the CrazyGames UI while the game is open: like an invite, but only from a menu (never mid-play).
 onJoinRoom((code) => {

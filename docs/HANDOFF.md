@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames Instant Multiplayer: straight into a new room** (src/main.ts, src/flow/online.ts, src/config/portal.ts)
-  Now: after init, only `inviteRoom()` is checked; a player sent as the first of a CrazyGames party gets quick start into Story level 1 (or the menu).
-  Want: `SDK.game.isInstantMultiplayer` true = skip quick start and the menu, open Multiplayer and create a room at once with the saved name and colour; an invite wins over it (join that room as today); a failed create stays on the Multiplayer screen with today's error.
-  Done when: tests with a fake SDK cover instant / invite + instant / neither; the normal build is unchanged; tests, build:portal and `npm run online-check` pass.
-  Spec: docs/design/crazygames-multiplayer.md
-
 - **CrazyGames muteAudio setting silences the game** (src/services/crazygames_room.ts, src/flow/sound.ts, src/main.ts)
   Now: sound is muted only while a midgame ad plays (`audio.setAdMuted`); `SDK.game.settings.muteAudio`, required for HTML5 at Full Launch, is ignored.
   Want: muteAudio true (read after init and kept current with addSettingsChangeListener) turns all sound off above the player's own settings, without changing saved settings; it stacks with the ad mute (sound returns only when neither asks for silence).
@@ -59,6 +53,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-16: CrazyGames Instant Multiplayer: `isInstantMultiplayer()` (services/crazygames_room.ts) + `sdkEntry(invite, instant)` (flow/crazy_join.ts): instant = skip quick start, open Multiplayer and `online.createNow()` with the saved name and colour; an invite wins; a failed create shows today's error on the Multiplayer screen. Normal build unchanged. 585 tests, build, build:portal and online-check pass.
 
 - 2026-11-16: CrazyGames room data replaces the deprecated invite button: new src/services/crazygames_room.ts (`updateRoom` with roomId / isJoinable / inviteParams, repeats skipped; `leftRoom`; `onJoinRoom` listener), lobby sets joinable by free seat, round start = not joinable, leaving = leftRoom; join from the CrazyGames UI opens Multiplayer with the code only from a menu / Story map / Multiplayer screen (flow/crazy_join.ts). Old showInvite/hideInvite removed. 583 tests, build, build:portal and online-check pass.
 
