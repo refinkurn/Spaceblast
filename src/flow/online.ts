@@ -1,17 +1,15 @@
-import { reloadForUpdate } from '../net/build';
-import { randomCode } from '../net/client';
 import { RoomLink, savedSeat } from '../net/link';
 import {
-  CODE_LETTERS, DEFAULT_SETTINGS, MAX_PLAYERS, PLAYER_COLORS, isRoomCode,
-  type Profile, type RoomSettings, type ServerMsg,
+  CODE_LETTERS, DEFAULT_SETTINGS,
+  type ClientMsg, type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
-import { dragScroll } from './drag_scroll';
 import { leaveRoom } from './ad_points';
 import { hideInvite, showInvite } from '../services/crazygames';
-import { inviteUrl, shareInvite } from './invite';
-import { botColorsFor, botsAfterTap, lobbySlots } from './lobby_slots';
-import { arenaOptions, botLevelOptions, matchOptions, scenarioFlags, scenarioOf, scenarioOptions, timeOptions, type Scenario } from './online_options';
-import { Stepper } from './stepper';
+import { shareInvite } from './invite';
+import { botColorsFor } from './lobby_slots';
+import { JoinFlow } from './online_join';
+import { LobbyView } from './online_lobby';
+import { backLabel, loadPrefs, savePrefs } from './online_prefs';
 import { t } from '../utils/i18n';
 
 export { botColorsFor };
@@ -35,35 +33,6 @@ export interface RoundStart {
   frames?: number[][];
 }
 
-/** A refused join, in words (unknown reasons are shown as they are). */
-const errorText = (reason: string) => (['taken', 'not_found', 'full', 'bad_code', 'expired', 'update'].includes(reason) ? t(`online.err.${reason}`) : reason);
-
-const session = (): Storage | null => {
-  try { return window.sessionStorage; } catch { return null; }
-};
-
-const PREFS_KEY = 'spaceblast.online';
-
-function loadPrefs(): { name: string; color: number } {
-  try {
-    return { name: '', color: -1, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') };
-  } catch {
-    return { name: '', color: -1 };
-  }
-}
-
-function savePrefs(name: string, color: number): void {
-  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ name, color })); } catch { /* private mode */ }
-}
-
-/** The Back icon button says what it does: "Back" on the join screen, "Leave room" in the lobby. */
-function backLabel(label: string): void {
-  const back = $('online-back');
-  back.setAttribute('aria-label', label);
-  back.title = label;
-}
-
-
 export class OnlineRoom {
   onRoundStart: (s: RoundStart) => void = () => {};
   onFrames: (r: number, tick: number, c: number[][]) => void = () => {};
@@ -82,26 +51,29 @@ export class OnlineRoom {
   settings: RoomSettings = { ...DEFAULT_SETTINGS };
   code = '';
   private net = new RoomLink();
+  private lobby = new LobbyView(this);
   private screen = $('online');
   private status = $('online-status');
   private codeInput = $<HTMLInputElement>('online-code');
   private nameInput = $<HTMLInputElement>('online-name');
   private prefs = loadPrefs();
   private lastStart = -Infinity;
+  private joiner: JoinFlow;
 
   constructor() {
+    this.joiner = new JoinFlow(this, this.net, this.prefs, this.nameInput);
     this.net.onMessage = (m) => this.handle(m);
     this.net.onLost = (reason) => this.exit(reason);
     this.net.onReconnecting = (on) => this.onReconnecting(on);
-    $('online-rejoin').addEventListener('click', () => this.rejoinSaved());
+    $('online-rejoin').addEventListener('click', () => this.joiner.rejoinSaved());
     this.nameInput.value = this.prefs.name;
-    $('online-create').addEventListener('click', () => this.create());
+    $('online-create').addEventListener('click', () => this.joiner.create());
     $('online-invite').addEventListener('click', async () => {
       const note = await shareInvite(this.code);
       $('online-invite-note').textContent = note;
       if (note) setTimeout(() => { $('online-invite-note').textContent = ''; }, 4000);
     });
-    $('online-join').addEventListener('click', () => this.join(this.codeInput.value));
+    $('online-join').addEventListener('click', () => this.joiner.join(this.codeInput.value));
     this.codeInput.addEventListener('input', () => {
       this.codeInput.value = [...this.codeInput.value.toUpperCase()].filter((c) => CODE_LETTERS.includes(c)).join('');
     });
@@ -109,12 +81,12 @@ export class OnlineRoom {
       // Typing must not move the astronaut (keyboard controls listen on window).
       input.addEventListener('keydown', (e) => {
         e.stopPropagation();
-        if (e.key === 'Enter') input === this.codeInput ? this.join(this.codeInput.value) : this.codeInput.focus();
+        if (e.key === 'Enter') input === this.codeInput ? this.joiner.join(this.codeInput.value) : this.codeInput.focus();
       });
     }
     $('online-start').addEventListener('click', () => this.startRound());
     $('online-back').addEventListener('click', () => this.leave());
-    this.buildLobbyControls();
+    this.lobby.buildControls();
   }
 
   /** In a room (connected, or reconnecting to our seat). */
@@ -188,7 +160,7 @@ export class OnlineRoom {
     backLabel(t('online.leaveRoom'));
     $('online-room').textContent = this.code;
     showInvite(this.code); // CrazyGames portal: its own invite button for this room
-    this.renderLobby(note);
+    this.lobby.render(note);
   }
 
   hide(): void {
@@ -227,6 +199,11 @@ export class OnlineRoom {
     this.net.send({ t: 'start', seed: (Math.random() * 0xffffffff) >>> 0 });
   }
 
+  /** Any message to the room server. */
+  send(msg: ClientMsg): void {
+    this.net.send(msg);
+  }
+
   sendInput(r: number, tick: number, c: number[]): void {
     this.net.send({ t: 'in', r, tick, c });
   }
@@ -238,97 +215,6 @@ export class OnlineRoom {
 
   sendHash(r: number, tick: number, h: number): void {
     this.net.send({ t: 'hash', r, tick, h });
-  }
-
-  private me(): Profile | undefined {
-    return this.players.find((p) => p.slot === this.you);
-  }
-
-  private typedName(): string {
-    const name = this.nameInput.value.trim();
-    savePrefs(name, this.prefs.color);
-    this.prefs.name = name;
-    return name;
-  }
-
-  /** True while creating or joining: extra taps are ignored. */
-  private busy = false;
-
-  private async create(): Promise<void> {
-    if (this.busy) return;
-    this.busy = true;
-    this.setStatus(t('online.creating'));
-    try {
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const ok = await this.connect(randomCode(), true);
-        if (ok !== 'taken') return;
-      }
-      this.setStatus(t('online.createFailed'), true);
-    } finally {
-      this.busy = false;
-    }
-  }
-
-  private async join(raw: string): Promise<void> {
-    if (this.busy) return;
-    const code = raw.trim().toUpperCase();
-    if (!isRoomCode(code)) {
-      this.setStatus(errorText('bad_code'), true);
-      return;
-    }
-    this.busy = true;
-    this.setStatus('Joining…');
-    try {
-      await this.connect(code, false);
-    } finally {
-      this.busy = false;
-    }
-  }
-
-  /** After a page reload: back into the saved seat. */
-  private async rejoinSaved(): Promise<void> {
-    const seat = savedSeat();
-    if (!seat || this.busy) return;
-    this.busy = true;
-    this.code = seat.code;
-    this.setStatus('Rejoining…');
-    try {
-      const first = await this.net.rejoin(seat);
-      if (first.t === 'error') this.refused(seat.code, first.reason);
-    } catch {
-      this.setStatus(t('online.unreachable'), true);
-    } finally {
-      this.busy = false;
-    }
-  }
-
-  /** Returns 'ok', an error reason, or 'offline'. */
-  private async connect(code: string, create: boolean): Promise<string> {
-    this.code = code; // the welcome (and the lobby) can arrive before connect() resolves
-    try {
-      const first = await this.net.connect(code, create, this.typedName(), this.prefs.color);
-      if (first.t === 'error') {
-        if (first.reason !== 'taken' || !create) this.refused(code, first.reason);
-        return first.reason;
-      }
-      return 'ok';
-    } catch {
-      this.setStatus(t('online.unreachableHosted'), true);
-      return 'offline';
-    }
-  }
-
-  /**
-   * A refused join, shown in words. 'update' (the room runs another build of
-   * the game): reload once into the latest page, back on this room's code
-   * (an invite link); if the room still refuses it, say so.
-   */
-  private refused(code: string, reason: string): void {
-    if (reason === 'update' && reloadForUpdate(session(), Date.now(), () => window.location.assign(inviteUrl(code, window.location.href)))) {
-      this.setStatus(t('online.updating'));
-      return;
-    }
-    this.setStatus(errorText(reason), true);
   }
 
   private handle(m: ServerMsg): void {
@@ -351,17 +237,17 @@ export class OnlineRoom {
           this.prefs.color = m.player.color;
           savePrefs(this.prefs.name, m.player.color);
         }
-        if (this.screenOpen) this.renderLobby();
+        if (this.screenOpen) this.lobby.render();
         break;
       }
       case 'settings':
         this.settings = m.s;
-        if (this.screenOpen) this.renderLobby();
+        if (this.screenOpen) this.lobby.render();
         break;
       case 'left':
         this.players = this.players.filter((p) => p.slot !== m.slot);
         this.host = m.host;
-        if (this.screenOpen) this.renderLobby();
+        if (this.screenOpen) this.lobby.render();
         this.onLeft(m.slot);
         break;
       case 'away':
@@ -393,116 +279,7 @@ export class OnlineRoom {
     }
   }
 
-  // --- Lobby ----------------------------------------------------------------------
-
-  private steppers!: {
-    arena: Stepper<RoomSettings['arena']>;
-    time: Stepper<number>;
-    scenario: Stepper<Scenario>;
-    match: Stepper<RoomSettings['match']>;
-    botLevel: Stepper<RoomSettings['botLevel']>;
-  };
-
-  private buildLobbyControls(): void {
-    const swatches = $('online-colors');
-    PLAYER_COLORS.forEach((color, i) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.style.background = color;
-      b.setAttribute('aria-label', t('online.colour', { n: i + 1 }));
-      b.addEventListener('click', () => this.net.send({ t: 'profile', name: this.me()?.name ?? '', color: i }));
-      swatches.append(b);
-    });
-    // Mouse: wheel and drag scroll the colour strip sideways (a finger swipes it natively).
-    dragScroll(swatches);
-    // Match options: one ‹ value › selector each (the host steps; guests see the host's pick).
-    this.steppers = {
-      arena: new Stepper($('set-arena'), arenaOptions(), (arena) => this.changeSettings({ arena }), t('lobby.opt.arena')),
-      time: new Stepper($('set-time'), timeOptions(), (time) => this.changeSettings({ time }), t('lobby.opt.time')),
-      scenario: new Stepper<Scenario>($('set-scenario'), scenarioOptions(), (sc) => this.changeSettings(scenarioFlags(sc)), t('lobby.opt.scenarios')),
-      match: new Stepper($('set-match'), matchOptions(), (match) => this.changeSettings({ match }), t('lobby.opt.match')),
-      botLevel: new Stepper($('set-bot-level'), botLevelOptions(), (botLevel) => this.changeSettings({ botLevel }), t('lobby.opt.botLevel')),
-    };
-  }
-
-  private changeSettings(change: Partial<RoomSettings>): void {
-    if (!this.isHost) return;
-    this.net.send({ t: 'settings', s: { ...this.settings, ...change } });
-  }
-
-  private renderLobby(note = ''): void {
-    this.renderSlots();
-
-    const mine = this.me()?.color;
-    [...$('online-colors').children].forEach((el, i) => {
-      const b = el as HTMLButtonElement;
-      b.setAttribute('aria-pressed', String(i === mine));
-      b.disabled = i !== mine && this.players.some((p) => p.color === i);
-    });
-
-    const host = this.isHost;
-    $('settings-label').textContent = host ? t('online.matchSettings') : t('online.matchSettingsGuest');
-    const st = this.steppers;
-    st.arena.set(this.settings.arena);
-    st.time.set(this.settings.time);
-    st.scenario.set(scenarioOf(this.settings));
-    st.match.set(this.settings.match);
-    st.botLevel.set(this.settings.botLevel);
-    st.arena.disabled = st.time.disabled = st.scenario.disabled = st.match.disabled = !host;
-    // Bot level only matters with a bot in the room.
-    st.botLevel.disabled = !host || this.settings.bots === 0;
-
-    const start = $<HTMLButtonElement>('online-start');
-    start.hidden = !host;
-    start.disabled = this.total < 2;
-    const waiting = this.total < 2
-      ? t('online.shareCode', { n: this.players.length, max: MAX_PLAYERS })
-      : host ? t('online.ready', { n: this.total }) : t('online.waitingHostStart');
-    this.setStatus(note || waiting);
-  }
-
-  /** The four seat tiles in one row. The host taps an open seat (+) to add a bot and a bot to remove it. */
-  private renderSlots(): void {
-    const box = $('online-slots');
-    box.innerHTML = '';
-    const slots = lobbySlots(this.players, this.settings.bots, this.host, this.you);
-    for (const slot of slots) {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = `slot ${slot.kind}`;
-      const next = botsAfterTap(slot, this.settings.bots);
-      card.disabled = !this.isHost || next === null;
-      if (next !== null && this.isHost) card.addEventListener('click', () => this.changeSettings({ bots: next }));
-      card.classList.toggle('you', slot.you);
-      // Spoken / hover name: the tile itself only shows P#, initials (or a bot icon, or +) and the host star.
-      const host = slot.host ? `, ${t('lobby.tag.host')}` : '';
-      const spoken = next !== null && this.isHost
-        ? (slot.kind === 'open' ? `${slot.label}: ${t('lobby.addBot')}` : `${slot.label}: ${slot.name} (${t('lobby.removeBot')})`)
-        : `${slot.label}: ${slot.name}${host}`;
-      card.setAttribute('aria-label', spoken);
-      card.title = spoken;
-      const label = document.createElement('span');
-      label.className = 'slot-label';
-      label.textContent = slot.label;
-      const face = document.createElement('span');
-      face.className = 'slot-face';
-      face.setAttribute('aria-hidden', 'true');
-      if (slot.color) face.style.setProperty('--seat', slot.color);
-      if (slot.kind === 'player') face.textContent = slot.initials;
-      else face.innerHTML = `<svg class="ui-icon"><use href="#${slot.kind === 'bot' ? 'i-bot' : 'i-plus'}"/></svg>`;
-      card.append(label, face);
-      if (slot.host) {
-        const star = document.createElement('span');
-        star.className = 'slot-star';
-        star.setAttribute('aria-hidden', 'true');
-        star.innerHTML = '<svg class="ui-icon"><use href="#i-credits"/></svg>';
-        card.append(star);
-      }
-      box.append(card);
-    }
-  }
-
-  private setStatus(text: string, error = false): void {
+  setStatus(text: string, error = false): void {
     this.status.textContent = text;
     this.status.classList.toggle('error', error);
   }
