@@ -88,6 +88,11 @@ export class StoryMode {
     }));
   }
 
+  /** The Story map is on screen. */
+  get mapOpen(): boolean {
+    return this.map.open;
+  }
+
   get endingOpen(): boolean {
     return !this.ending.hidden;
   }

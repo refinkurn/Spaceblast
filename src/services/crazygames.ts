@@ -33,9 +33,10 @@ export interface CrazySdk {
   game?: {
     gameplayStart?(): void;
     gameplayStop?(): void;
-    showInviteButton?(params: Record<string, string>): unknown;
-    hideInviteButton?(): void;
     getInviteParam?(key: string): string | null;
+    updateRoom?(data: { roomId?: string; isJoinable?: boolean; inviteParams?: Record<string, string> }): unknown;
+    leftRoom?(): unknown;
+    addJoinRoomListener?(listener: (params: Record<string, unknown> | null | undefined) => void): unknown;
   };
 }
 
@@ -89,7 +90,6 @@ export function resetCrazySdk(): void {
   warned = false;
   wanted = false;
   told = false;
-  inviteShown = false;
   adblock = true;
   adHook = null;
   accountName = null;
@@ -116,31 +116,6 @@ function sendGameplay(): void {
 export function setGameplay(active: boolean): void {
   wanted = active;
   sendGameplay();
-}
-
-/** The invite button shows only while it is on, so a repeated call changes nothing. */
-let inviteShown = false;
-
-/** Lobby open with a room code: CrazyGames shows its invite button for that room. */
-export function showInvite(code: string): void {
-  if (!sdk || !code) return;
-  try {
-    sdk.game?.showInviteButton?.({ roomId: code });
-    inviteShown = true;
-  } catch (err) {
-    warnOnce('showInviteButton failed', err);
-  }
-}
-
-/** Lobby closed or the round started. Only calls the SDK if the button was shown. */
-export function hideInvite(): void {
-  if (!sdk || !inviteShown) return;
-  inviteShown = false;
-  try {
-    sdk.game?.hideInviteButton?.();
-  } catch (err) {
-    warnOnce('hideInviteButton failed', err);
-  }
 }
 
 /** The room code this page was opened with from a CrazyGames invite, or null (none, malformed, no SDK). */

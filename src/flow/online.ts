@@ -1,10 +1,10 @@
 import { RoomLink, savedSeat } from '../net/link';
 import {
-  CODE_LETTERS, DEFAULT_SETTINGS,
+  CODE_LETTERS, DEFAULT_SETTINGS, MAX_PLAYERS,
   type ClientMsg, type Profile, type RoomSettings, type ServerMsg,
 } from '../net/protocol';
 import { leaveRoom } from './ad_points';
-import { hideInvite, showInvite } from '../services/crazygames';
+import { leftRoom, updateRoom } from '../services/crazygames_room';
 import { shareInvite } from './invite';
 import { botColorsFor } from './lobby_slots';
 import { JoinFlow } from './online_join';
@@ -151,6 +151,16 @@ export class OnlineRoom {
     this.nameInput.focus();
   }
 
+  /** CrazyGames portal: tells it the room and whether a friend can still join (a free seat). */
+  private syncRoom(): void {
+    updateRoom(this.code, this.total < MAX_PLAYERS);
+  }
+
+  private renderAndSync(): void {
+    this.lobby.render();
+    this.syncRoom();
+  }
+
   /** Back to the lobby (the connection stays open). */
   showLobby(note = ''): void {
     $('lobby-left').append(this.status, $('online-back'));
@@ -159,13 +169,13 @@ export class OnlineRoom {
     $('online-lobby').hidden = false;
     backLabel(t('online.leaveRoom'));
     $('online-room').textContent = this.code;
-    showInvite(this.code); // CrazyGames portal: its own invite button for this room
     this.lobby.render(note);
+    this.syncRoom();
   }
 
   hide(): void {
     this.screen.hidden = true;
-    hideInvite();
+    if (this.you >= 0) updateRoom(this.code, false); // a round is starting: not joinable
   }
 
   /** The player leaves the room for the menu: a midgame ad first when in a room (never between rounds). */
@@ -176,7 +186,7 @@ export class OnlineRoom {
   /** Leaves the room and tells main.ts. With a reason, the online screen stays up to show it. */
   exit(reason: string): void {
     this.net.leave();
-    hideInvite();
+    leftRoom();
     this.you = this.host = -1;
     this.players = [];
     if (reason) {
@@ -237,17 +247,17 @@ export class OnlineRoom {
           this.prefs.color = m.player.color;
           savePrefs(this.prefs.name, m.player.color);
         }
-        if (this.screenOpen) this.lobby.render();
+        if (this.screenOpen) this.renderAndSync();
         break;
       }
       case 'settings':
         this.settings = m.s;
-        if (this.screenOpen) this.lobby.render();
+        if (this.screenOpen) this.renderAndSync();
         break;
       case 'left':
         this.players = this.players.filter((p) => p.slot !== m.slot);
         this.host = m.host;
-        if (this.screenOpen) this.lobby.render();
+        if (this.screenOpen) this.renderAndSync();
         this.onLeft(m.slot);
         break;
       case 'away':

@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames room data instead of the invite button** (src/services/crazygames_room.ts new, src/flow/online.ts, src/main.ts)
-  Now: the lobby calls `showInvite(code)` / `hideInvite()` (SDK.game.showInviteButton, deprecated by CrazyGames); the SDK is never told when a round starts, the room is full or the player left; a friend joining through the CrazyGames UI while the game is open is not heard.
-  Want: `updateRoom` with roomId, isJoinable (true in the lobby, false during a round or when full) and inviteParams `{ roomId }`; `leftRoom()` on leaving; a join-room listener that opens Multiplayer with the code filled in when the player is in a menu (ignored during play).
-  Done when: unit tests with a fake SDK cover lobby / round start / full / leave / join listener in and out of play; our own site makes no call; tests and build:portal pass.
-  Spec: docs/design/crazygames-multiplayer.md
-
 - **CrazyGames Instant Multiplayer: straight into a new room** (src/main.ts, src/flow/online.ts, src/config/portal.ts)
   Now: after init, only `inviteRoom()` is checked; a player sent as the first of a CrazyGames party gets quick start into Story level 1 (or the menu).
   Want: `SDK.game.isInstantMultiplayer` true = skip quick start and the menu, open Multiplayer and create a room at once with the saved name and colour; an invite wins over it (join that room as today); a failed create stays on the Multiplayer screen with today's error.
@@ -65,6 +59,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-16: CrazyGames room data replaces the deprecated invite button: new src/services/crazygames_room.ts (`updateRoom` with roomId / isJoinable / inviteParams, repeats skipped; `leftRoom`; `onJoinRoom` listener), lobby sets joinable by free seat, round start = not joinable, leaving = leftRoom; join from the CrazyGames UI opens Multiplayer with the code only from a menu / Story map / Multiplayer screen (flow/crazy_join.ts). Old showInvite/hideInvite removed. 583 tests, build, build:portal and online-check pass.
 
 - 2026-11-16: Split src/flow/online.ts: lobby rendering to online_lobby.ts (138), create/join/rejoin flow to online_join.ts (115), prefs helpers to online_prefs.ts (28); online.ts 509 -> 288 lines, no behaviour change. 575 tests, build, shots and online-check pass.
 

@@ -7,6 +7,7 @@ import { DevPanel } from './flow/dev';
 import { setupFullscreen } from './flow/fullscreen';
 import { Hud } from './flow/hud';
 import { haptics } from './flow/haptics';
+import { canJoinFromUi } from './flow/crazy_join';
 import { parseRoomParam } from './flow/invite';
 import { registerOfflineCache } from './flow/offline';
 import { Countdown } from './flow/countdown';
@@ -42,6 +43,7 @@ import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
 import { initCrazySdk, inviteRoom, setGameplay } from './services/crazygames';
+import { onJoinRoom } from './services/crazygames_room';
 import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
 
@@ -149,6 +151,12 @@ initCrazySdk().then(() => {
   // Opened from a CrazyGames invite: same as ?room=CODE (Multiplayer, code filled in, the player taps Join).
   const invited = inviteRoom();
   if (invited && screens.menuOpen) { startModeNow('online'); online.prefillCode(invited); }
+});
+// A friend joins through the CrazyGames UI while the game is open: like an invite, but only from a menu (never mid-play).
+onJoinRoom((code) => {
+  if (!canJoinFromUi({ inRoom: online.connected, menuOpen: screens.menuOpen, storyMapOpen: story.mapOpen, onlineScreenOpen: online.screenOpen })) return;
+  if (!online.screenOpen) { story.closeOverlays(); screens.hideMenu(); online.open(); }
+  online.prefillCode(code);
 });
 installInputMode();
 // A portal provides full screen itself and forbids a button of our own.
