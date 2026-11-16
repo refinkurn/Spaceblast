@@ -43,7 +43,7 @@ import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
 import { initCrazySdk, inviteRoom, setGameplay } from './services/crazygames';
-import { isInstantMultiplayer, onJoinRoom } from './services/crazygames_room';
+import { isInstantMultiplayer, onJoinRoom, onMuteAudio } from './services/crazygames_room';
 import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
 
@@ -90,6 +90,7 @@ const cine = new Cinematic(view, recorder, (s) => {
   audio.events(s, session.localId);
 });
 installAdShield((on) => audio.setAdMuted(on));
+onMuteAudio((mute) => audio.setPortalMuted(mute)); // CrazyGames muteAudio setting
 const cutscene = new Cutscene((cue) => audio.cue(cue));
 const story = new StoryMode({
   newLevel: () => { newGame(); return session.state; },

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { canJoinFromUi, sdkEntry } from '../flow/crazy_join';
 import { CODE_LENGTH, CODE_LETTERS } from '../net/protocol';
 import { initCrazySdk, resetCrazySdk, type CrazySdk } from './crazygames';
-import { isInstantMultiplayer, leftRoom, onJoinRoom, resetCrazyRoom, updateRoom } from './crazygames_room';
+import { isInstantMultiplayer, leftRoom, onJoinRoom, onMuteAudio, resetCrazyRoom, updateRoom } from './crazygames_room';
 
 const ok = () => Promise.resolve();
 const code = CODE_LETTERS.slice(0, CODE_LENGTH);
@@ -148,5 +148,55 @@ describe('Instant Multiplayer', () => {
     expect(sdkEntry(code, true)).toEqual({ join: code });
     expect(sdkEntry(code, false)).toEqual({ join: code });
     expect(sdkEntry(null, false)).toBeNull();
+  });
+});
+
+describe('muteAudio setting', () => {
+  type SettingsListener = (s: { muteAudio?: boolean } | null | undefined) => void;
+  function withSettings(muteAudio: boolean | undefined) {
+    const { sdk } = make();
+    let change: SettingsListener | null = null;
+    sdk.game!.settings = { muteAudio };
+    sdk.game!.addSettingsChangeListener = (l) => { change = l; };
+    return { sdk, change: (s: { muteAudio?: boolean } | null) => change?.(s) };
+  }
+
+  it('on at start: told true; off or missing: told false', async () => {
+    for (const [value, expected] of [[true, true], [false, false], [undefined, false]] as const) {
+      resetCrazySdk(); resetCrazyRoom();
+      const { sdk } = withSettings(value);
+      await ready(sdk);
+      const got: boolean[] = [];
+      onMuteAudio((m) => got.push(m));
+      expect(got).toEqual([expected]);
+    }
+  });
+
+  it('a change during play is passed on (on, then off)', async () => {
+    const { sdk, change } = withSettings(false);
+    await ready(sdk);
+    const got: boolean[] = [];
+    onMuteAudio((m) => got.push(m));
+    change({ muteAudio: true });
+    change({ muteAudio: false });
+    change(null);
+    expect(got).toEqual([false, true, false, false]);
+  });
+
+  it('waits for the SDK, watches once, and does nothing on our own site', async () => {
+    const { sdk, change } = withSettings(true);
+    const got: boolean[] = [];
+    onMuteAudio((m) => got.push(m)); // before init
+    expect(got).toEqual([]);
+    await ready(sdk);
+    onMuteAudio((m) => got.push(m)); // a second ask changes nothing
+    change({ muteAudio: false });
+    expect(got).toEqual([true, false]);
+    resetCrazySdk(); resetCrazyRoom();
+    const own = withSettings(true);
+    await initCrazySdk({ enabled: false, load: ok, find: () => own.sdk });
+    const none: boolean[] = [];
+    onMuteAudio((m) => none.push(m));
+    expect(none).toEqual([]);
   });
 });

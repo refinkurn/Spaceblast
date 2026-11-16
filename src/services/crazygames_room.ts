@@ -6,11 +6,13 @@ import { crazySdk, onCrazyReady } from './crazygames';
 /** What the SDK was last told about our room; null = not in a room. */
 let told: { code: string; joinable: boolean } | null = null;
 let listening = false;
+let muteWatching = false;
 
 /** Forget everything (tests). */
 export function resetCrazyRoom(): void {
   told = null;
   listening = false;
+  muteWatching = false;
 }
 
 function guarded(what: string, call: () => void): void {
@@ -62,4 +64,20 @@ export function isInstantMultiplayer(): boolean {
     console.warn('CrazyGames SDK: isInstantMultiplayer failed', err);
     return false;
   }
+}
+
+/**
+ * The CrazyGames `muteAudio` setting: `listener(true)` when sound must be off, read once the SDK is
+ * ready and again on every change. Never runs without the SDK. The caller keeps it apart from the player's own sound choice.
+ */
+export function onMuteAudio(listener: (mute: boolean) => void): void {
+  onCrazyReady(() => {
+    const sdk = crazySdk();
+    if (!sdk || muteWatching) return;
+    muteWatching = true;
+    guarded('muteAudio', () => listener(sdk.game?.settings?.muteAudio === true));
+    guarded('addSettingsChangeListener', () => sdk.game?.addSettingsChangeListener?.((s) => {
+      guarded('muteAudio listener', () => listener(s?.muteAudio === true));
+    }));
+  });
 }

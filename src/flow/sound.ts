@@ -85,6 +85,11 @@ export class GameAudio {
     this.engine.setAdMuted(on);
   }
 
+  /** The portal's mute setting: silence above the player's own sound choice. */
+  setPortalMuted(on: boolean): void {
+    this.engine.setPortalMuted(on);
+  }
+
   get started(): boolean {
     return $('start-screen').hasAttribute('hidden');
   }

@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames muteAudio setting silences the game** (src/services/crazygames_room.ts, src/flow/sound.ts, src/main.ts)
-  Now: sound is muted only while a midgame ad plays (`audio.setAdMuted`); `SDK.game.settings.muteAudio`, required for HTML5 at Full Launch, is ignored.
-  Want: muteAudio true (read after init and kept current with addSettingsChangeListener) turns all sound off above the player's own settings, without changing saved settings; it stacks with the ad mute (sound returns only when neither asks for silence).
-  Done when: tests cover setting on/off, a change during play, and ad mute + setting overlapping; tests and build:portal pass.
-  Spec: docs/design/crazygames-multiplayer.md
-
 ## In progress
 
 ## Blocked
@@ -53,6 +47,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-16: CrazyGames muteAudio setting: `onMuteAudio` (services/crazygames_room.ts) reads `game.settings.muteAudio` after init and follows `addSettingsChangeListener`; `MuteSources` (audio/mute.ts) holds the ad mute and the portal mute apart so sound returns only when neither asks; saved sound settings untouched. 591 tests, build and build:portal pass. Queue empty now.
 
 - 2026-11-16: CrazyGames Instant Multiplayer: `isInstantMultiplayer()` (services/crazygames_room.ts) + `sdkEntry(invite, instant)` (flow/crazy_join.ts): instant = skip quick start, open Multiplayer and `online.createNow()` with the saved name and colour; an invite wins; a failed create shows today's error on the Multiplayer screen. Normal build unchanged. 585 tests, build, build:portal and online-check pass.
 

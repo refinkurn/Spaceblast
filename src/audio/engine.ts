@@ -4,6 +4,8 @@
 // license. Real recordings can replace a recipe later without touching callers.
 // Phones only allow sound after a tap, so unlock() runs on the tap-to-start screen.
 
+import { MuteSources, type MuteSource } from './mute';
+
 export type SoundSetting = 'all' | 'sfx' | 'off';
 const PREFS_KEY = 'spaceblast.sound';
 
@@ -18,8 +20,8 @@ export class AudioEngine {
   /** Volumes from Settings, 0-1. */
   private musicVolume = 0.7;
   private sfxVolume = 0.9;
-  /** An ad is playing: everything is silent (the Settings choice comes back after). */
-  private adMuted = false;
+  /** An ad is playing or the portal asks for silence: everything is silent (the Settings choice comes back after). */
+  private muted = new MuteSources();
 
   /** Creates or resumes the context. Must be called from a tap or key press. */
   unlock(): void {
@@ -68,15 +70,24 @@ export class AudioEngine {
 
   /** Mutes all sound while an ad plays. */
   setAdMuted(on: boolean): void {
-    this.adMuted = on;
+    this.setMuted('ad', on);
+  }
+
+  /** The portal's own mute setting (CrazyGames muteAudio): above the Settings choice, stacks with the ad mute. */
+  setPortalMuted(on: boolean): void {
+    this.setMuted('portal', on);
+  }
+
+  private setMuted(source: MuteSource, on: boolean): void {
+    this.muted.set(source, on);
     this.apply();
   }
 
   private apply(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this.music.gain.setTargetAtTime(this.adMuted ? 0 : this.setting === 'all' ? 0.45 * this.musicVolume : 0, t, 0.05);
-    this.sfx.gain.setTargetAtTime(this.adMuted || this.setting === 'off' ? 0 : 0.9 * this.sfxVolume, t, 0.05);
+    this.music.gain.setTargetAtTime(this.muted.silent ? 0 : this.setting === 'all' ? 0.45 * this.musicVolume : 0, t, 0.05);
+    this.sfx.gain.setTargetAtTime(this.muted.silent || this.setting === 'off' ? 0 : 0.9 * this.sfxVolume, t, 0.05);
   }
 
   /** A shaped oscillator note. `to` slides the pitch over the note. */

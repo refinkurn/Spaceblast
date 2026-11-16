@@ -31,6 +31,8 @@ export interface CrazySdk {
     hasAdblock?(): Promise<boolean> | boolean;
   };
   game?: {
+    settings?: { muteAudio?: boolean };
+    addSettingsChangeListener?(listener: (settings: { muteAudio?: boolean } | null | undefined) => void): unknown;
     /** True when the player came as the first of a CrazyGames party. */
     isInstantMultiplayer?: boolean;
     gameplayStart?(): void;
