@@ -9,6 +9,7 @@ import { shareInvite } from './invite';
 import { botColorsFor } from './lobby_slots';
 import { JoinFlow } from './online_join';
 import { LobbyView } from './online_lobby';
+import { crazyAccountName, onAccountName } from '../services/crazygames';
 import { backLabel, loadPrefs, savePrefs } from './online_prefs';
 import { t } from '../utils/i18n';
 
@@ -66,7 +67,8 @@ export class OnlineRoom {
     this.net.onLost = (reason) => this.exit(reason);
     this.net.onReconnecting = (on) => this.onReconnecting(on);
     $('online-rejoin').addEventListener('click', () => this.joiner.rejoinSaved());
-    this.nameInput.value = this.prefs.name;
+    this.showName();
+    onAccountName(() => this.showName());
     $('online-create').addEventListener('click', () => this.joiner.create());
     $('online-invite').addEventListener('click', async () => {
       const note = await shareInvite(this.code);
@@ -143,6 +145,14 @@ export class OnlineRoom {
     const rejoin = $('online-rejoin');
     rejoin.hidden = !seat;
     if (seat) rejoin.querySelector('span')!.textContent = t('online.rejoinRoom', { code: seat.code });
+  }
+
+  /** The name field: the CrazyGames username (read-only, with a hint) when logged in, else the saved name. */
+  private showName(): void {
+    const account = crazyAccountName();
+    this.nameInput.value = account ?? this.prefs.name;
+    this.nameInput.readOnly = account !== null;
+    $('online-name-note').textContent = account ? t('online.fromCrazyGames') : '';
   }
 
   /** Instant Multiplayer: create a room now with the saved name and colour (a failure shows today's error). */

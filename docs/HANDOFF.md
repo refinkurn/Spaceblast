@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames username as the online name** (portal build; src/flow/online.ts, online_join.ts)
-  Now: the online name field always starts from the saved prefs name (online_prefs.ts); the CrazyGames username (`crazyAccountName()`, src/services/crazygames.ts) is used only on the leaderboard.
-  Want: when logged in to CrazyGames, the Multiplayer name field shows the username (already cleaned to NAME_MAX 12), read-only with a short hint like the leaderboard's (`lb.fromCrazyGames`), and rooms are created/joined with it; follows `onAccountName` for a login during play. Logged out, no SDK or our own site: today's behaviour, saved prefs name untouched.
-  Done when: tests cover the name choice (account name wins, null falls back to prefs); `npm test`, build, build:portal and `npm run online-check` pass.
-  Spec: docs/design/crazygames-multiplayer.md ("Later" list)
-
 - **CrazyGames loading events** (portal build; src/services/crazygames.ts, src/main.ts)
   Now: the portal build sends gameplayStart/stop but never `SDK.game.loadingStart()` / `loadingStop()`.
   Want: a wrapper sends loadingStart when the SDK is ready while the game is still loading, and loadingStop once the first tappable screen (splash / quick start) is up; if loading already finished before the SDK was ready, send neither; silent no-op without the SDK. Re-read docs.crazygames.com/sdk/game first; their docs win.
@@ -58,6 +52,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-17: CrazyGames username as the online name: `chooseOnlineName(account, typed)` (flow/online_prefs.ts); logged in = the Multiplayer name field shows the username read-only with hint `online.fromCrazyGames`, rooms are created/joined with it, saved prefs name untouched; follows `onAccountName`. 593 tests, build, build:portal and online-check pass.
 
 - 2026-11-17: Split src/flow/story_map.ts: node card to story_map_card.ts (`StoryMapCard`); story_map.ts 335 -> 292 lines, no behaviour change. Tests, build and shots pass.
 

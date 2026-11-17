@@ -196,6 +196,7 @@
     "online.ready": "{n} astronauts ready.",
     "online.reconnected": "Reconnected!",
     "online.reconnectingTo": "Reconnecting to room {code}…",
+    "online.fromCrazyGames": "Your name comes from your CrazyGames account.",
     "online.rejoinRoom": "Rejoin room {code}",
     "online.shareCode": "Share the code, or add a bot. {n}/{max} players.",
     "online.unreachable": "Could not reach the room server.",

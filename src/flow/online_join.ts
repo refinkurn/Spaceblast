@@ -3,7 +3,8 @@ import { randomCode } from '../net/client';
 import { savedSeat, type RoomLink } from '../net/link';
 import { isRoomCode } from '../net/protocol';
 import { inviteUrl } from './invite';
-import { savePrefs, session } from './online_prefs';
+import { crazyAccountName } from '../services/crazygames';
+import { chooseOnlineName, savePrefs, session } from './online_prefs';
 import { t } from '../utils/i18n';
 
 // Creating, joining and rejoining a room: the connection attempts and how a refusal is worded.
@@ -27,7 +28,10 @@ export class JoinFlow {
   ) {}
 
   typedName(): string {
-    const name = this.nameInput.value.trim();
+    const account = crazyAccountName();
+    // A CrazyGames name is used as is; the saved prefs name stays untouched.
+    if (account) return chooseOnlineName(account, '');
+    const name = chooseOnlineName(null, this.nameInput.value.trim());
     savePrefs(name, this.prefs.color);
     this.prefs.name = name;
     return name;
