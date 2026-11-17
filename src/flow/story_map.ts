@@ -1,9 +1,9 @@
 import { LEVEL_COUNT, levelSpec, sectorOf } from '../sim/levels';
 import { SpriteView } from '../view/sprite_renderer';
-import { GOAL_ICONS } from './goal_icons';
+import { StoryMapCard } from './story_map_card';
 import { LEVELS_PER_SECTOR, MAP_SECTORS, nodeOf, sectorsShown } from './map_layout';
 import { sectorLook } from '../view/sector_look';
-import { bestLine, bossLabel, coreSignal, enterLabel, nodeGoal, sectorStars, sectorTitle, starChecklist } from './map_text';
+import { bossLabel, coreSignal, sectorStars, sectorTitle } from './map_text';
 import type { StoryProgress } from './progress';
 import { levelCard } from './story';
 import './story_map.css';
@@ -18,9 +18,6 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 const WALK_MS = 600;
 const WARP_MS = 800;
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const icon = (body: string, cls: string) =>
-  `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
-const TICK = icon('<path d="M5 12l5 5 9-10"/>', 'map-tick');
 
 /** Bosco just cleared `from`: he walks (or warps) on to the next node. */
 export interface MapArrival {
@@ -30,25 +27,22 @@ export interface MapArrival {
 export class StoryMap {
   private root = $('story-hub');
   private track = $('map-track');
-  private card = $('map-card');
+  private card: StoryMapCard;
   private warp = $('map-warp');
   private pawnCanvas = document.createElement('canvas');
   private pawn = new SpriteView(this.pawnCanvas, 'body');
   private panels: HTMLElement[] = [];
   private dividers: HTMLElement[] = [];
   private nodes = new Map<number, HTMLButtonElement>();
-  private cardLevel = 0;
   private raf = 0;
   private timers: number[] = [];
 
-  constructor(private progress: StoryProgress, private onEnter: (level: number) => void, private onBack: () => void, onBoard: () => void) {
+  constructor(private progress: StoryProgress, onEnter: (level: number) => void, private onBack: () => void, onBoard: () => void) {
     this.pawnCanvas.className = 'map-pawn';
     this.pawnCanvas.setAttribute('aria-hidden', 'true');
     $('hub-back').addEventListener('click', () => onBack());
     $('hub-board').addEventListener('click', () => onBoard());
-    $('map-card-back').addEventListener('click', () => this.closeCard());
-    $('map-card-enter').addEventListener('click', () => this.enter());
-    this.card.addEventListener('click', (e) => { if (e.target === this.card) this.closeCard(); });
+    this.card = new StoryMapCard(progress, onEnter, (level) => this.nodes.get(level)?.focus());
     this.track.addEventListener('scroll', () => this.updateHeader(), { passive: true });
     // Desktop: the mouse wheel scrolls the track sideways.
     this.track.addEventListener('wheel', (e) => {
@@ -73,7 +67,7 @@ export class StoryMap {
     // A node unlocked by this very clear pops open once Bosco reaches it.
     const reveal = from && to === p.unlocked && p.stars(to) === 0 ? to : 0;
     this.root.hidden = false;
-    this.card.hidden = true;
+    this.card.hide();
     this.render(current, reveal);
     const boss = from > 0 && nodeOf(from).index === LEVELS_PER_SECTOR - 1;
     this.pawn.show('astropaw', 'neutral');
@@ -94,7 +88,7 @@ export class StoryMap {
     this.warp.hidden = true;
     this.warp.classList.remove('on');
     this.root.hidden = true;
-    this.card.hidden = true;
+    this.card.hide();
     cancelAnimationFrame(this.raf);
     this.raf = 0;
   }
@@ -175,7 +169,7 @@ export class StoryMap {
       + `<span class="map-node-body">${face}<span class="map-node-num">${card.title.replace(' BOSS', '')}</span></span>`
       + (boss ? `<span class="map-node-name">${boss}</span>` : '');
     b.setAttribute('aria-label', t('map.aria.level', { title: card.title }) + (boss ? `, ${boss}` : '') + (stars ? t('map.aria.stars', { n: stars }) : '') + (locked ? t('map.aria.locked') : ''));
-    b.addEventListener('click', () => { if (!b.classList.contains('locked')) this.openCard(level); });
+    b.addEventListener('click', () => { if (!b.classList.contains('locked')) this.card.open(level); });
     this.nodes.set(level, b);
     return b;
   }
@@ -258,52 +252,15 @@ export class StoryMap {
     $('map-stars').textContent = sectorStars(sector, (n) => this.progress.stars(n));
   }
 
-  private openCard(level: number): void {
-    const spec = levelSpec(level);
-    const text = levelCard(spec);
-    this.cardLevel = level;
-    $('map-card-title').textContent = text.title;
-    $('map-card-sector').textContent = text.sector;
-    $('map-card-icon').innerHTML = GOAL_ICONS[text.goal.icon];
-    $('map-card-goal').textContent = nodeGoal(level);
-    $('map-card-brief').textContent = text.briefing;
-    const list = $('map-card-stars');
-    list.innerHTML = '';
-    for (const line of starChecklist(level, this.progress.stars(level))) {
-      const li = document.createElement('li');
-      li.classList.toggle('done', line.done);
-      li.innerHTML = line.done ? TICK : '<span class="map-box"></span>';
-      li.append(line.text);
-      list.append(li);
-    }
-    $('map-card-best').textContent = bestLine(this.progress.bestScore(level));
-    $('map-card-enter').querySelector('.go-label')!.textContent = enterLabel(level);
-    this.card.hidden = false;
-    $('map-card-enter').focus();
-  }
-
-  private closeCard(): void {
-    if (this.card.hidden) return;
-    this.card.hidden = true;
-    this.nodes.get(this.cardLevel)?.focus();
-  }
-
-  /** The map stays up under the fade to black (Story play() hides it); the card closes now, so a second press can't enter twice. */
-  private enter(): void {
-    if (this.card.hidden) return;
-    this.card.hidden = true;
-    this.onEnter(this.cardLevel);
-  }
-
   private key(e: KeyboardEvent): void {
     if (this.root.hidden) return;
     if (e.code === 'Escape') {
       e.preventDefault();
-      if (!this.card.hidden) this.closeCard();
+      if (this.card.shown) this.card.close();
       else this.onBack();
       return;
     }
-    if (!this.card.hidden || (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight')) return;
+    if (this.card.shown || (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight')) return;
     // Arrow keys step between unlocked nodes.
     const open = [...this.nodes.values()].filter((b) => !b.classList.contains('locked'));
     const at = open.indexOf(document.activeElement as HTMLButtonElement);

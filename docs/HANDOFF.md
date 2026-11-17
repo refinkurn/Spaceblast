@@ -30,11 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Split src/flow/story_map.ts** (Known issue: 335 lines, over the ~300 rule)
-  Now: one StoryMap class holds the track build, node card, Bosco's walk/warp animation and keyboard handling.
-  Want: move the walk/warp arrival animation (or the node card) into its own file in src/flow/ so story_map.ts is under 300 lines; no behaviour change.
-  Done when: story_map.ts under 300 lines, `npm test`, build and `npm run shots` pass, the Story map looks and plays the same.
-
 - **CrazyGames username as the online name** (portal build; src/flow/online.ts, online_join.ts)
   Now: the online name field always starts from the saved prefs name (online_prefs.ts); the CrazyGames username (`crazyAccountName()`, src/services/crazygames.ts) is used only on the leaderboard.
   Want: when logged in to CrazyGames, the Multiplayer name field shows the username (already cleaned to NAME_MAX 12), read-only with a short hint like the leaderboard's (`lb.fromCrazyGames`), and rooms are created/joined with it; follows `onAccountName` for a login during play. Logged out, no SDK or our own site: today's behaviour, saved prefs name untouched.
@@ -58,11 +53,13 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
-- **Debt: files over the ~300-line rule**: src/main.ts (361), src/flow/story_map.ts (335; queued in Ready). Split by feature, no behaviour change.
+- **Debt: files over the ~300-line rule**: src/main.ts (361). Split by feature, no behaviour change.
 - **Frame rate under 50 fps in `npm run perf`** (4 GB Chromebook, a CrazyGames requirement, docs/PORTAL.md): Story level 1 2.3 fps avg, Battle vs Bot 2.2 fps, with 4x CPU throttling and software drawing (no GPU in the cloud run), so this says little about a real Chromebook. Needs a run on a real one (Refindo) or a GPU-backed machine before any optimising.
 
 
 ## Done
+
+- 2026-11-17: Split src/flow/story_map.ts: node card to story_map_card.ts (`StoryMapCard`); story_map.ts 335 -> 292 lines, no behaviour change. Tests, build and shots pass.
 
 - 2026-11-16: CrazyGames muteAudio setting: `onMuteAudio` (services/crazygames_room.ts) reads `game.settings.muteAudio` after init and follows `addSettingsChangeListener`; `MuteSources` (audio/mute.ts) holds the ad mute and the portal mute apart so sound returns only when neither asks; saved sound settings untouched. 591 tests, build and build:portal pass. Queue empty now.
 
