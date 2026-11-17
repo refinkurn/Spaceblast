@@ -30,6 +30,22 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Split src/flow/story_map.ts** (Known issue: 335 lines, over the ~300 rule)
+  Now: one StoryMap class holds the track build, node card, Bosco's walk/warp animation and keyboard handling.
+  Want: move the walk/warp arrival animation (or the node card) into its own file in src/flow/ so story_map.ts is under 300 lines; no behaviour change.
+  Done when: story_map.ts under 300 lines, `npm test`, build and `npm run shots` pass, the Story map looks and plays the same.
+
+- **CrazyGames username as the online name** (portal build; src/flow/online.ts, online_join.ts)
+  Now: the online name field always starts from the saved prefs name (online_prefs.ts); the CrazyGames username (`crazyAccountName()`, src/services/crazygames.ts) is used only on the leaderboard.
+  Want: when logged in to CrazyGames, the Multiplayer name field shows the username (already cleaned to NAME_MAX 12), read-only with a short hint like the leaderboard's (`lb.fromCrazyGames`), and rooms are created/joined with it; follows `onAccountName` for a login during play. Logged out, no SDK or our own site: today's behaviour, saved prefs name untouched.
+  Done when: tests cover the name choice (account name wins, null falls back to prefs); `npm test`, build, build:portal and `npm run online-check` pass.
+  Spec: docs/design/crazygames-multiplayer.md ("Later" list)
+
+- **CrazyGames loading events** (portal build; src/services/crazygames.ts, src/main.ts)
+  Now: the portal build sends gameplayStart/stop but never `SDK.game.loadingStart()` / `loadingStop()`.
+  Want: a wrapper sends loadingStart when the SDK is ready while the game is still loading, and loadingStop once the first tappable screen (splash / quick start) is up; if loading already finished before the SDK was ready, send neither; silent no-op without the SDK. Re-read docs.crazygames.com/sdk/game first; their docs win.
+  Done when: tests cover the order (start before stop, each once, none when ready late); `npm test`, build and build:portal pass; our own site makes no call.
+
 ## In progress
 
 ## Blocked
@@ -42,7 +58,7 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
-- **Debt: files over the ~300-line rule**: src/main.ts (338), src/flow/story_map.ts (336). Split by feature, no behaviour change.
+- **Debt: files over the ~300-line rule**: src/main.ts (361), src/flow/story_map.ts (335; queued in Ready). Split by feature, no behaviour change.
 - **Frame rate under 50 fps in `npm run perf`** (4 GB Chromebook, a CrazyGames requirement, docs/PORTAL.md): Story level 1 2.3 fps avg, Battle vs Bot 2.2 fps, with 4x CPU throttling and software drawing (no GPU in the cloud run), so this says little about a real Chromebook. Needs a run on a real one (Refindo) or a GPU-backed machine before any optimising.
 
 
@@ -79,7 +95,3 @@ Older entries: docs/CHANGELOG.md.
 - 2026-11-10: src/main.ts split from 720 to 333 lines, no behaviour change (session.ts, game_run.ts, battle_flow.ts, online_play.ts, event_handlers.ts, keyboard_flow.ts, screen_layout.ts, dev_hooks.ts in src/flow). New `npm run online-check` (two browsers, one room, one round). 515 tests, screenshots and the online check pass.
 
 - 2026-11-10: launch prep (Refindo: "execute"). Portal build (`npm run build:portal`, docs/PORTAL.md: CrazyGames rules read from their docs); desktop players no longer see the touch stick and Charge button (they come back on a real touch); privacy page (public/privacy.html, linked from Credits); iPhone sound resumes on the next touch after an interruption; scripts `status`, `check`, `shots`, `live`; GitHub Actions: screenshot checks on every push and a live check after each deploy and daily; new `ui-builder` agent (Sonnet). Cloud environment "spaceblast" lets sessions reach the live game and the CrazyGames docs. Live check: both addresses run the same build.
-
-- 2026-11-09: floating joystick rests in the middle of the left gutter when idle (was '50%' of the half-screen touch zone, i.e. over the arena's edge); clamped 4 px from the screen edge. Checked at 667/844/896 px wide. Phone checks for Ducking v0.3 and the balance passed (Refindo).
-
-- 2026-11-08: online fixes (sim-specialist). Version check on join: the page sends its build (commit SHA) with ?v=; a room seats one version only; a mismatched page reloads once into the invite link, then shows "Everyone should reload". Host `start` ignored mid-round (a straggler that never reports the round over can hold the next round 10 s at most). A `profile` without a usable name keeps the seat's name. server/room.ts split into room.ts (288 lines), round_clock.ts, room_join.ts; build_version.ts derives the build. 512 tests pass. Every push now changes the version: a tab left open across any deploy reloads before it can join new rooms.
