@@ -35,6 +35,8 @@ export interface CrazySdk {
     addSettingsChangeListener?(listener: (settings: { muteAudio?: boolean } | null | undefined) => void): unknown;
     /** True when the player came as the first of a CrazyGames party. */
     isInstantMultiplayer?: boolean;
+    loadingStart?(): void;
+    loadingStop?(): void;
     gameplayStart?(): void;
     gameplayStop?(): void;
     getInviteParam?(key: string): string | null;

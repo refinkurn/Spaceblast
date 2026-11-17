@@ -43,6 +43,7 @@ import { applyDom, t } from './utils/i18n';
 import { installAnalytics } from './services/analytics';
 import { installWebAnalytics } from './services/web_analytics';
 import { initCrazySdk, inviteRoom, setGameplay } from './services/crazygames';
+import { loadingDone, watchLoading } from './services/crazygames_loading';
 import { isInstantMultiplayer, onJoinRoom, onMuteAudio } from './services/crazygames_room';
 import { QUICK_START, isPortal, markPortal, wantsQuickStart } from './config/portal';
 import { installInputMode } from './input/input_mode';
@@ -147,6 +148,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden && !pause.open && canPause()) pause.show(session.mode);
 });
 markPortal();
+watchLoading(); // CrazyGames loadingStart once the SDK is ready (portal build only)
 // CrazyGames portal build only: loads in the background, never holds up the start screen.
 initCrazySdk().then(() => {
   // Opened from a CrazyGames invite: same as ?room=CODE (Multiplayer, code filled in, the player taps Join).
@@ -256,6 +258,7 @@ const layout = installLayout(view);
 // Both are set up under the splash, so no fade here.
 newGame();
 showMenuNow();
+loadingDone(); // the start screen is up: CrazyGames loadingStop
 // An invite link (?room=CODE) opens Multiplayer with the code filled in.
 {
   const invited = parseRoomParam(window.location.search);

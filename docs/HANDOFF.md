@@ -30,11 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **CrazyGames loading events** (portal build; src/services/crazygames.ts, src/main.ts)
-  Now: the portal build sends gameplayStart/stop but never `SDK.game.loadingStart()` / `loadingStop()`.
-  Want: a wrapper sends loadingStart when the SDK is ready while the game is still loading, and loadingStop once the first tappable screen (splash / quick start) is up; if loading already finished before the SDK was ready, send neither; silent no-op without the SDK. Re-read docs.crazygames.com/sdk/game first; their docs win.
-  Done when: tests cover the order (start before stop, each once, none when ready late); `npm test`, build and build:portal pass; our own site makes no call.
-
 ## In progress
 
 ## Blocked
@@ -52,6 +47,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-17: CrazyGames loading events: new src/services/crazygames_loading.ts (`watchLoading` sends loadingStart when the SDK is ready while loading; `loadingDone` after the start screen is set up in main.ts sends loadingStop; each once, none if loading ended first, no-op without SDK). 597 tests, build and build:portal pass. Not checked: docs.crazygames.com/sdk/game could not be fetched in this run (permission gate), so the call names and order follow the spec only; worth a re-read.
 
 - 2026-11-17: CrazyGames username as the online name: `chooseOnlineName(account, typed)` (flow/online_prefs.ts); logged in = the Multiplayer name field shows the username read-only with hint `online.fromCrazyGames`, rooms are created/joined with it, saved prefs name untouched; follows `onAccountName`. 593 tests, build, build:portal and online-check pass.
 
