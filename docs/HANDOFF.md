@@ -30,12 +30,8 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Split src/main.ts under 300 lines** (src/main.ts; Known issue)
-  Now: src/main.ts is 364 lines; the CrazyGames boot wiring (initCrazySdk then instant multiplayer / invite entry, onJoinRoom, onMuteAudio, watchLoading) and the fixed-timestep render loop body (view.renderer.setAnimationLoop) sit inline in it.
-  Want: move the CrazyGames boot wiring into a new src/flow/portal_boot.ts (and the loop body into src/flow/frame_loop.ts if still needed) so main.ts is under 300 lines, no behaviour change.
-  Done when: `wc -l src/main.ts` is under 300; `npm test`, `npm run build`, `npm run build:portal`, `npm run shots` and `npm run online-check` pass; the Known issue line is removed.
-
 ## In progress
+
 
 ## Blocked
 
@@ -47,11 +43,12 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
-- **Debt: files over the ~300-line rule**: src/main.ts (361). Split by feature, no behaviour change.
 - **Frame rate under 50 fps in `npm run perf`** (4 GB Chromebook, a CrazyGames requirement, docs/PORTAL.md): Story level 1 2.3 fps avg, Battle vs Bot 2.2 fps, with 4x CPU throttling and software drawing (no GPU in the cloud run), so this says little about a real Chromebook. Needs a run on a real one (Refindo) or a GPU-backed machine before any optimising.
 
 
 ## Done
+
+- 2026-11-18: Split src/main.ts 364 -> 265 lines: CrazyGames boot wiring to src/flow/portal_boot.ts (`installPortalBoot`), the fixed-timestep loop to src/flow/frame_loop.ts (`installFrameLoop`), no behaviour change. 597 tests, build, build:portal, shots and online-check pass.
 
 - 2026-11-17: CrazyGames loading events: new src/services/crazygames_loading.ts (`watchLoading` sends loadingStart when the SDK is ready while loading; `loadingDone` after the start screen is set up in main.ts sends loadingStop; each once, none if loading ended first, no-op without SDK). 597 tests, build and build:portal pass. Not checked: docs.crazygames.com/sdk/game could not be fetched in this run (permission gate), so the call names and order follow the spec only; worth a re-read.
 
