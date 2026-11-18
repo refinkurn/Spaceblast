@@ -30,6 +30,11 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Split src/main.ts under 300 lines** (src/main.ts; Known issue)
+  Now: src/main.ts is 364 lines; the CrazyGames boot wiring (initCrazySdk then instant multiplayer / invite entry, onJoinRoom, onMuteAudio, watchLoading) and the fixed-timestep render loop body (view.renderer.setAnimationLoop) sit inline in it.
+  Want: move the CrazyGames boot wiring into a new src/flow/portal_boot.ts (and the loop body into src/flow/frame_loop.ts if still needed) so main.ts is under 300 lines, no behaviour change.
+  Done when: `wc -l src/main.ts` is under 300; `npm test`, `npm run build`, `npm run build:portal`, `npm run shots` and `npm run online-check` pass; the Known issue line is removed.
+
 ## In progress
 
 ## Blocked
@@ -81,7 +86,3 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 - 2026-11-14 (Director run, Refindo: "run it now"): quick start for first-time portal players: one tap lands in Story level 1; the opening crawl and prologue play once as a look back before the next level; once per save, never for a room invite, our own site unchanged (D-1, veto by 2026-11-16). Analytics events carry their source (site / crazygames; D-2) with queries for the numbers CrazyGames judges. Independent review found and fixed 4 bugs before the push (invite ignored, repeat on every visit, story lost if interrupted, level running under the splash). Hibernation closed as not needed now (D-3). The stale M0 / portal lock from 2026-11-10 was released: M0 is done apart from the items under Needs Refindo. 522 tests pass.
 
 Older entries: docs/CHANGELOG.md.
-
-- 2026-11-10: src/main.ts split from 720 to 333 lines, no behaviour change (session.ts, game_run.ts, battle_flow.ts, online_play.ts, event_handlers.ts, keyboard_flow.ts, screen_layout.ts, dev_hooks.ts in src/flow). New `npm run online-check` (two browsers, one room, one round). 515 tests, screenshots and the online check pass.
-
-- 2026-11-10: launch prep (Refindo: "execute"). Portal build (`npm run build:portal`, docs/PORTAL.md: CrazyGames rules read from their docs); desktop players no longer see the touch stick and Charge button (they come back on a real touch); privacy page (public/privacy.html, linked from Credits); iPhone sound resumes on the next touch after an interruption; scripts `status`, `check`, `shots`, `live`; GitHub Actions: screenshot checks on every push and a live check after each deploy and daily; new `ui-builder` agent (Sonnet). Cloud environment "spaceblast" lets sessions reach the live game and the CrazyGames docs. Live check: both addresses run the same build.
