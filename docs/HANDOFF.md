@@ -30,11 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Split src/flow/online.ts under 300 lines** (src/flow/online.ts)
-  Now: 311 lines; `handle(m: ServerMsg)` (the server message switch, lines ~245-306) is the biggest block in `OnlineRoom`.
-  Want: move the message handling to a new src/flow/online_messages.ts (like online_lobby.ts / online_join.ts), no behaviour change.
-  Done when: online.ts is under 300 lines; `npm test`, `npm run build`, `npm run shots` and `npm run online-check` pass.
-
 ## In progress
 
 
@@ -48,12 +43,12 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
 
-- **src/flow/online.ts is 311 lines** (rule: under ~300). Queued 2026-11-21.
-
 - **Frame rate under 50 fps in `npm run perf`** (4 GB Chromebook, a CrazyGames requirement, docs/PORTAL.md): Story level 1 2.3 fps avg, Battle vs Bot 2.2 fps, with 4x CPU throttling and software drawing (no GPU in the cloud run), so this says little about a real Chromebook. Needs a run on a real one (Refindo) or a GPU-backed machine before any optimising.
 
 
 ## Done
+
+- 2026-11-21: Split src/flow/online.ts 311 -> 250 lines: server message handling to src/flow/online_messages.ts (`handleServerMsg`, `MessageHost`), no behaviour change. 604 tests, build, shots and online-check pass.
 
 - 2026-11-21: `rewardedAd(deps): Promise<boolean>` in src/services/crazygames_ads.ts (true only on adFinished; false when ads off / no SDK / ad blocker / adError / 5 s timeout; same `onAdState` hook; no call site). 604 tests, build and build:portal pass. Not checked: docs.crazygames.com/sdk/html5-v3 could not be fetched in this run; call shape follows the midgame wrapper and the spec.
 

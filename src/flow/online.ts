@@ -1,16 +1,17 @@
 import { RoomLink, savedSeat } from '../net/link';
 import {
   CODE_LETTERS, DEFAULT_SETTINGS, MAX_PLAYERS,
-  type ClientMsg, type Profile, type RoomSettings, type ServerMsg,
+  type ClientMsg, type Profile, type RoomSettings,
 } from '../net/protocol';
 import { leaveRoom } from './ad_points';
 import { leftRoom, updateRoom } from '../services/crazygames_room';
 import { shareInvite } from './invite';
 import { botColorsFor } from './lobby_slots';
 import { JoinFlow } from './online_join';
+import { handleServerMsg } from './online_messages';
 import { LobbyView } from './online_lobby';
 import { crazyAccountName, onAccountName } from '../services/crazygames';
-import { backLabel, loadPrefs, savePrefs } from './online_prefs';
+import { backLabel, loadPrefs } from './online_prefs';
 import { t } from '../utils/i18n';
 
 export { botColorsFor };
@@ -57,13 +58,13 @@ export class OnlineRoom {
   private status = $('online-status');
   private codeInput = $<HTMLInputElement>('online-code');
   private nameInput = $<HTMLInputElement>('online-name');
-  private prefs = loadPrefs();
+  prefs = loadPrefs();
   private lastStart = -Infinity;
   private joiner: JoinFlow;
 
   constructor() {
     this.joiner = new JoinFlow(this, this.net, this.prefs, this.nameInput);
-    this.net.onMessage = (m) => this.handle(m);
+    this.net.onMessage = (m) => handleServerMsg(this, m);
     this.net.onLost = (reason) => this.exit(reason);
     this.net.onReconnecting = (on) => this.onReconnecting(on);
     $('online-rejoin').addEventListener('click', () => this.joiner.rejoinSaved());
@@ -171,7 +172,7 @@ export class OnlineRoom {
     updateRoom(this.code, this.total < MAX_PLAYERS);
   }
 
-  private renderAndSync(): void {
+  renderAndSync(): void {
     this.lobby.render();
     this.syncRoom();
   }
@@ -240,68 +241,6 @@ export class OnlineRoom {
 
   sendHash(r: number, tick: number, h: number): void {
     this.net.send({ t: 'hash', r, tick, h });
-  }
-
-  private handle(m: ServerMsg): void {
-    switch (m.t) {
-      case 'welcome': {
-        const back = this.you === m.you && this.code !== '' && !this.screenOpen;
-        this.you = m.you;
-        this.host = m.host;
-        this.players = m.players;
-        this.settings = m.settings;
-        this.where = m.where ?? '';
-        // Reconnected mid-match: stay in the game (a resume follows) instead of the lobby.
-        if (!back) this.showLobby(m.playing ? 'A match is on. You will join from the next round.' : '');
-        break;
-      }
-      case 'profile': {
-        const others = this.players.filter((p) => p.slot !== m.player.slot);
-        this.players = [...others, m.player].sort((a, b) => a.slot - b.slot);
-        if (m.player.slot === this.you) {
-          this.prefs.color = m.player.color;
-          savePrefs(this.prefs.name, m.player.color);
-        }
-        if (this.screenOpen) this.renderAndSync();
-        break;
-      }
-      case 'settings':
-        this.settings = m.s;
-        if (this.screenOpen) this.renderAndSync();
-        break;
-      case 'left':
-        this.players = this.players.filter((p) => p.slot !== m.slot);
-        this.host = m.host;
-        if (this.screenOpen) this.renderAndSync();
-        this.onLeft(m.slot);
-        break;
-      case 'away':
-        this.onAway(m.slot, m.away);
-        break;
-      case 'start': {
-        const local = m.players.findIndex((p) => p.slot === this.you);
-        this.settings = m.settings;
-        if (local < 0) return; // joined mid-match: wait for the next round
-        this.hide();
-        this.onRoundStart({ r: m.r, seed: m.seed, players: m.players, settings: m.settings, local });
-        break;
-      }
-      case 'f':
-        this.onFrames(m.r, m.tick, m.c);
-        break;
-      case 'resume': {
-        const local = m.players.findIndex((p) => p.slot === this.you);
-        if (local < 0) return;
-        this.hide();
-        this.onRoundStart({ r: m.r, seed: m.seed, players: m.players, settings: m.settings, local, frames: m.c });
-        break;
-      }
-      case 'hash':
-        this.onHash(m.r, m.tick, m.h);
-        break;
-      case 'error':
-        break;
-    }
   }
 
   setStatus(text: string, error = false): void {
