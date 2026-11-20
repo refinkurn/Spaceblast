@@ -30,11 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Move the CrazyGames ad code to its own file** (src/services/crazygames.ts -> new src/services/crazygames_ads.ts)
-  Now: crazygames.ts is 307 lines (rule: under ~300); its "Midgame ads" section (adblock check, `onAdState`, `adsAvailable`, `midgameAd`, `afterMidgameAd`, `AdDeps`) sits next to the loader, user and data modules. The next item adds a rewarded ad there.
-  Want: the ad section moves to crazygames_ads.ts using the SDK through an accessor from crazygames.ts (as crazygames_room.ts does with `crazySdk()`); init still runs the adblock check; callers and src/services/crazygames_ads.test.ts import from the new file. No behaviour change.
-  Done when: crazygames.ts is under 300 lines, `npm test`, `npm run build` and `npm run build:portal` pass.
-
 - **Rewarded ad wrapper, switched off, no button yet** (src/services/crazygames_ads.ts)
   Now: only `midgameAd()` exists; the roadmap's rewarded ad (one extra heart on a Story retry, M2) has no SDK call. Its button and score rule wait on the Blocked question below.
   Want: `rewardedAd(deps): Promise<boolean>` calls `SDK.ad.requestAd('rewarded', ...)`; true only on `adFinished`; false at once when `adsAvailable()` is false (CRAZY_ADS off, no SDK, ad blocker), on `adError`, or when neither adStarted nor adError comes within 5 s; never rejects. While it plays it uses the same `onAdState` hook as midgame (sound muted, taps shielded). No call site.
@@ -65,6 +60,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-21: Moved the CrazyGames ad code (midgame ads, adblock check, `onAdState`) to src/services/crazygames_ads.ts; crazygames.ts 307 -> 229 lines, no behaviour change. 597 tests, build and build:portal pass.
 
 - 2026-11-18: Split src/main.ts 364 -> 265 lines: CrazyGames boot wiring to src/flow/portal_boot.ts (`installPortalBoot`), the fixed-timestep loop to src/flow/frame_loop.ts (`installFrameLoop`), no behaviour change. 597 tests, build, build:portal, shots and online-check pass.
 
