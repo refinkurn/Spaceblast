@@ -85,3 +85,41 @@ export function afterMidgameAd(next: () => void, deps: AdDeps = {}): void {
   if (!(deps.enabled ?? CRAZY_ADS) || !crazySdk()?.ad?.requestAd) { next(); return; }
   void midgameAd(deps).then(next);
 }
+
+/**
+ * A rewarded ad (nothing calls it yet; the button waits on the score question in docs/HANDOFF.md).
+ * Resolves true only when the ad finished. False at once when ads are off, the SDK is not ready or
+ * an ad blocker was found; false on an ad error or when neither adStarted nor adError comes within
+ * 5 s. Never rejects. Mutes sound and shields taps through `onAdState`, like the midgame ad.
+ */
+export function rewardedAd(deps: AdDeps = {}): Promise<boolean> {
+  if (!adsAvailable(deps)) return Promise.resolve(false);
+  const ad = crazySdk()!.ad!;
+  return new Promise<boolean>((resolve) => {
+    let playing = false;
+    let done = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = (rewarded: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (playing) adHook?.(false);
+      resolve(rewarded);
+    };
+    timer = setTimeout(() => finish(false), deps.startTimeoutMs ?? 5000);
+    try {
+      ad.requestAd!('rewarded', {
+        adStarted: () => {
+          if (done) return;
+          clearTimeout(timer); // it plays now: wait for the end
+          if (!playing) { playing = true; adHook?.(true); }
+        },
+        adFinished: () => finish(true),
+        adError: () => finish(false),
+      });
+    } catch (err) {
+      console.warn('CrazyGames SDK: requestAd failed', err);
+      finish(false);
+    }
+  });
+}

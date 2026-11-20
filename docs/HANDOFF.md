@@ -30,12 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Rewarded ad wrapper, switched off, no button yet** (src/services/crazygames_ads.ts)
-  Now: only `midgameAd()` exists; the roadmap's rewarded ad (one extra heart on a Story retry, M2) has no SDK call. Its button and score rule wait on the Blocked question below.
-  Want: `rewardedAd(deps): Promise<boolean>` calls `SDK.ad.requestAd('rewarded', ...)`; true only on `adFinished`; false at once when `adsAvailable()` is false (CRAZY_ADS off, no SDK, ad blocker), on `adError`, or when neither adStarted nor adError comes within 5 s; never rejects. While it plays it uses the same `onAdState` hook as midgame (sound muted, taps shielded). No call site.
-  Done when: Vitest covers finished = true, error / timeout / ads off / ad blocker = false, and the mute hook on and off once; `npm test` and `npm run build:portal` pass. Re-read docs.crazygames.com/sdk/html5-v3 (ads) first if reachable; their docs win.
-  Spec: docs/design/crazygames-full-launch.md (ads section)
-
 - **Split src/flow/online.ts under 300 lines** (src/flow/online.ts)
   Now: 311 lines; `handle(m: ServerMsg)` (the server message switch, lines ~245-306) is the biggest block in `OnlineRoom`.
   Want: move the message handling to a new src/flow/online_messages.ts (like online_lobby.ts / online_join.ts), no behaviour change.
@@ -60,6 +54,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-21: `rewardedAd(deps): Promise<boolean>` in src/services/crazygames_ads.ts (true only on adFinished; false when ads off / no SDK / ad blocker / adError / 5 s timeout; same `onAdState` hook; no call site). 604 tests, build and build:portal pass. Not checked: docs.crazygames.com/sdk/html5-v3 could not be fetched in this run; call shape follows the midgame wrapper and the spec.
 
 - 2026-11-21: Moved the CrazyGames ad code (midgame ads, adblock check, `onAdState`) to src/services/crazygames_ads.ts; crazygames.ts 307 -> 229 lines, no behaviour change. 597 tests, build and build:portal pass.
 

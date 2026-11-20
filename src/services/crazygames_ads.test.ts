@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initCrazySdk, resetCrazySdk, type CrazySdk } from './crazygames';
-import { adsAvailable, afterMidgameAd, midgameAd, onAdState } from './crazygames_ads';
+import { adsAvailable, afterMidgameAd, midgameAd, onAdState, rewardedAd } from './crazygames_ads';
 
 type Cb = { adStarted?: () => void; adFinished?: () => void; adError?: (e: unknown) => void };
 const ok = () => Promise.resolve();
@@ -121,5 +121,72 @@ describe('afterMidgameAd', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(next).toHaveBeenCalledOnce();
+  });
+});
+
+describe('rewardedAd', () => {
+  it('finished: true, with the mute hook on at start and off at the end', async () => {
+    const { sdk, asked } = await ready();
+    const hook = vi.fn();
+    onAdState(hook);
+    const p = rewardedAd({ enabled: true });
+    expect(sdk.ad!.requestAd).toHaveBeenCalledWith('rewarded', expect.any(Object));
+    asked[0].adStarted!();
+    expect(hook).toHaveBeenCalledTimes(1);
+    expect(hook).toHaveBeenLastCalledWith(true);
+    asked[0].adFinished!();
+    await expect(p).resolves.toBe(true);
+    expect(hook).toHaveBeenCalledTimes(2);
+    expect(hook).toHaveBeenLastCalledWith(false);
+  });
+
+  it('error: false, and the hook is released if the ad had started', async () => {
+    const { asked } = await ready();
+    const hook = vi.fn();
+    onAdState(hook);
+    const p = rewardedAd({ enabled: true });
+    asked[0].adStarted!();
+    asked[0].adError!(new Error('x'));
+    await expect(p).resolves.toBe(false);
+    expect(hook.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it('error before start: false, hook untouched', async () => {
+    const { asked } = await ready();
+    const hook = vi.fn();
+    onAdState(hook);
+    const p = rewardedAd({ enabled: true });
+    asked[0].adError!(new Error('x'));
+    await expect(p).resolves.toBe(false);
+    expect(hook).not.toHaveBeenCalled();
+  });
+
+  it('times out after 5 s without adStarted or adError: false', async () => {
+    vi.useFakeTimers();
+    await ready();
+    const p = rewardedAd({ enabled: true });
+    vi.advanceTimersByTime(5000);
+    await expect(p).resolves.toBe(false);
+  });
+
+  it('switch off: false at once, never touches the SDK', async () => {
+    const { sdk } = await ready();
+    await expect(rewardedAd({ enabled: false })).resolves.toBe(false);
+    expect(sdk.ad!.requestAd).not.toHaveBeenCalled();
+  });
+
+  it('ad blocker or no SDK: false at once', async () => {
+    const { sdk } = await ready(true);
+    await expect(rewardedAd({ enabled: true })).resolves.toBe(false);
+    expect(sdk.ad!.requestAd).not.toHaveBeenCalled();
+    resetCrazySdk();
+    await expect(rewardedAd({ enabled: true })).resolves.toBe(false);
+  });
+
+  it('requestAd throwing: false, never rejects', async () => {
+    const { sdk } = await ready();
+    sdk.ad!.requestAd = () => { throw new Error('boom'); };
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await expect(rewardedAd({ enabled: true })).resolves.toBe(false);
   });
 });
