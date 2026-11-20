@@ -30,6 +30,22 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Move the CrazyGames ad code to its own file** (src/services/crazygames.ts -> new src/services/crazygames_ads.ts)
+  Now: crazygames.ts is 307 lines (rule: under ~300); its "Midgame ads" section (adblock check, `onAdState`, `adsAvailable`, `midgameAd`, `afterMidgameAd`, `AdDeps`) sits next to the loader, user and data modules. The next item adds a rewarded ad there.
+  Want: the ad section moves to crazygames_ads.ts using the SDK through an accessor from crazygames.ts (as crazygames_room.ts does with `crazySdk()`); init still runs the adblock check; callers and src/services/crazygames_ads.test.ts import from the new file. No behaviour change.
+  Done when: crazygames.ts is under 300 lines, `npm test`, `npm run build` and `npm run build:portal` pass.
+
+- **Rewarded ad wrapper, switched off, no button yet** (src/services/crazygames_ads.ts)
+  Now: only `midgameAd()` exists; the roadmap's rewarded ad (one extra heart on a Story retry, M2) has no SDK call. Its button and score rule wait on the Blocked question below.
+  Want: `rewardedAd(deps): Promise<boolean>` calls `SDK.ad.requestAd('rewarded', ...)`; true only on `adFinished`; false at once when `adsAvailable()` is false (CRAZY_ADS off, no SDK, ad blocker), on `adError`, or when neither adStarted nor adError comes within 5 s; never rejects. While it plays it uses the same `onAdState` hook as midgame (sound muted, taps shielded). No call site.
+  Done when: Vitest covers finished = true, error / timeout / ads off / ad blocker = false, and the mute hook on and off once; `npm test` and `npm run build:portal` pass. Re-read docs.crazygames.com/sdk/html5-v3 (ads) first if reachable; their docs win.
+  Spec: docs/design/crazygames-full-launch.md (ads section)
+
+- **Split src/flow/online.ts under 300 lines** (src/flow/online.ts)
+  Now: 311 lines; `handle(m: ServerMsg)` (the server message switch, lines ~245-306) is the biggest block in `OnlineRoom`.
+  Want: move the message handling to a new src/flow/online_messages.ts (like online_lobby.ts / online_join.ts), no behaviour change.
+  Done when: online.ts is under 300 lines; `npm test`, `npm run build`, `npm run shots` and `npm run online-check` pass.
+
 ## In progress
 
 
@@ -42,6 +58,8 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 ## Known issues
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
+
+- **src/flow/online.ts is 311 lines** (rule: under ~300). Queued 2026-11-21.
 
 - **Frame rate under 50 fps in `npm run perf`** (4 GB Chromebook, a CrazyGames requirement, docs/PORTAL.md): Story level 1 2.3 fps avg, Battle vs Bot 2.2 fps, with 4x CPU throttling and software drawing (no GPU in the cloud run), so this says little about a real Chromebook. Needs a run on a real one (Refindo) or a GPU-backed machine before any optimising.
 
