@@ -1,4 +1,4 @@
-import { onAdState } from '../services/crazygames';
+import { onAdState } from '../services/crazygames_ads';
 
 // While a CrazyGames midgame ad plays (services/crazygames.ts midgameAd): all sound muted and taps on the
 // game ignored. A transparent layer over the page takes the taps; it exists only in a build with ads.

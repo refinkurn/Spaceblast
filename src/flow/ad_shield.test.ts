@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { initCrazySdk, midgameAd, resetCrazySdk, type CrazySdk } from '../services/crazygames';
+import { initCrazySdk, resetCrazySdk, type CrazySdk } from '../services/crazygames';
+import { midgameAd } from '../services/crazygames_ads';
 import { installAdShield } from './ad_shield';
 
 afterEach(() => resetCrazySdk());

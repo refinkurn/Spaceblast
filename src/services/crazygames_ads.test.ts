@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { adsAvailable, afterMidgameAd, initCrazySdk, midgameAd, onAdState, resetCrazySdk, type CrazySdk } from './crazygames';
+import { initCrazySdk, resetCrazySdk, type CrazySdk } from './crazygames';
+import { adsAvailable, afterMidgameAd, midgameAd, onAdState } from './crazygames_ads';
 
 type Cb = { adStarted?: () => void; adFinished?: () => void; adError?: (e: unknown) => void };
 const ok = () => Promise.resolve();

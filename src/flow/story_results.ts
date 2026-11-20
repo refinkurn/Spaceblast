@@ -14,7 +14,7 @@ import { ENDING_SCENE, OUTRO_SCENES } from './story_scenes';
 import { scoreRows, sendScore } from './story_score';
 import { bossClearLine, storySummary } from './summary';
 import { randomTip } from './tutorial';
-import { afterMidgameAd } from '../services/crazygames';
+import { afterMidgameAd } from '../services/crazygames_ads';
 import { fadeThrough } from './transition';
 
 // Story level results: the level-clear and game-over banners and their

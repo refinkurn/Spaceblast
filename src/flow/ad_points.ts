@@ -1,4 +1,4 @@
-import { afterMidgameAd, type AdDeps } from '../services/crazygames';
+import { afterMidgameAd, type AdDeps } from '../services/crazygames_ads';
 
 // Where a CrazyGames midgame ad may play (docs/design/crazygames-full-launch.md, Ads): between
 // rounds, on the tap that leaves a screen, never mid-play. Story results: flow/story_results.ts.
