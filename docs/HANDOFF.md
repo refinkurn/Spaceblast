@@ -30,6 +30,13 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Log in with CrazyGames button for logged-out portal players** (src/services/crazygames.ts, src/flow/leaderboard_screen.ts, index.html, src/config/locales.json)
+  Now: the portal build reads a logged-in CrazyGames account (`getUser` + `addAuthListener` in crazygames.ts; username on the leaderboard and online name; Story progress merged with SDK.data via `mergeAccount` in story_mode.ts), but a logged-out player has no way to log in from the game.
+  Want: on the leaderboard screen, a "Log in with CrazyGames" button (48 px, dashboard style, text via t('lb.crazyLogin')) under the name field, shown only in the portal build with the SDK ready, `SDK.user.isUserAccountAvailable` true and no `crazyAccountName()`; it calls `SDK.user.showAuthPrompt()` through a new wrapper in crazygames.ts that never rejects (cancel, error or no SDK = nothing happens).
+  Want: after a login (auth listener), the button hides, the name field turns read-only as today, and Story progress is merged again with the account copy (`mergeAccount(readAccountData(...))`, Story map refreshed if open) so progress made before the login is kept.
+  Done when: tests cover the wrapper (no SDK, account unavailable, cancel, login) and the re-merge on login; our own site and a logged-in player never see the button; `npm test`, build and build:portal pass. Re-read docs.crazygames.com/sdk/html5-v3 (user module) first; their docs win.
+  Spec: docs/design/crazygames-full-launch.md (user and data modules)
+
 ## In progress
 
 
@@ -77,15 +84,5 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 - 2026-11-15: CrazyGames midgame ads, switched off: `CRAZY_ADS` (false) in config/portal.ts; `midgameAd()` / `adsAvailable()` / `afterMidgameAd()` in the SDK wrapper (5 s start limit, never rejects); sound muted and taps shielded while an ad plays (flow/ad_shield.ts); call points on Story Next level / Retry, Battle vs Bot end screen, leaving an online room (flow/ad_points.ts). With the switch off the actions run in the same call as before. 554 tests, build and build:portal pass.
 
 - 2026-11-15: Split story_mode.ts: level-clear and game-over banners moved to src/flow/story_results.ts (story_mode.ts 290 lines, story_results.ts 93), no behaviour change. Tests, build and shots pass.
-
-- 2026-11-14: CrazyGames invite button + instant join: lobby shows the SDK invite button for its room and hides it on close, leave or round start; a page opened from a CrazyGames invite opens Multiplayer with the code filled in and skips quick start (our `?room=` unchanged). 534 tests, build, shots and online-check pass.
-
-- 2026-11-14: CrazyGames gameplay start/stop: `setGameplay(active)` called every frame from the main loop (round playing and not paused); the SDK hears changes only, state re-sent once when init finishes; our own site makes no call. 531 tests and build pass.
-
-- 2026-11-14: CrazyGames SDK loader: `CRAZY_SDK` switch, `initCrazySdk()` in src/services/crazygames.ts loads the v3 script at boot in the portal build only (no reference in the normal build; build:portal now checks it is there), failures caught and warned once. 528 tests, build, portal build and shots pass.
-
-- 2026-11-14: Chromebook frame-rate check: `npm run perf` (scripts/perf_check.mjs) plays 20 s of Story level 1 and 20 s of Battle vs Bot at 1366x768, CPU 4x throttled, prints avg fps, 1% worst frame and draw calls; numbers in PORTAL.md; low-fps Known issue replaces the untested one. Battle vs Bot has 2 players (you and the bot), not 4.
-
-- 2026-11-14 (Director run, Refindo: "run it now"): quick start for first-time portal players: one tap lands in Story level 1; the opening crawl and prologue play once as a look back before the next level; once per save, never for a room invite, our own site unchanged (D-1, veto by 2026-11-16). Analytics events carry their source (site / crazygames; D-2) with queries for the numbers CrazyGames judges. Independent review found and fixed 4 bugs before the push (invite ignored, repeat on every visit, story lost if interrupted, level running under the splash). Hibernation closed as not needed now (D-3). The stale M0 / portal lock from 2026-11-10 was released: M0 is done apart from the items under Needs Refindo. 522 tests pass.
 
 Older entries: docs/CHANGELOG.md.
