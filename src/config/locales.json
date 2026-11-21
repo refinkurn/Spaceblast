@@ -130,6 +130,7 @@
     "invite.copied": "Link copied",
     "invite.share": "Join my Spaceblast room {code}",
     "lb.badName": "Try another name (2-12 letters, numbers, spaces, _ or -, nothing rude).",
+    "lb.crazyLogin": "Log in with CrazyGames",
     "lb.empty": "No scores yet. Be the first!",
     "lb.fromCrazyGames": "Your name comes from your CrazyGames account.",
     "lb.level": "Level {n}",

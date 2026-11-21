@@ -24,6 +24,9 @@ export interface CrazySdk {
     setItem?(key: string, value: string): void;
   };
   user?: {
+    /** True when this player can log in here (the login button only shows then). */
+    isUserAccountAvailable?: boolean;
+    showAuthPrompt?(): Promise<unknown>;
     getUser?(): Promise<CrazyUser | null | undefined>;
     addAuthListener?(listener: (user: CrazyUser | null | undefined) => void): void;
   };
@@ -181,6 +184,24 @@ function setUser(user: CrazyUser | null | undefined): void {
   if (next === accountName) return;
   accountName = next;
   for (const l of nameListeners) l();
+}
+
+/** Whether the "Log in with CrazyGames" button should show: SDK ready, accounts available, nobody logged in. */
+export function canShowLogin(): boolean {
+  return !!sdk && sdk.user?.isUserAccountAvailable === true && accountName === null;
+}
+
+/**
+ * Opens the CrazyGames login prompt. Never rejects: a cancel, an error or no SDK = nothing happens.
+ * A successful login reaches the game through the auth listener (`onAccountName`).
+ */
+export async function showLogin(): Promise<void> {
+  if (!canShowLogin()) return;
+  try {
+    await sdk!.user!.showAuthPrompt?.();
+  } catch (err) {
+    warnOnce('login prompt failed or was cancelled', err);
+  }
 }
 
 async function watchUser(found: CrazySdk): Promise<void> {

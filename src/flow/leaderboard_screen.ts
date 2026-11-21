@@ -1,7 +1,7 @@
 import { LEVEL_COUNT } from '../sim/levels';
 import { leaderboard } from '../services/leaderboardApi';
 import { NAME_MAX } from '../services/name_filter';
-import { crazyAccountName, onAccountName } from '../services/crazygames';
+import { canShowLogin, crazyAccountName, onAccountName, showLogin } from '../services/crazygames';
 import { displayName, loadProfile, renameProfile } from '../services/profile';
 import { stageId } from '../services/score';
 import type { ScoreRow } from '../services/leaderboard_types';
@@ -34,6 +34,7 @@ export class LeaderboardScreen {
       $('lb-name-note').textContent = ok ? t('lb.saved') : t('lb.badName');
       input.value = loadProfile().name;
     });
+    $('lb-login').addEventListener('click', () => { void showLogin(); });
     // A login or logout while the screen is open.
     onAccountName(() => { if (this.open) this.showName(); });
   }
@@ -46,6 +47,7 @@ export class LeaderboardScreen {
     input.readOnly = account;
     $<HTMLButtonElement>('lb-form').querySelector('button')!.disabled = account;
     $('lb-name-note').textContent = account ? t('lb.fromCrazyGames') : '';
+    $('lb-login').hidden = !canShowLogin();
   }
 
   get open(): boolean {

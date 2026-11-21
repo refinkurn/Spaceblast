@@ -1022,6 +1022,8 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 .lb-form { display: flex; gap: 8px; align-items: center; justify-content: center; font-size: 14px; }
 .lb-form input { width: 150px; min-height: 48px; padding: 0 10px; font: inherit; font-size: 16px; color: var(--ink); background: #ffffff10; border: 1px solid #ffffff40; border-radius: 10px; }
 .lb-form button { font-size: 15px; padding: 0 16px; }
+.lb-login { align-self: center; min-height: 48px; padding: 0 18px; font: 700 15px system-ui, sans-serif; border-radius: 12px; }
+.lb-login[hidden] { display: none; }
 
 /* Start countdown (3-2-1-BLAST!) and the red damage flash at the screen edges. */
 #countdown { position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center; pointer-events: none; font: 900 min(28vh, 140px) system-ui, sans-serif; color: #fff; text-shadow: 0 0 24px #4aa3ff, 0 4px 0 #0a1a3a; }
@@ -1114,7 +1116,7 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 }
 .menu-list button:not(.nav-back), .nav-back, .quiet-btn, .stepper button, .icon-btn, .sound-btn, #menu-btn,
 #online button:not(.nav-back), .pause-list button, #banner button, #banner button.quiet, #congrats button, #hub-board,
-.map-card-actions button, .lb-pick button, .lb-form button, #ending-btn, #install-ok, .intro-skip, #crawl-skip, #cut-skip, .icon-go {
+.map-card-actions button, .lb-pick button, .lb-form button, .lb-login, #ending-btn, #install-ok, .intro-skip, #crawl-skip, #cut-skip, .icon-go {
   color: var(--ink);
   background: var(--dash-bg);
   border: 1px solid var(--dash-edge);
@@ -1124,7 +1126,7 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 .menu-list button:not(.nav-back):hover, .menu-list button:not(.nav-back):focus-visible, .nav-back:hover, .nav-back:focus-visible,
 .quiet-btn:hover, .quiet-btn:focus-visible, .stepper button:not(:disabled):hover, .icon-btn:hover, .sound-btn:hover, #menu-btn:hover,
 #online button:not(.nav-back):not(:disabled):hover, .pause-list button:hover, .pause-list button:focus-visible, #banner button:hover,
-#congrats button:hover, #hub-board:hover, .map-card-actions button:hover, .lb-pick button:not(:disabled):hover, .lb-form button:hover,
+#congrats button:hover, #hub-board:hover, .map-card-actions button:hover, .lb-pick button:not(:disabled):hover, .lb-form button:hover, .lb-login:hover,
 #ending-btn:hover, #install-ok:hover, .intro-skip:hover, #crawl-skip:hover, #cut-skip:hover {
   outline: none;
   background: var(--dash-bg-hover);
@@ -1286,7 +1288,7 @@ body.scene .boss-clock { visibility: hidden; }
 .hud-clock, .hud-chip, .menu-list button, .pause-list button, .quiet-btn, .go-btn, .icon-go,
 #online button, #online .slot, .slot-label, .intro-speaker, .cut-speaker, .coach-label,
 .stepper .step-value, #banner button, #congrats button, #ending-btn, #install-ok,
-.lb-pick button, .lb-form button, .map-card-actions button, .nav-back, .announce-count,
+.lb-pick button, .lb-form button, .lb-login, .map-card-actions button, .nav-back, .announce-count,
 #map-card-enter { font-family: var(--font-label); }
 .hud-clock, .hud-chip, .cut-speaker, .intro-speaker, .coach-label, .announce-count { font-weight: 700; }
 

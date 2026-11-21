@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { crazyAccountName, initCrazySdk, onAccountName, resetCrazySdk, usernameToName, type CrazySdk, type CrazyUser } from './crazygames';
+import { canShowLogin, crazyAccountName, initCrazySdk, onAccountName, resetCrazySdk, showLogin, usernameToName, type CrazySdk, type CrazyUser } from './crazygames';
 import { displayName, loadProfile } from './profile';
 
 const ok = () => Promise.resolve();
@@ -78,5 +78,52 @@ describe('account name', () => {
     const sdk: CrazySdk = { init: ok, environment: 'crazygames', user: { getUser: () => Promise.reject(new Error('no')) } };
     await initCrazySdk({ enabled: true, load: ok, find: () => sdk });
     expect(crazyAccountName()).toBeNull();
+  });
+});
+
+describe('login button wrapper', () => {
+  const sdkWith = (user: NonNullable<CrazySdk['user']>): CrazySdk => ({ init: ok, environment: 'crazygames', user });
+
+  it('no SDK: not shown, showLogin does nothing', async () => {
+    expect(canShowLogin()).toBe(false);
+    await expect(showLogin()).resolves.toBeUndefined();
+  });
+
+  it('account unavailable: not shown, no prompt', async () => {
+    const showAuthPrompt = vi.fn(() => Promise.resolve());
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdkWith({ isUserAccountAvailable: false, getUser: () => Promise.resolve(null), showAuthPrompt }) });
+    expect(canShowLogin()).toBe(false);
+    await showLogin();
+    expect(showAuthPrompt).not.toHaveBeenCalled();
+  });
+
+  it('logged out with accounts available: shown; the prompt opens', async () => {
+    const showAuthPrompt = vi.fn(() => Promise.resolve());
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdkWith({ isUserAccountAvailable: true, getUser: () => Promise.resolve(null), showAuthPrompt }) });
+    expect(canShowLogin()).toBe(true);
+    await showLogin();
+    expect(showAuthPrompt).toHaveBeenCalledOnce();
+  });
+
+  it('cancel or error never rejects', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdkWith({ isUserAccountAvailable: true, getUser: () => Promise.resolve(null), showAuthPrompt: () => Promise.reject(new Error('cancelled')) }) });
+    await expect(showLogin()).resolves.toBeUndefined();
+  });
+
+  it('a logged-in player never sees it; after a login it hides and the name listener runs', async () => {
+    let listener: (u: CrazyUser | null) => void = () => {};
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdkWith({ isUserAccountAvailable: true, getUser: () => Promise.resolve(null), addAuthListener: (l) => { listener = l; } }) });
+    const seen = vi.fn();
+    onAccountName(seen);
+    expect(canShowLogin()).toBe(true);
+    listener({ username: 'Luna' });
+    expect(canShowLogin()).toBe(false);
+    expect(seen).toHaveBeenCalledOnce();
+  });
+
+  it('already logged in at start: not shown', async () => {
+    await initCrazySdk({ enabled: true, load: ok, find: () => sdkWith({ isUserAccountAvailable: true, getUser: () => Promise.resolve({ username: 'Luna' }) }) });
+    expect(canShowLogin()).toBe(false);
   });
 });

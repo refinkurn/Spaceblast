@@ -30,13 +30,6 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
-- **Log in with CrazyGames button for logged-out portal players** (src/services/crazygames.ts, src/flow/leaderboard_screen.ts, index.html, src/config/locales.json)
-  Now: the portal build reads a logged-in CrazyGames account (`getUser` + `addAuthListener` in crazygames.ts; username on the leaderboard and online name; Story progress merged with SDK.data via `mergeAccount` in story_mode.ts), but a logged-out player has no way to log in from the game.
-  Want: on the leaderboard screen, a "Log in with CrazyGames" button (48 px, dashboard style, text via t('lb.crazyLogin')) under the name field, shown only in the portal build with the SDK ready, `SDK.user.isUserAccountAvailable` true and no `crazyAccountName()`; it calls `SDK.user.showAuthPrompt()` through a new wrapper in crazygames.ts that never rejects (cancel, error or no SDK = nothing happens).
-  Want: after a login (auth listener), the button hides, the name field turns read-only as today, and Story progress is merged again with the account copy (`mergeAccount(readAccountData(...))`, Story map refreshed if open) so progress made before the login is kept.
-  Done when: tests cover the wrapper (no SDK, account unavailable, cancel, login) and the re-merge on login; our own site and a logged-in player never see the button; `npm test`, build and build:portal pass. Re-read docs.crazygames.com/sdk/html5-v3 (user module) first; their docs win.
-  Spec: docs/design/crazygames-full-launch.md (user and data modules)
-
 ## In progress
 
 
@@ -54,6 +47,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-22: "Log in with CrazyGames" button on the leaderboard screen (`#lb-login`, `lb.crazyLogin`): `canShowLogin()` / `showLogin()` (never rejects) in crazygames.ts; shown only with the SDK ready, accounts available and nobody logged in; after a login Story progress is merged again (new flow/account_sync.ts `watchAccountMerge`, used by story_mode.ts). 612 tests, build and build:portal pass. Not checked: docs.crazygames.com could not be fetched in this run; `isUserAccountAvailable` / `showAuthPrompt` follow the item text, worth a re-read.
 
 - 2026-11-21: Split src/flow/online.ts 311 -> 250 lines: server message handling to src/flow/online_messages.ts (`handleServerMsg`, `MessageHost`), no behaviour change. 604 tests, build, shots and online-check pass.
 
