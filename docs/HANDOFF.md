@@ -39,6 +39,8 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 - **Rewarded extra heart vs score (asked 2026-11-15)**: the roadmap's rewarded ad gives one extra heart on a Story retry. Should that heart count for score and stars? Today hearts left count up to 3 (1000 each) and 3 stars need all 3 hearts, so a bonus heart lets a player lose one and still score full hearts and 3 stars. Suggest: no, score and stars count hearts as if the bonus heart were not there, so the leaderboard stays fair. The item (src/sim option + Story game-over button, code session) is queued once you answer.
 
+- **Next milestone (asked 2026-11-23)**: M2 code is built (ads off, username, account progress, login, room data, instant multiplayer, muteAudio, loading events) except the rewarded heart, which waits on the question above. M1 waits on the CrazyGames upload (Needs Refindo 1-2). Should the Producer start M3's "weekly metrics report" now (a script that prints the docs/ANALYTICS.md numbers per week, site vs crazygames), or hold the queue until launch data exists? Suggest: start it now, so the report is ready on the first day of Basic Launch.
+
 ## Known issues
 
 Open bugs and debts, newest first. The Producer turns these into Ready items when the milestone allows; fixed ones move to Done.
@@ -71,13 +73,5 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 - 2026-11-16: CrazyGames room data replaces the deprecated invite button: new src/services/crazygames_room.ts (`updateRoom` with roomId / isJoinable / inviteParams, repeats skipped; `leftRoom`; `onJoinRoom` listener), lobby sets joinable by free seat, round start = not joinable, leaving = leftRoom; join from the CrazyGames UI opens Multiplayer with the code only from a menu / Story map / Multiplayer screen (flow/crazy_join.ts). Old showInvite/hideInvite removed. 583 tests, build, build:portal and online-check pass.
 
 - 2026-11-16: Split src/flow/online.ts: lobby rendering to online_lobby.ts (138), create/join/rejoin flow to online_join.ts (115), prefs helpers to online_prefs.ts (28); online.ts 509 -> 288 lines, no behaviour change. 575 tests, build, shots and online-check pass.
-
-- 2026-11-15: Story progress on the CrazyGames account: `save()` also writes SDK.data; when the SDK is ready the account copy is sanitized, merged with the local one (`mergeSaved`: best of each field, seen lists joined, introPending only if both) and saved to both; the Story map refreshes if open; no SDK = localStorage only. 575 tests, build and build:portal pass. Not checked: whether the data module must be switched on in the CrazyGames developer page (docs search returned no text); worth a look at upload.
-
-- 2026-11-15: CrazyGames username as the leaderboard name: the SDK user module (getUser + auth listener) gives a logged-in username, cleaned to our name rules (`usernameToName`; unusable = device name); scores are sent with it (`displayName()`), the leaderboard name field shows it read-only with a hint (`lb.fromCrazyGames`), updates on a login during play. 564 tests, build and build:portal pass.
-
-- 2026-11-15: CrazyGames midgame ads, switched off: `CRAZY_ADS` (false) in config/portal.ts; `midgameAd()` / `adsAvailable()` / `afterMidgameAd()` in the SDK wrapper (5 s start limit, never rejects); sound muted and taps shielded while an ad plays (flow/ad_shield.ts); call points on Story Next level / Retry, Battle vs Bot end screen, leaving an online room (flow/ad_points.ts). With the switch off the actions run in the same call as before. 554 tests, build and build:portal pass.
-
-- 2026-11-15: Split story_mode.ts: level-clear and game-over banners moved to src/flow/story_results.ts (story_mode.ts 290 lines, story_results.ts 93), no behaviour change. Tests, build and shots pass.
 
 Older entries: docs/CHANGELOG.md.
