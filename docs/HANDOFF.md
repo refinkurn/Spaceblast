@@ -66,12 +66,4 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 - 2026-11-17: Split src/flow/story_map.ts: node card to story_map_card.ts (`StoryMapCard`); story_map.ts 335 -> 292 lines, no behaviour change. Tests, build and shots pass.
 
-- 2026-11-16: CrazyGames muteAudio setting: `onMuteAudio` (services/crazygames_room.ts) reads `game.settings.muteAudio` after init and follows `addSettingsChangeListener`; `MuteSources` (audio/mute.ts) holds the ad mute and the portal mute apart so sound returns only when neither asks; saved sound settings untouched. 591 tests, build and build:portal pass. Queue empty now.
-
-- 2026-11-16: CrazyGames Instant Multiplayer: `isInstantMultiplayer()` (services/crazygames_room.ts) + `sdkEntry(invite, instant)` (flow/crazy_join.ts): instant = skip quick start, open Multiplayer and `online.createNow()` with the saved name and colour; an invite wins; a failed create shows today's error on the Multiplayer screen. Normal build unchanged. 585 tests, build, build:portal and online-check pass.
-
-- 2026-11-16: CrazyGames room data replaces the deprecated invite button: new src/services/crazygames_room.ts (`updateRoom` with roomId / isJoinable / inviteParams, repeats skipped; `leftRoom`; `onJoinRoom` listener), lobby sets joinable by free seat, round start = not joinable, leaving = leftRoom; join from the CrazyGames UI opens Multiplayer with the code only from a menu / Story map / Multiplayer screen (flow/crazy_join.ts). Old showInvite/hideInvite removed. 583 tests, build, build:portal and online-check pass.
-
-- 2026-11-16: Split src/flow/online.ts: lobby rendering to online_lobby.ts (138), create/join/rejoin flow to online_join.ts (115), prefs helpers to online_prefs.ts (28); online.ts 509 -> 288 lines, no behaviour change. 575 tests, build, shots and online-check pass.
-
 Older entries: docs/CHANGELOG.md.
