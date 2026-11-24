@@ -60,10 +60,4 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 - 2026-11-18: Split src/main.ts 364 -> 265 lines: CrazyGames boot wiring to src/flow/portal_boot.ts (`installPortalBoot`), the fixed-timestep loop to src/flow/frame_loop.ts (`installFrameLoop`), no behaviour change. 597 tests, build, build:portal, shots and online-check pass.
 
-- 2026-11-17: CrazyGames loading events: new src/services/crazygames_loading.ts (`watchLoading` sends loadingStart when the SDK is ready while loading; `loadingDone` after the start screen is set up in main.ts sends loadingStop; each once, none if loading ended first, no-op without SDK). 597 tests, build and build:portal pass. Not checked: docs.crazygames.com/sdk/game could not be fetched in this run (permission gate), so the call names and order follow the spec only; worth a re-read.
-
-- 2026-11-17: CrazyGames username as the online name: `chooseOnlineName(account, typed)` (flow/online_prefs.ts); logged in = the Multiplayer name field shows the username read-only with hint `online.fromCrazyGames`, rooms are created/joined with it, saved prefs name untouched; follows `onAccountName`. 593 tests, build, build:portal and online-check pass.
-
-- 2026-11-17: Split src/flow/story_map.ts: node card to story_map_card.ts (`StoryMapCard`); story_map.ts 335 -> 292 lines, no behaviour change. Tests, build and shots pass.
-
 Older entries: docs/CHANGELOG.md.
