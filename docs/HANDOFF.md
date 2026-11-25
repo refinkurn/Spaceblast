@@ -58,6 +58,4 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 - 2026-11-21: Moved the CrazyGames ad code (midgame ads, adblock check, `onAdState`) to src/services/crazygames_ads.ts; crazygames.ts 307 -> 229 lines, no behaviour change. 597 tests, build and build:portal pass.
 
-- 2026-11-18: Split src/main.ts 364 -> 265 lines: CrazyGames boot wiring to src/flow/portal_boot.ts (`installPortalBoot`), the fixed-timestep loop to src/flow/frame_loop.ts (`installFrameLoop`), no behaviour change. 597 tests, build, build:portal, shots and online-check pass.
-
 Older entries: docs/CHANGELOG.md.
