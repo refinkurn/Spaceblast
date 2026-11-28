@@ -2,6 +2,12 @@
 
 Decisions agents made without waiting for Refindo, newest first. Tier 1 = reversible and inside what the roadmap, canon, rules and design already say. Tier 2 = players will notice it, still easy to undo: Refindo has until the "Veto by" date to say no (tell the design chat "veto D-n"); silence means accepted.
 
+## D-5 Pause "Restart level" keeps a watched-for heart (2026-11-28, Tier 2)
+Decided: after a rewarded "+1 heart (ad)" retry, restarting the level from the pause menu keeps the 4th heart. A game over still resets to 3. Why: the player paid for the heart by watching an ad; taking it away on a restart would feel like a broken promise. Rejected: reset to 3 on restart (simpler, but punishes a paying player). Revert: drop the last argument of `story.play` in the pause `restart` in src/main.ts. Veto by: 2026-11-30. Status: Active
+
+## D-4 Rewarded heart button: "+1 heart (ad)", third button on the game-over card (2026-11-28, Tier 2)
+Decided: the rewarded retry is a third button between "Retry level N" and "Map", labelled "+1 heart (ad)" with the replay icon; it shows only when ads are on and available. Why: the label must say plainly that it plays an ad; a longer label ("Watch an ad: retry with +1 heart") wrapped to three lines on an 800x450 phone. Rejected: replacing the normal Retry (players without ads would lose it). Revert: text in locales.json `story.retryBonus`. Veto by: 2026-11-30. Status: Active
+
 ## D-3 No Durable Object hibernation for now (2026-11-14, Tier 1)
 Decided: do not build hibernation for idle lobbies before launch. Why: it only saves server time while lobbies sit idle; the game has had 1-4 players a day (analytics, 3-10 Nov), so there is nothing to save, and the build risks lost seats after a wake-up. Rejected: build it now (two deploys, a handler rewrite, a new dev dependency). Revisit: when the Cloudflare dashboard shows Durable Object duration near the free limit during the CrazyGames soft launch.
 Revert: n/a (nothing built). Status: Active

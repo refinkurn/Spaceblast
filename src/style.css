@@ -91,6 +91,7 @@ html, body {
 /* HUD: hearts and oxygen, stage chip, objective, power-up pips. */
 /* Three columns: hearts fill the first row, Oxygen Vest armor (up to 3) the second, never a ragged wrap. */
 .hud-health { display: grid; grid-template-columns: repeat(3, calc(16px * var(--hs))); gap: calc(3px * var(--hs)); align-items: center; }
+.hud-health.four { grid-template-columns: repeat(4, calc(16px * var(--hs))); }
 .hud-health .icon { width: calc(16px * var(--hs)); height: calc(16px * var(--hs)); }
 .icon { width: 18px; height: 18px; display: block; fill: currentColor; stroke: currentColor; stroke-width: 0; }
 .icon.heart { color: #ff4f6d; }
@@ -1098,6 +1099,7 @@ body.paused #countdown, body.paused #announce, body.paused #alert, body.paused #
 /* Proceed buttons with a label (Next level, Retry, Enter): play icon before the words. */
 .go-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .go-btn .ui-icon { width: 18px; height: 18px; }
+.go-btn[hidden] { display: none; }
 
 /* Screen-change micro-fade (flow/transition.ts): above everything, takes taps only while dark. */
 #fade { position: fixed; inset: 0; z-index: 100; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.1s linear; }

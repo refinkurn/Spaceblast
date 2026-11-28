@@ -83,6 +83,14 @@ export function scoreTarget(level: number): number {
   return SCORE.clear + 2 * SCORE.heart + Math.ceil(spec.roster.length / 2) * SCORE.martian + (par === null ? 0 : Math.round(par / 4) * SCORE.second);
 }
 
+/**
+ * Hearts a Story clear is scored with: as if the run started with START_LIVES, so a bonus
+ * heart from a rewarded ad keeps you alive but never adds score or a third star (Refindo, 2026-11-28).
+ */
+export function heartsForScore(livesLost: number): number {
+  return START_LIVES - Math.min(Math.max(0, livesLost), START_LIVES);
+}
+
 /** 1: cleared. 2: score target met. 3: all hearts left and under par (bosses: all hearts). */
 export function starsFor(level: number, total: number, heartsLeft: number, seconds: number): number {
   const par = parSeconds(level);

@@ -126,6 +126,11 @@ export class Screens {
     summary.hidden = rows.length === 0;
     this.sprite.show(extra.pose ? 'astropaw' : null, extra.pose ?? 'neutral');
     this.primary.querySelector('.go-label')!.textContent = button;
+    const bonus = $<HTMLButtonElement>('banner-bonus');
+    bonus.hidden = !extra.bonus;
+    bonus.querySelector('.go-label')!.textContent = extra.bonus?.label ?? '';
+    // Once per banner, like the main button.
+    bonus.onclick = extra.bonus ? () => { bonus.onclick = null; this.onPrimary = () => {}; extra.bonus!.onClick(); } : null;
     this.onPrimary = onClick;
     this.banner.hidden = false;
     this.animate();
@@ -155,6 +160,7 @@ export class Screens {
   private firePrimary(): void {
     const action = this.onPrimary;
     this.onPrimary = () => {};
+    $('banner-bonus').onclick = null; // one choice per banner: Retry and "+1 heart" lock each other
     action();
   }
 }

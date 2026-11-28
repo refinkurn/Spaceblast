@@ -42,7 +42,8 @@ describe('leaderboard: validate', () => {
     expect(validate(sub({ score: -1 }))).toEqual({ ok: false, reason: 'bad_score' });
     expect(validate(sub({ completion_time_seconds: 4 }))).toEqual({ ok: false, reason: 'bad_time' });
     expect(validate(sub({ completion_time_seconds: 3601 }))).toEqual({ ok: false, reason: 'bad_time' });
-    expect(validate(sub({ hearts_left: 0 }))).toEqual({ ok: false, reason: 'bad_hearts' });
+    expect(validate(sub({ hearts_left: -1 }))).toEqual({ ok: false, reason: 'bad_hearts' });
+    expect(validate(sub({ hearts_left: 4 }))).toEqual({ ok: false, reason: 'bad_hearts' });
     expect(validate(sub({ stars: 4 }))).toEqual({ ok: false, reason: 'bad_stars' });
     expect(validate(sub({ score: maxScore(1) })).ok).toBe(true);
   });

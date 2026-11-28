@@ -14,6 +14,8 @@ export interface BannerExtra {
   summary?: [string, string][];
   /** What the second button does instead of opening the menu (Story: back to the map). */
   onMenu?: () => void;
+  /** An extra button between the two (Story game over: the rewarded-ad retry). */
+  bonus?: { label: string; onClick: () => void };
 }
 
 export const fmtTime = (ticks: number) => {

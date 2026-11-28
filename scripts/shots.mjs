@@ -86,9 +86,9 @@ for (const s of SIZES) {
 
   // Level cleared: the end-of-level card.
   await p.evaluate(() => { const st = window.spaceblast.state; const c = st.grid.cells; c[st.gate] = 0; const h = st.players[0]; h.x = (st.gate % st.grid.w) * 1000; h.y = Math.floor(st.gate / st.grid.w) * 1000; });
+  // The outro scene and the card take longer on a slow machine (CI): wait for it, tapping through scenes.
   await p.waitForTimeout(2500);
-  for (let i = 0; i < 12; i++) { await tapCards(p); await p.waitForTimeout(150); }
-  await p.waitForTimeout(800);
+  for (let i = 0; i < 40 && !(await visible(p, 'banner')); i++) { await tapCards(p); await p.waitForTimeout(250); }
   await need('banner', 'end-of-level card');
   await shot('5-level-clear');
 

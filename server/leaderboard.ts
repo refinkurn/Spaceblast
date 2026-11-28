@@ -39,7 +39,8 @@ export function validate(body: unknown): Validated {
   if (level === null) return { ok: false, reason: 'bad_stage' };
   if (!intIn(b.score, 0, maxScore(level))) return { ok: false, reason: 'bad_score' };
   if (!intIn(b.completion_time_seconds, 5, 3600)) return { ok: false, reason: 'bad_time' };
-  if (!intIn(b.hearts_left, 1, 3)) return { ok: false, reason: 'bad_hearts' };
+  // 0 is a clear on the rewarded extra heart (scored as if the run had 3: services/score.ts heartsForScore).
+  if (!intIn(b.hearts_left, 0, 3)) return { ok: false, reason: 'bad_hearts' };
   if (!intIn(b.stars, 1, 3)) return { ok: false, reason: 'bad_stars' };
   // Older clients send no gems field: their scores have none.
   const gems = b.gems === undefined ? 0 : b.gems;

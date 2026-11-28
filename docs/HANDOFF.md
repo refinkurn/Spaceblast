@@ -19,27 +19,16 @@ Hosting (details in ONLINE.md): game page on Vercel, https://spaceblast.vercel.a
 
 ## Needs Refindo
 
-Only you can do these (accounts, uploads, your own databases). Ranked by what they unblock. Everything else is prepared.
+Only you can do these. Ranked by what they unblock; everything else is prepared.
 
-1. **Create the CrazyGames developer account** (developer.crazygames.com), about 10 min. Unblocks the whole soft launch (M1).
-2. **Upload the game**, about 15 min: `spaceblast-portal.zip` (from `npm run build:portal`, or the "spaceblast-portal" file on the latest GitHub Test run), orientation landscape, desktop + mobile; listing text, covers and both videos are in `docs/LISTING.md` and `listing/`. Then try it in their preview tool on a phone and a computer.
-3. **Analytics source column**, 1 min: run the one line in docs/ANALYTICS.md ("Source column") in the Cloudflare D1 console, before the upload.
-4. **Traffic analytics token**, 5 min (optional): set `VITE_CF_BEACON_TOKEN` in Vercel (docs/ANALYTICS.md, part 1).
-5. **Phone check**, 1 min: the last open line in docs/PHONE_TEST.md (floating stick at rest).
-6. **Decisions made for you**: docs/DECISIONS.md. D-1 (quick start on the portal) can be vetoed until 2026-11-16.
+1. **Upload today's zip to CrazyGames and finish the submission**, about 15 min. Everything built since 2026-11-14 (CrazyGames login, progress saved to the account, their invite and instant-join, username on the leaderboard) only reaches portal players through a new upload: CrazyGames runs the zip you gave it. Zip: `npm run build:portal`, or the "spaceblast-portal" file on the latest GitHub Test run. Listing text, covers and videos: `docs/LISTING.md`, `listing/`. If the game is still a draft, press Submit; if it is in review or live, upload the new version. Analytics shows no CrazyGames players since your own test on 2026-11-14, so it is not live yet. Before ticking "someone other than you has tested it", have one friend play a few levels.
+2. **`npx wrangler login` once on your computer** (2 min, optional): then `npm run metrics` prints the weekly report there. Agents can also run it for you through the Cloudflare connection.
+3. **Phone check** (1 min): the last open line in docs/PHONE_TEST.md (floating stick at rest), plus the bonus-heart HUD below when ads are on.
+4. **Chromebook check** (when you have one at hand): CrazyGames wants smooth play on a 4 GB Chromebook; open the game there and play a level (Known issues).
+5. **Traffic analytics token** (5 min, optional): `VITE_CF_BEACON_TOKEN` in Vercel (docs/ANALYTICS.md part 1).
+6. **Decisions made for you**: docs/DECISIONS.md. D-4 and D-5 can be vetoed until 2026-11-30.
 
 ## Ready
-
-- **Weekly metrics report: `npm run metrics`** (scripts/metrics_report.mjs, src/services/metrics_report.ts, docs/ANALYTICS.md)
-  Now: the numbers exist only as separate SQL queries in docs/ANALYTICS.md, run by hand in the D1 console; no week view, no site vs crazygames split in one place.
-  Want: `npm run metrics` prints the docs/design/metrics-report.md columns per ISO week, split site / crazygames / unknown, plus the Story drop-off table; reads live D1 through wrangler, or `--file rows.json` offline.
-  Done when: `npm run metrics -- --file <fixture>` prints the tables; a Vitest test checks week grouping, d1 % and `-` for zero divisions; ANALYTICS.md has a "Weekly report" section; `npm test` and build pass.
-  Spec: docs/design/metrics-report.md
-
-- **[code session] Rewarded extra heart on a Story retry** (src/sim/state.ts GameOptions, src/flow/story_results.ts, src/flow/story_mode.ts)
-  Now: Story game over offers Retry (after `afterMidgameAd`) and Map; `rewardedAd()` exists in src/services/crazygames_ads.ts with no call site; every Story start gives START_LIVES hearts.
-  Want: a `bonusLives` GameOption (0 or 1, in hashState) adds hearts at start; the game-over banner shows a "Retry +1 heart" button only when `adsAvailable()`, which calls `rewardedAd()` and retries with 1 bonus heart only if it returns true (false = normal retry, no heart). Score and stars count hearts as if the bonus heart were not there (Refindo, 2026-11-28): heartsLeft = START_LIVES - min(lost, START_LIVES), as story_results.ts already does.
-  Done when: sim test for the bonus heart; a test that a 4-heart run losing 1 heart scores 2 hearts and no 3 stars; text via t() in locales.json; GAME_RULES.md updated; `npm test`, build and build:portal pass. CRAZY_ADS stays false.
 
 ## In progress
 
@@ -56,6 +45,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-28 (Director run, Refindo: "execute plan today"): `npm run metrics` weekly report (src/services/metrics_report.ts + test + fixture, scripts/metrics_report.mjs, ANALYTICS.md "Weekly report"; checked against the live D1 rows). Rewarded extra heart: `bonusLives` GameOption (0-1, player 0, Story only, in hashState via lives), "+1 heart (ad)" on the Story game-over card only when `adsAvailable()` (CRAZY_ADS still false, so nobody sees it yet), retry with 4 hearts only if the ad finished; score and stars use `heartsForScore` (as if 3 hearts); leaderboard server accepts hearts_left 0 (a clear on the bonus heart); HUD draws 4 hearts in one row and keeps a lost bonus heart as lost; pause Restart keeps a watched-for heart (D-5). Independent review found 6 problems, all fixed before the push (an empty button on every banner, bonus clears rejected by the leaderboard, the two retry buttons not locking each other, a late ad result starting a level over the map, the HUD wrap, misleading metrics errors). Screenshot check made tolerant of slow CI (the 2026-11-24 red run). CrazyGames login calls checked against docs.crazygames.com (user module): they match. 620 tests, build, build:portal, shots and online-check pass.
 
 - 2026-11-28: Refindo answered both Blocked questions: the rewarded bonus heart does not count for score and stars; start M3's weekly metrics report now. Both queued.
 

@@ -60,6 +60,9 @@ export class Hud {
   private powers = $('hud-powers');
   private last = ['', '', '', '', ''];
   private lives = -1;
+  /** Most hearts seen in this game (a rewarded retry starts with 4); a lost bonus heart stays drawn as lost. */
+  private peak = 0;
+  private game: GameState | null = null;
   private armor = -1;
 
   /** Shakes and flashes the hearts row (CSS animation; restarts if already running). */
@@ -80,7 +83,10 @@ export class Hud {
   update(state: GameState, info: HudInfo): void {
     const p = state.players[info.local] ?? state.players[0];
     // Battle rounds give one life, so show one heart there.
-    const hearts = info.mode === 'survival' ? Math.max(START_LIVES, p.lives) : Math.max(1, p.lives);
+    if (this.game !== state) { this.game = state; this.peak = 0; }
+    this.peak = Math.max(this.peak, p.lives);
+    const hearts = info.mode === 'survival' ? Math.max(START_LIVES, this.peak) : Math.max(1, p.lives);
+    this.health.classList.toggle('four', hearts > START_LIVES);
     const health =
       Array.from({ length: hearts }, (_, i) => `<span class="${i < p.lives ? '' : 'lost'}">${HEART}</span>`).join('') +
       Array.from({ length: p.armor }, () => OXYGEN).join('');

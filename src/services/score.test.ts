@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { LEVEL_COUNT, levelSpec } from '../sim/levels';
-import { levelOfStage, maxGems, maxScore, parSeconds, SCORE, scoreConsistent, scoreFor, scoreTarget, stageId, starsFor } from './score';
+import { heartsForScore, levelOfStage, maxGems, maxScore, parSeconds, SCORE, scoreConsistent, scoreFor, scoreTarget, stageId, starsFor } from './score';
 import { cleanName, defaultName, isRude } from './name_filter';
 
 describe('story score', () => {
+  it('scores a bonus-heart run as if it started with 3 hearts', () => {
+    // 4 hearts (rewarded ad), 1 lost: scored with 2 hearts left, so no third star even under par.
+    expect(heartsForScore(1)).toBe(2);
+    expect(heartsForScore(0)).toBe(3);
+    expect(heartsForScore(3)).toBe(0);
+    const s = scoreFor({ level: 2, martians: 3, ticks: 20 * 60, heartsLeft: heartsForScore(1), gems: 0 });
+    expect(s.hearts).toBe(2 * SCORE.heart);
+    expect(starsFor(2, s.total, heartsForScore(1), 20)).toBeLessThan(3);
+  });
+
+
   it('adds clear, Martians, time under par and hearts', () => {
     // Level 1: par 90 s. 30 s used, 4 Martians, 3 hearts.
     const s = scoreFor({ level: 1, martians: 4, ticks: 30 * 60 + 59, heartsLeft: 3 });

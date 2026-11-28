@@ -57,7 +57,7 @@ From level 16 Martians lean towards the nearest astronaut (the Hunt). Frozen Mar
 ## Story mode (survival)
 
 - 20 levels in 4 sectors of 5; the full table is `docs/design/level-progression.md`. One new species and one new hazard per sector.
-- 3 lives (hearts). Clear a level by finding the Warp Gate and stepping on it; defeating Martians is optional and earns score.
+- 3 lives (hearts). After a game over on the CrazyGames build with ads on, a player can watch a rewarded ad to retry with 4 hearts; the extra heart never adds score or a third star (scored as if the run had 3). Clear a level by finding the Warp Gate and stepping on it; defeating Martians is optional and earns score.
 - Levels 5, 10, 15 are bosses (Goopling Hive, Darkness Hive, Maze Master) on the centre tile. They can't be damaged: survive 3 waves; each wait is half the one before (44/40/36 s first waits). Each wave spouts 3 Gooplings.
 - Level 20 is a 1-on-1 duel with Ducking (a bot astronaut with 1 life), Maze Shift only.
 - Hazards, each announced 3 s ahead, never overlapping; first about 20 s in, then every 25-35 s (12-18 s from level 13):

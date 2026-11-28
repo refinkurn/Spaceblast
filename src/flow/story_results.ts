@@ -14,7 +14,8 @@ import { ENDING_SCENE, OUTRO_SCENES } from './story_scenes';
 import { scoreRows, sendScore } from './story_score';
 import { bossClearLine, storySummary } from './summary';
 import { randomTip } from './tutorial';
-import { afterMidgameAd } from '../services/crazygames_ads';
+import { adsAvailable, afterMidgameAd, rewardedAd } from '../services/crazygames_ads';
+import { heartsForScore } from '../services/score';
 import { fadeThrough } from './transition';
 
 // Story level results: the level-clear and game-over banners and their
@@ -28,7 +29,8 @@ export interface StoryResultsDeps {
   progress: StoryProgress;
   level(): number;
   livesLost(): number;
-  play(level: number, withStory: boolean): void;
+  /** `bonusLives`: 1 after a watched rewarded ad (the extra heart). */
+  play(level: number, withStory: boolean, bonusLives?: number): void;
   /** Opens the Story map (`from`: the level just cleared, where Bosco walks on from). */
   showMap(from?: number): void;
   showEnding(): void;
@@ -46,7 +48,7 @@ export class StoryResults {
     if (spec.rival) this.deps.progress.add({ bosses: 1 });
     const lost = Math.min(this.deps.livesLost(), START_LIVES);
     const martians = state.martians.filter((m) => !m.alive).length;
-    const heartsLeft = START_LIVES - lost;
+    const heartsLeft = heartsForScore(this.deps.livesLost());
     const gems = gemsCollected(state);
     const score = scoreFor({ level, martians, ticks: state.tick, heartsLeft, gems });
     const stars = score.stars;
@@ -84,6 +86,14 @@ export class StoryResults {
     this.deps.screens.showBanner(t('banner.defeated'), t(level === LEVEL_COUNT ? 'story.gameOverDuel' : 'story.gameOver', { n: level }), t('story.retry', { n: level }), () => afterMidgameAd(() => fadeThrough(() => this.deps.play(level, false))), t('banner.map'), randomTip(),
       {
         pose: 'defeated', summary: storySummary(this.deps.host.state, tally, this.deps.livesLost(), 0),
+        // Rewarded ad (portal, ads on): retry with one extra heart, only if the ad was watched to the end.
+        bonus: adsAvailable() ? {
+          label: t('story.retryBonus'),
+          onClick: () => void rewardedAd().then((watched) => {
+            if (!this.deps.screens.bannerOpen) return; // left for the map or menu while the ad was loading
+            fadeThrough(() => this.deps.play(level, false, watched ? 1 : 0));
+          }),
+        } : undefined,
         // "Map" goes back to the Story map, not the main menu.
         onMenu: () => fadeThrough(() => {
           this.deps.screens.hideBanner();

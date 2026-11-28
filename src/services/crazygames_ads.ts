@@ -87,7 +87,7 @@ export function afterMidgameAd(next: () => void, deps: AdDeps = {}): void {
 }
 
 /**
- * A rewarded ad (nothing calls it yet; the button waits on the score question in docs/HANDOFF.md).
+ * A rewarded ad: the "+1 heart (ad)" retry on the Story game-over card (flow/story_results.ts).
  * Resolves true only when the ad finished. False at once when ads are off, the SDK is not ready or
  * an ad blocker was found; false on an ad error or when neither adStarted nor adError comes within
  * 5 s. Never rejects. Mutes sound and shields taps through `onAdState`, like the midgame ad.

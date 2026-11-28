@@ -118,7 +118,7 @@ const dev = new DevPanel(startAtLevel);
 const pause = new PauseMenu({
   restart: () => fadeThrough(() => {
     pause.close();
-    if (session.mode === 'battle') newGame(); else story.play(story.level, false);
+    if (session.mode === 'battle') newGame(); else story.play(story.level, false, false, story.bonusLives); // keeps a watched-for heart
   }),
   settings: (back) => screens.openSettingsOver(back),
   quit: openMenu,

@@ -132,6 +132,11 @@ export interface GameOptions {
    * arena layout's own (levels.ts rockDensity). Ignored in battle.
    */
   rockDensity?: number;
+  /**
+   * Story: extra hearts for the player (0 or 1), the rewarded-ad retry. Lives are in
+   * hashState, so the bonus is covered there. Ignored in battle and for the duel's rival.
+   */
+  bonusLives?: number;
   /** Battle: ticks before the arena starts to collapse (default ROUND_TICKS). */
   roundTicks?: number;
   /**
@@ -248,7 +253,8 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
   if (bossKind) setupBoss(state, bossKind);
   else if (!battle && !rival) placeGate(state);
   // One life per round in battle and for the duel's rival; survival keeps START_LIVES.
-  for (let i = 0; i < players; i++) state.players.push(newPlayer(i, battle || (rival && i > 0) ? 1 : START_LIVES));
+  const bonus = battle ? 0 : Math.max(0, Math.min(1, Math.trunc(options.bonusLives ?? 0)));
+  for (let i = 0; i < players; i++) state.players.push(newPlayer(i, battle || (rival && i > 0) ? 1 : START_LIVES + (i === 0 ? bonus : 0)));
   spawnMartians(state, roster);
   return state;
 }

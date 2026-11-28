@@ -55,7 +55,7 @@ export function createGameRun(d: GameRunDeps) {
     if (mode === 'online' && net) session.state = createGame(seed, net.gameOptions());
     // Battle vs Bot: a random sector arena each round (picked from the seed).
     else if (mode === 'battle') session.state = createGame(seed, { mode: 'battle', arena: 'random' });
-    else session.state = createGame(seed, storyOptions(story.level));
+    else session.state = createGame(seed, { ...storyOptions(story.level), bonusLives: story.bonusLives });
     if (session.devRun && mode === 'survival') applyCheats();
     session.bot = mode === 'battle' ? new Bot(1, seed, screens.botLevel) : spec.rival ? new Bot(1, seed, 'hard') : null;
     recorder.reset();

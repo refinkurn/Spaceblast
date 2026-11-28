@@ -41,6 +41,8 @@ export interface StoryHost {
 
 export class StoryMode {
   level = 1;
+  /** Extra hearts for the level being started (the rewarded-ad retry); read by game_run's newGame. */
+  bonusLives = 0;
   readonly progress = new StoryProgress();
   private livesLost = 0;
   private ending = $('ending');
@@ -62,7 +64,7 @@ export class StoryMode {
       progress: this.progress,
       level: () => this.level,
       livesLost: () => this.livesLost,
-      play: (level, withStory) => this.play(level, withStory),
+      play: (level, withStory, bonusLives) => this.play(level, withStory, false, bonusLives),
       showMap: (from) => this.map.show(from === undefined ? undefined : { from }),
       showEnding: () => this.showEnding(),
     });
@@ -159,7 +161,8 @@ export class StoryMode {
    * fromMap: started from the map's node card, which already showed the level's
    * goal, so there is no level card: play starts right after the scenes.
    */
-  play(level: number, withStory: boolean, fromMap = false): void {
+  play(level: number, withStory: boolean, fromMap = false, bonusLives = 0): void {
+    this.bonusLives = bonusLives;
     this.map.hide();
     this.screens.hideStory();
     this.cutscene.cancel();
