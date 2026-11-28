@@ -77,3 +77,20 @@ SELECT day,
   ROUND(100.0 * SUM(name='level_clear' AND level=1) / MAX(SUM(name='level_start' AND level=1), 1)) AS level1_clear_pct
 FROM events WHERE src='crazygames' GROUP BY day ORDER BY day DESC LIMIT 21;
 ```
+
+## Weekly report
+`npm run metrics` prints every number above per ISO week (Monday start, UTC), split by source: `site`, `crazygames`, and `unknown` (rows from before the source column). Then Story drop-off per level (starts/clears/fails). Options: `--weeks N` (default 8), `--file rows.json` to read a saved export instead of the live database.
+
+The live read goes through wrangler, so it needs `npx wrangler login` once (or `CLOUDFLARE_API_TOKEN`). Without either it says so and stops. The SQL it sends is `METRICS_SQL` in `src/services/metrics_report.ts`; the same SQL run in the D1 console gives rows you can save as JSON for `--file`.
+
+| Number | Meaning |
+|---|---|
+| players | one per device per UTC day, summed over the week |
+| new players | devices playing for the first time |
+| d1 % | new players of that week who came back the next day |
+| sessions | page opens (and returns from the background) |
+| avg minutes | average session length |
+| stayed 1 min % | sessions of a minute or more (CrazyGames' "conversion") |
+| story level 1 start % | level 1 starts per new player (did the quick start work?) |
+| level 1 clear % | level 1 clears per level 1 start |
+| online rounds / player | online battle rounds per player |

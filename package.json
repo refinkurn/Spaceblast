@@ -19,6 +19,7 @@
     "live": "node scripts/live_check.mjs",
     "check": "npm test && npm run build && node scripts/build_portal.mjs",
     "online-check": "node scripts/online_check.mjs",
+    "metrics": "node scripts/metrics_report.mjs",
     "perf": "node scripts/perf_check.mjs"
   },
   "dependencies": {

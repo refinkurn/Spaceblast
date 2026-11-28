@@ -1,0 +1,12 @@
+[
+  { "day": "2026-11-16", "src": null, "name": "day", "level": null, "mode": null, "days": 0, "first_day": "2026-11-16", "n": 3, "value_sum": null, "long_n": null },
+  { "day": "2026-11-17", "src": "site", "name": "day", "level": null, "mode": null, "days": 0, "first_day": "2026-11-17", "n": 1, "value_sum": null, "long_n": null },
+  { "day": "2026-11-24", "src": "crazygames", "name": "day", "level": null, "mode": null, "days": 0, "first_day": "2026-11-24", "n": 2, "value_sum": null, "long_n": null },
+  { "day": "2026-11-25", "src": "crazygames", "name": "day", "level": null, "mode": null, "days": 1, "first_day": "2026-11-24", "n": 1, "value_sum": null, "long_n": null },
+  { "day": "2026-11-24", "src": "crazygames", "name": "session_start", "level": null, "mode": null, "days": null, "first_day": null, "n": 3, "value_sum": null, "long_n": null },
+  { "day": "2026-11-24", "src": "crazygames", "name": "session_end", "level": null, "mode": null, "days": null, "first_day": null, "n": 3, "value_sum": 420, "long_n": 2 },
+  { "day": "2026-11-24", "src": "crazygames", "name": "level_start", "level": 1, "mode": "story", "days": null, "first_day": null, "n": 2, "value_sum": null, "long_n": null },
+  { "day": "2026-11-24", "src": "crazygames", "name": "level_clear", "level": 1, "mode": "story", "days": null, "first_day": null, "n": 1, "value_sum": 70, "long_n": 1 },
+  { "day": "2026-11-24", "src": "crazygames", "name": "level_fail", "level": 1, "mode": "story", "days": null, "first_day": null, "n": 1, "value_sum": 40, "long_n": 0 },
+  { "day": "2026-11-25", "src": "crazygames", "name": "round", "level": null, "mode": "online", "days": null, "first_day": null, "n": 4, "value_sum": 300, "long_n": 4 }
+]
