@@ -30,16 +30,23 @@ Only you can do these (accounts, uploads, your own databases). Ranked by what th
 
 ## Ready
 
+- **Weekly metrics report: `npm run metrics`** (scripts/metrics_report.mjs, src/services/metrics_report.ts, docs/ANALYTICS.md)
+  Now: the numbers exist only as separate SQL queries in docs/ANALYTICS.md, run by hand in the D1 console; no week view, no site vs crazygames split in one place.
+  Want: `npm run metrics` prints the docs/design/metrics-report.md columns per ISO week, split site / crazygames / unknown, plus the Story drop-off table; reads live D1 through wrangler, or `--file rows.json` offline.
+  Done when: `npm run metrics -- --file <fixture>` prints the tables; a Vitest test checks week grouping, d1 % and `-` for zero divisions; ANALYTICS.md has a "Weekly report" section; `npm test` and build pass.
+  Spec: docs/design/metrics-report.md
+
+- **[code session] Rewarded extra heart on a Story retry** (src/sim/state.ts GameOptions, src/flow/story_results.ts, src/flow/story_mode.ts)
+  Now: Story game over offers Retry (after `afterMidgameAd`) and Map; `rewardedAd()` exists in src/services/crazygames_ads.ts with no call site; every Story start gives START_LIVES hearts.
+  Want: a `bonusLives` GameOption (0 or 1, in hashState) adds hearts at start; the game-over banner shows a "Retry +1 heart" button only when `adsAvailable()`, which calls `rewardedAd()` and retries with 1 bonus heart only if it returns true (false = normal retry, no heart). Score and stars count hearts as if the bonus heart were not there (Refindo, 2026-11-28): heartsLeft = START_LIVES - min(lost, START_LIVES), as story_results.ts already does.
+  Done when: sim test for the bonus heart; a test that a 4-heart run losing 1 heart scores 2 hearts and no 3 stars; text via t() in locales.json; GAME_RULES.md updated; `npm test`, build and build:portal pass. CRAZY_ADS stays false.
+
 ## In progress
 
 
 ## Blocked
 
 - **Later (postponed by Refindo until the product is ready, no cost now): Capacitor app packaging** - landscape lock, native haptics (@capacitor/haptics: light impact on Charge / power-up, warning on damage). The web build already buzzes via navigator.vibrate on Android.
-
-- **Rewarded extra heart vs score (asked 2026-11-15)**: the roadmap's rewarded ad gives one extra heart on a Story retry. Should that heart count for score and stars? Today hearts left count up to 3 (1000 each) and 3 stars need all 3 hearts, so a bonus heart lets a player lose one and still score full hearts and 3 stars. Suggest: no, score and stars count hearts as if the bonus heart were not there, so the leaderboard stays fair. The item (src/sim option + Story game-over button, code session) is queued once you answer.
-
-- **Next milestone (asked 2026-11-23)**: M2 code is built (ads off, username, account progress, login, room data, instant multiplayer, muteAudio, loading events) except the rewarded heart, which waits on the question above. M1 waits on the CrazyGames upload (Needs Refindo 1-2). Should the Producer start M3's "weekly metrics report" now (a script that prints the docs/ANALYTICS.md numbers per week, site vs crazygames), or hold the queue until launch data exists? Suggest: start it now, so the report is ready on the first day of Basic Launch.
 
 ## Known issues
 
@@ -49,6 +56,8 @@ Open bugs and debts, newest first. The Producer turns these into Ready items whe
 
 
 ## Done
+
+- 2026-11-28: Refindo answered both Blocked questions: the rewarded bonus heart does not count for score and stars; start M3's weekly metrics report now. Both queued.
 
 - 2026-11-22: "Log in with CrazyGames" button on the leaderboard screen (`#lb-login`, `lb.crazyLogin`): `canShowLogin()` / `showLogin()` (never rejects) in crazygames.ts; shown only with the SDK ready, accounts available and nobody logged in; after a login Story progress is merged again (new flow/account_sync.ts `watchAccountMerge`, used by story_mode.ts). 612 tests, build and build:portal pass. Not checked: docs.crazygames.com could not be fetched in this run; `isUserAccountAvailable` / `showAuthPrompt` follow the item text, worth a re-read.
 
