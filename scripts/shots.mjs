@@ -42,6 +42,8 @@ for (const s of SIZES) {
   console.log(`${s.name} ${s.w}x${s.h}`);
   const ctx = await browser.newContext({ viewport: { width: s.w, height: s.h }, hasTouch: s.touch });
   const p = await ctx.newPage();
+  // SHOTS_THROTTLE=6 slows the page's CPU like a slow CI machine (debugging flaky checks).
+  if (process.env.SHOTS_THROTTLE) await (await ctx.newCDPSession(p)).send('Emulation.setCPUThrottlingRate', { rate: Number(process.env.SHOTS_THROTTLE) });
   p.on('pageerror', (e) => fail(`${s.name}: script error: ${e.message}`));
   const shot = (name) => p.screenshot({ path: `${OUT}/${s.name}-${name}.png` });
   const need = async (id, what) => { if (!(await visible(p, id))) fail(`${s.name}: ${what} (#${id}) not showing`); };
@@ -85,10 +87,13 @@ for (const s of SIZES) {
   }
 
   // Level cleared: the end-of-level card.
-  await p.evaluate(() => { const st = window.spaceblast.state; const c = st.grid.cells; c[st.gate] = 0; const h = st.players[0]; h.x = (st.gate % st.grid.w) * 1000; h.y = Math.floor(st.gate / st.grid.w) * 1000; });
+  // Put Bosco on the gate, shielded; repeat while the level runs (a Martian bite can send him back to his corner).
+  const toGate = () => p.evaluate(() => { const st = window.spaceblast.state; if (st.status !== 'playing') return; const c = st.grid.cells; c[st.gate] = 0; const h = st.players[0]; h.shield = 600; h.x = (st.gate % st.grid.w) * 1000; h.y = Math.floor(st.gate / st.grid.w) * 1000; });
+  await toGate();
   // The outro scene and the card take longer on a slow machine (CI): wait for it, tapping through scenes.
   await p.waitForTimeout(2500);
-  for (let i = 0; i < 40 && !(await visible(p, 'banner')); i++) { await tapCards(p); await p.waitForTimeout(250); }
+  for (let i = 0; i < 40 && !(await visible(p, 'banner')); i++) { await toGate(); await tapCards(p); await p.waitForTimeout(250); }
+  if (!(await visible(p, 'banner'))) console.log(`  ${s.name} state at the missing card:`, JSON.stringify(await p.evaluate(() => { const st = window.spaceblast.state; const h = st.players[0]; const open = (id) => { const e = document.getElementById(id); return !!e && !e.hidden; }; return { status: st.status, tick: st.tick, gate: st.gate, gateCell: st.grid.cells[st.gate], hero: [h.x, h.y, h.alive, h.lives], overlays: ['cutscene', 'intro-card', 'level-card', 'pause-card', 'story', 'menu'].filter(open) }; })));
   await need('banner', 'end-of-level card');
   await shot('5-level-clear');
 
